@@ -2,6 +2,15 @@
 # and its dependencies with the aid of the Mix.Config module.
 use Mix.Config
 
+config :swarm_engine, SwarmEngine.DataVault,
+  adapter: Ecto.Adapters.Postgres,
+  database: "data_vault",
+  username: "postgres",
+  hostname: "localhost"
+
+  config :swarm_engine,
+    ecto_repos: [SwarmEngine.DataVault]
+
 # This configuration is loaded before any dependency and is restricted
 # to this project. If another project depends on this project, this
 # file won't be loaded nor affect the parent project. For this reason,
