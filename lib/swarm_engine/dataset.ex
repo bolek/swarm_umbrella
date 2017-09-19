@@ -13,6 +13,20 @@ defmodule SwarmEngine.Dataset do
     end
   end
 
+  def insert(%Dataset{name: name, columns: columns}, data) do
+    column_names = [:_full_hash | Enum.map(columns, &(&1.name))]
+
+    stream = data
+    |> Stream.map(&([generate_hash(&1) | &1]))
+    |> Stream.map(&(Enum.zip(column_names, &1)))
+    |> Stream.chunk_every(500)
+    |> Stream.map(&IO.inspect(&1))
+
+    Enum.each(stream, &(DataVault.insert_all name, &1,
+      [ {:on_conflict, :nothing}, {:conflict_target, [:_full_hash]} ]
+    ))
+  end
+
   def exists?(%Dataset{name: name}) do
     case SQL.query(DataVault, """
       SELECT EXISTS (
@@ -37,6 +51,11 @@ defmodule SwarmEngine.Dataset do
     else
       false -> {:error, :dataset_without_table}
     end
+  end
+
+  defp generate_hash(list) do
+    :crypto.hash(:md5 , Enum.join(list, ""))
+    |> Base.encode64()
   end
 
   defp create_table(%Dataset{name: name, columns: columns}) do
