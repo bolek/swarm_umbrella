@@ -13,18 +13,20 @@ defmodule SwarmEngine.Dataset do
     end
   end
 
-  def insert(%Dataset{name: name, columns: columns}, data) do
-    column_names = [:_full_hash | Enum.map(columns, &(&1.name))]
+  def insert(%Dataset{} = dataset, data) do
+    insert_stream(dataset, data)
+    |> Stream.run
+  end
 
-    stream = data
+  def insert_stream(%Dataset{name: name, columns: columns}, stream) do
+    column_names = [:_full_hash | Enum.map(columns, &(&1.name))]
+    insert_opts = [{:on_conflict, :nothing}, {:conflict_target, [:_full_hash]}]
+
+    stream
     |> Stream.map(&([generate_hash(&1) | &1]))
     |> Stream.map(&(Enum.zip(column_names, &1)))
     |> Stream.chunk_every(500)
-    |> Stream.map(&IO.inspect(&1))
-
-    Enum.each(stream, &(DataVault.insert_all name, &1,
-      [ {:on_conflict, :nothing}, {:conflict_target, [:_full_hash]} ]
-    ))
+    |> Stream.map(&(DataVault.insert_all(name, &1, insert_opts)))
   end
 
   def exists?(%Dataset{name: name}) do
