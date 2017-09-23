@@ -1,6 +1,22 @@
 defmodule SwarmEngine.Connectors.HTTP do
   @http Application.get_env(:swarm_engine, :http_client)
 
+  defmodule Error do
+    alias __MODULE__
+
+    defexception [:message]
+
+    def exception({url, reason}) do
+      msg = "requesting #{url}, got: #{Kernel.inspect(reason)}"
+      %Error{message: msg}
+    end
+
+    def exception(url) do
+      msg = "error when requesting #{url}"
+      %Error{message: msg}
+    end
+  end
+
   def get(%{url: url}, opts \\ []) do
     {term, headers, body, opts} = initialize_opts(opts)
 
@@ -24,24 +40,24 @@ defmodule SwarmEngine.Connectors.HTTP do
   defp begin_download(term, url, req_headers, body, opts) do
     case @http.get(term, url, req_headers, body, opts) do
       {:ok, 200, _headers, client} ->
-        client
-      all ->
-        {:error, all}
+        {client, url}
+      sink ->
+        raise Error, {url, sink}
     end
   end
 
-  defp continue_download(client) do
+  defp continue_download({client, url}) do
     case @http.stream(client) do
       {:ok, data} ->
-        {[data], client}
+        {[data], {client, url}}
       :done ->
         # IO.puts "No more data"
-        {:halt, client}
-      {:error, reason} ->
-        raise reason
+        {:halt, {client, url}}
+      _ ->
+        raise Error, url
     end
   end
 
-  defp finish_download(_client) do
+  defp finish_download({_client, _url}) do
   end
 end
