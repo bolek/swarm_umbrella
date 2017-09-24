@@ -33,7 +33,7 @@ defmodule SwarmEngine.Adapters.HTTP.Test do
     end
   end
 
-  defp gen_content(term, url, headers, body, opts) do
+  defp gen_content(term, url, headers, _body, opts) do
     ["requested", term, url, headers, opts]
       |> Enum.map(&(Kernel.inspect(&1)))
   end
