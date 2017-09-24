@@ -2,7 +2,7 @@ defmodule SwarmEngine.Connectors.GoogleDrive do
   defexception [:message]
 
   @google_auth Application.get_env(:swarm_engine, :google_auth_client)
-  @scope "https://www.googleapis.com/auth/drive.read"
+  @scope "https://www.googleapis.com/auth/drive.readonly"
   @endpoint "https://www.googleapis.com/drive/v3/"
 
   def get(%{fileid: id}, _opts \\ []) do
