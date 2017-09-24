@@ -6,3 +6,5 @@ config :swarm_engine, SwarmEngine.DataVault,
 
 config :swarm_engine, :http_client, SwarmEngine.Adapters.HTTP.Test
 config :swarm_engine, :google_auth_client, SwarmEngine.Adapters.GoogleAuth.Test
+
+config :logger, level: :warn
