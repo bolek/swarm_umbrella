@@ -5,3 +5,4 @@ config :swarm_engine, SwarmEngine.DataVault,
   database: "data_vault_test"
 
 config :swarm_engine, :http_client, SwarmEngine.Adapters.HTTP.Test
+config :swarm_engine, :google_auth_client, SwarmEngine.Adapters.GoogleAuth.Test

@@ -14,6 +14,7 @@ config :swarm_engine, SwarmEngine.DataVault,
 # Adapters
 
 config :swarm_engine, :http_client, SwarmEngine.Adapters.HTTP.Hackney
+config :swarm_engine, :google_auth_client, SwarmEngine.Adapters.GoogleAuth.Goth
 
 # This configuration is loaded before any dependency and is restricted
 # to this project. If another project depends on this project, this
@@ -40,6 +41,21 @@ config :swarm_engine, :http_client, SwarmEngine.Adapters.HTTP.Hackney
 # Configuration from the imported file will override the ones defined
 # here (which is why it is important to import them last).
 #
-#     import_config "#{Mix.env}.exs"
+
+config :goth,
+  json: """
+    {
+    "type": "service_account",
+    "project_id": "",
+    "private_key_id": "",
+    "private_key": "",
+    "client_email": "",
+    "client_id": "",
+    "auth_uri": "",
+    "token_uri": "",
+    "auth_provider_x509_cert_url": "",
+    "client_x509_cert_url": ""
+    }
+  """
 
 import_config "#{Mix.env}.exs"
