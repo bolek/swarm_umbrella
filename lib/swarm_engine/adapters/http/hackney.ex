@@ -1,6 +1,6 @@
 defmodule SwarmEngine.Adapters.HTTP.Hackney do
 
-  def get(term, url, headers, body, opts) do
+  def request(term, url, headers, body, opts) do
     :hackney.request(term, url, headers, body, opts)
   end
 

@@ -1,5 +1,5 @@
 defmodule SwarmEngine.Adapters.HTTP.Test do
-  def get(term, url, headers, body, opts) do
+  def request(term, url, headers, body, opts) do
     with  {:ok, _} <-
             validate_http_request(url),
           content <-

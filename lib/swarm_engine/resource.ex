@@ -15,7 +15,7 @@ defmodule SwarmEngine.Resource do
     target_path = build_path(resource, path)
     tmp_path = gen_temp_path()
 
-    connector.get(params, options)
+    connector.request(params, options)
       |> Stream.into(File.stream!(tmp_path))
       |> Stream.run
 

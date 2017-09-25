@@ -5,12 +5,12 @@ defmodule SwarmEngine.Connectors.GoogleDrive do
   @scope "https://www.googleapis.com/auth/drive.readonly"
   @endpoint "https://www.googleapis.com/drive/v3/"
 
-  def get(%{fileid: id}, _opts \\ []) do
+  def request(%{fileid: id}, _opts \\ []) do
     with  {:ok, %{token: token}} <- get_token(),
           url                    <- build_url(id),
           headers                <- build_headers(token)
     do
-      SwarmEngine.Connectors.HTTP.get(%{url: url}, [{:headers, headers}])
+      SwarmEngine.Connectors.HTTP.request(%{url: url}, [{:headers, headers}])
     else
       sink ->
         raise __MODULE__, Kernel.inspect(sink)

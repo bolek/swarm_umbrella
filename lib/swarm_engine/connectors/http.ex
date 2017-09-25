@@ -17,12 +17,16 @@ defmodule SwarmEngine.Connectors.HTTP do
     end
   end
 
-  def get(%{url: url}, opts \\ []) do
+  def request(%{url: url}, opts \\ []) do
     {term, headers, body, opts} = initialize_opts(opts)
 
     Stream.resource(fn -> begin_download(term, url, headers, body, opts) end,
                     &continue_download/1,
                     &finish_download/1)
+  end
+
+  def get_metadata(%{url: url}, opts \\ []) do
+
   end
 
   defp initialize_opts(opts) do
@@ -38,7 +42,7 @@ defmodule SwarmEngine.Connectors.HTTP do
   end
 
   defp begin_download(term, url, req_headers, body, opts) do
-    case @http.get(term, url, req_headers, body, opts) do
+    case @http.request(term, url, req_headers, body, opts) do
       {:ok, 200, _headers, client} ->
         {client, url}
       sink ->
