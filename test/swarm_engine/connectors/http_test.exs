@@ -23,11 +23,6 @@ defmodule SwarmEngine.Connectors.HTTPTest do
       HTTPTest.request(%{url: "http://example.com/file.csv"})
   end
 
-  test "streaming with a :post term" do
-    assert ~s("requested" :post "http://url" [] [term: :post]) =
-      HTTPTest.request(%{url: "http://url"}, [{:term, :post}])
-  end
-
   test "streaming with headers" do
     assert ~s("requested" :get "http://url" [{"Authorization", "pass"}] [headers: [{\"Authorization\", \"pass\"}]]) =
       HTTPTest.request(%{url: "http://url"}, [{:headers, [{"Authorization", "pass"}]}])

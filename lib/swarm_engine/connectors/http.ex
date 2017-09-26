@@ -1,4 +1,6 @@
 defmodule SwarmEngine.Connectors.HTTP do
+  alias __MODULE__.Helpers
+
   @http Application.get_env(:swarm_engine, :http_client)
 
   defmodule Error do
@@ -18,27 +20,35 @@ defmodule SwarmEngine.Connectors.HTTP do
   end
 
   def request(%{url: url}, opts \\ []) do
-    {term, headers, body, opts} = initialize_opts(opts)
+    {headers, body, opts} = initialize_opts(opts)
 
-    Stream.resource(fn -> begin_download(term, url, headers, body, opts) end,
+    Stream.resource(fn -> begin_download(:get, url, headers, body, opts) end,
                     &continue_download/1,
                     &finish_download/1)
   end
 
-  def get_metadata(%{url: url}, opts \\ []) do
+  def request_metadata(%{url: url}, opts \\ []) do
+    {headers, body, opts} = initialize_opts(opts)
 
+    with  {:ok, 200, response_headers} <-
+            @http.request(:head, url, headers, body, opts),
+          filename <-
+            Helpers.get_filename(url, response_headers),
+          size <-
+            Helpers.get_file_size(response_headers)
+    do
+      {:ok, %{filename: filename, size: size}}
+    else
+      sink ->
+        {:error, {url, sink}}
+    end
   end
 
   defp initialize_opts(opts) do
-    term = extract_option(opts, :term, :get)
-    headers = extract_option(opts, :headers, [])
-    body = extract_option(opts, :body, "")
+    headers = Helpers.extract_value(opts, :headers, [])
+    body = Helpers.extract_value(opts, :body, "")
 
-    {term, headers, body, opts}
-  end
-
-  defp extract_option(opts, key, default) do
-    Keyword.pop_first(opts, key, default) |> elem(0)
+    {headers, body, opts}
   end
 
   defp begin_download(term, url, req_headers, body, opts) do
