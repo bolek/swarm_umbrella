@@ -17,7 +17,38 @@ defmodule SwarmEngine.Connectors.GoogleDrive do
     end
   end
 
+  def request_metadata(%{file_id: id}, _opts \\ []) do
+    with  {:ok, %{token: token}}
+            <- get_token(),
+          url
+            <- @endpoint <> "files/#{id}?fields=size,name,modifiedTime",
+          headers
+            <- build_headers(token),
+          %{"name" => filename, "modifiedTime" => raw_modified_at, "size" => raw_size}
+            <- get_metadata(%{url: url}, [{:headers, headers}]),
+          {:ok, modified_at, 0}
+            <- DateTime.from_iso8601(raw_modified_at),
+          {size, _}
+            <- Integer.parse(raw_size)
+    do
+      {:ok, %{
+        filename: filename,
+        size: size,
+        modified_at: modified_at
+      }}
+    else
+      {:error, reason} -> {:error ,reason}
+    end
+  end
+
   defp get_token(), do: @google_auth.get_token(@scope)
   defp build_url(id), do: @endpoint <> "files/#{id}?alt=media"
   defp build_headers(token), do: [{'Authorization', 'Bearer #{token}'}]
+
+  defp get_metadata(params, opts) do
+    SwarmEngine.Connectors.HTTP.request(params, opts)
+    |> Enum.to_list()
+    |> Enum.join()
+    |> Poison.Parser.parse!
+  end
 end
