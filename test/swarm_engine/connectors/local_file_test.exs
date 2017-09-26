@@ -14,4 +14,9 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
     assert "col_1,col_2,col_3\nABC,def,123\n" =
       LocalFileTest.request(%{path: "test/fixtures/dummy.csv"})
   end
+
+  test "retrieving metadata" do
+    assert {:ok, %{filename: "test.xlsx", size: 3847}} =
+      LocalFile.request_metadata(%{path: "test/fixtures/test.xlsx"})
+  end
 end
