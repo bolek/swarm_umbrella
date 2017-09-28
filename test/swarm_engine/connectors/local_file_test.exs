@@ -4,19 +4,29 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
   alias __MODULE__
   alias SwarmEngine.Connectors.LocalFile
 
-  def request(params) do
-    LocalFile.request(params)
-      |> Enum.to_list()
-      |> Enum.join(" ")
+  def request(source) do
+    source
+    |> LocalFile.request()
+    |> Enum.to_list()
+    |> Enum.join(" ")
+  end
+
+  test "creating a LocalFile source" do
+    assert LocalFile.create(%{path: "some/path"}) ==
+      {LocalFile, %{path: "some/path"}, []}
   end
 
   test "streaming a local file" do
-    assert "col_1,col_2,col_3\nABC,def,123\n" =
-      LocalFileTest.request(%{path: "test/fixtures/dummy.csv"})
+    source = LocalFile.create(%{path: "test/fixtures/dummy.csv"})
+
+    assert "col_1,col_2,col_3\nABC,def,123\n" ==
+      LocalFileTest.request(source)
   end
 
   test "retrieving metadata" do
-    assert {:ok, %{filename: "test.xlsx", size: 3847}} =
-      LocalFile.request_metadata(%{path: "test/fixtures/test.xlsx"})
+    source = LocalFile.create(%{path: "test/fixtures/test.xlsx"})
+
+    assert {:ok, %{filename: "test.xlsx", size: 3847, source: source}} ==
+      LocalFile.request_metadata(source)
   end
 end

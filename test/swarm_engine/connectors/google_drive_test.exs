@@ -10,6 +10,11 @@ defmodule SwarmEngine.Connectors.GoogleDriveTest do
       |> Enum.join(" ")
   end
 
+  test "creating a GoogleDrive source" do
+    assert GoogleDrive.create(%{fileid: "123abc"}) ==
+      {GoogleDrive, %{fileid: "123abc"}, []}
+  end
+
   test "streaming a file from dropbox" do
     assert ~s("requested" :get "https://www.googleapis.com/drive/v3/files/123abc?alt=media" [{'Authorization', 'Bearer abctoken'}] [headers: [{'Authorization', 'Bearer abctoken'}]]) =
       GoogleDriveTest.request(%{fileid: "123abc"})

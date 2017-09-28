@@ -1,23 +1,30 @@
 defmodule SwarmEngine.Connectors.GoogleDrive do
   defexception [:message]
 
+  alias SwarmEngine.Connectors.HTTP
+
   @google_auth Application.get_env(:swarm_engine, :google_auth_client)
   @scope "https://www.googleapis.com/auth/drive.readonly"
   @endpoint "https://www.googleapis.com/drive/v3/"
+
+  def create(params, options \\ []) do
+    {__MODULE__, params, options}
+  end
 
   def request(%{fileid: id}, _opts \\ []) do
     with  {:ok, %{token: token}} <- get_token(),
           url                    <- build_url(id),
           headers                <- build_headers(token)
     do
-      SwarmEngine.Connectors.HTTP.request(%{url: url}, [{:headers, headers}])
+      HTTP.create(%{url: url}, [{:headers, headers}])
+      |> HTTP.request()
     else
       sink ->
         raise __MODULE__, Kernel.inspect(sink)
     end
   end
 
-  def request_metadata(%{file_id: id}, _opts \\ []) do
+  def request_metadata({__MODULE, %{file_id: id}, _opts} = source) do
     with  {:ok, %{token: token}}
             <- get_token(),
           url
@@ -34,7 +41,8 @@ defmodule SwarmEngine.Connectors.GoogleDrive do
       {:ok, %{
         filename: filename,
         size: size,
-        modified_at: modified_at
+        modified_at: modified_at,
+        source: source
       }}
     else
       {:error, reason} -> {:error ,reason}
@@ -46,7 +54,8 @@ defmodule SwarmEngine.Connectors.GoogleDrive do
   defp build_headers(token), do: [{'Authorization', 'Bearer #{token}'}]
 
   defp get_metadata(params, opts) do
-    SwarmEngine.Connectors.HTTP.request(params, opts)
+    HTTP.create(params, opts)
+    |> HTTP.request()
     |> Enum.to_list()
     |> Enum.join()
     |> Poison.Parser.parse!

@@ -7,15 +7,23 @@ defmodule SwarmEngine.Connectors.HTTPTest do
   doctest SwarmEngine.Dataset
 
   def request(params) do
-    HTTP.request(params)
-      |> Enum.to_list()
-      |> Enum.join(" ")
+    params
+    |> HTTP.create()
+    |> HTTP.request()
+    |> Enum.to_list()
+    |> Enum.join(" ")
   end
 
   def request(params, options) do
-    HTTP.request(params, options)
-      |> Enum.to_list()
-      |> Enum.join(" ")
+    HTTP.create(params, options)
+    |> HTTP.request
+    |> Enum.to_list
+    |> Enum.join(" ")
+  end
+
+  test "creating a HTTP source" do
+    assert HTTP.create(%{url: "some/path"}) ==
+      {HTTP, %{url: "some/path"}, []}
   end
 
   test "streaming a file" do

@@ -1,6 +1,7 @@
 defmodule SwarmEngine.Resource do
   alias __MODULE__
   alias SwarmEngine.Util.{UUID,Zip}
+  alias SwarmEngine.Connector
 
   @enforce_keys [:id, :name, :connectors]
   defstruct [:id, :name, :connectors]
@@ -11,11 +12,11 @@ defmodule SwarmEngine.Resource do
     { :ok, %Resource{id: UUID.generate, name: name, connectors: []} }
   end
 
-  def pull(resource, path, connector, %{} = params, options \\ []) do
+  def pull(resource, path, source) do
     target_path = build_path(resource, path)
     tmp_path = gen_temp_path()
 
-    connector.request(params, options)
+    Connector.request(source)
       |> Stream.into(File.stream!(tmp_path))
       |> Stream.run
 

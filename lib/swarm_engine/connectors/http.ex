@@ -3,6 +3,10 @@ defmodule SwarmEngine.Connectors.HTTP do
 
   @http Application.get_env(:swarm_engine, :http_client)
 
+  def create(params, options \\ []) do
+    {__MODULE__, params, options}
+  end
+
   defmodule Error do
     alias __MODULE__
 
@@ -19,7 +23,7 @@ defmodule SwarmEngine.Connectors.HTTP do
     end
   end
 
-  def request(%{url: url}, opts \\ []) do
+  def request({__MODULE__, %{url: url}, opts}) do
     {headers, body, opts} = initialize_opts(opts)
 
     Stream.resource(fn -> begin_download(:get, url, headers, body, opts) end,
@@ -27,7 +31,7 @@ defmodule SwarmEngine.Connectors.HTTP do
                     &finish_download/1)
   end
 
-  def request_metadata(%{url: url}, opts \\ []) do
+  def request_metadata({__MODULE__, %{url: url}, opts} = source) do
     {headers, body, opts} = initialize_opts(opts)
 
     with  {:ok, 200, response_headers} <-
@@ -37,7 +41,7 @@ defmodule SwarmEngine.Connectors.HTTP do
           size <-
             Helpers.get_file_size(response_headers)
     do
-      {:ok, %{filename: filename, size: size}}
+      {:ok, %{filename: filename, size: size, source: source}}
     else
       sink ->
         {:error, {url, sink}}

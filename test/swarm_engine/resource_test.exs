@@ -11,11 +11,11 @@ defmodule SwarmEngine.ResourceTest do
 
   test "pulling resource" do
     target = 'test_1'
-    source = 'test/fixtures/dummy.csv'
     {:ok, resource} = Resource.create('dummy')
+    source = LocalFile.create(%{path: 'test/fixtures/dummy.csv'})
 
     assert {:ok, [file_path]} =
-      SwarmEngine.Resource.pull(resource, target, LocalFile, %{path: source})
+      Resource.pull(resource, target, source)
 
     assert {:ok, "col_1,col_2,col_3\nABC,def,123\n"} =
       File.read(file_path)
@@ -26,11 +26,12 @@ defmodule SwarmEngine.ResourceTest do
 
   test "pulling zipped resource" do
     filename = 'test.csv'
-    path = 'test/fixtures/archive.zip'
+    source = LocalFile.create(%{path: 'test/fixtures/archive.zip'})
+
     {:ok, resource} = Resource.create('archive')
 
     assert {:ok, [file_path_1, file_path_2]} =
-      SwarmEngine.Resource.pull(resource, filename, LocalFile, %{path: path})
+      Resource.pull(resource, filename, source)
 
     assert {:ok, "col_4,col_5,col_6\nABC,def,123\n"} =
       File.read(file_path_1)
