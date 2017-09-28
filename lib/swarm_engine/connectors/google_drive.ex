@@ -31,21 +31,34 @@ defmodule SwarmEngine.Connectors.GoogleDrive do
             <- @endpoint <> "files/#{id}?fields=size,name,modifiedTime",
           headers
             <- build_headers(token),
-          %{"name" => filename, "modifiedTime" => raw_modified_at, "size" => raw_size}
-            <- get_metadata(%{url: url}, [{:headers, headers}]),
-          {:ok, modified_at, 0}
-            <- DateTime.from_iso8601(raw_modified_at),
-          {size, _}
-            <- Integer.parse(raw_size)
+          response
+            <- get_metadata(%{url: url}, [{:headers, headers}])
     do
       {:ok, %{
-        filename: filename,
-        size: size,
-        modified_at: modified_at,
+        filename: get_filename(response),
+        size: get_size(response),
+        modified_at: get_modified_at(response),
         source: source
       }}
     else
       {:error, reason} -> {:error ,reason}
+    end
+  end
+
+  defp get_filename(%{"filename" => filename}), do: filename
+
+  defp get_size(%{"size" => size}) do
+    size
+    |> Integer.parse
+    |> elem(0)
+  end
+
+  defp get_modified_at(%{"modifiedTime" => modified_at}) do
+    case  modified_at
+          |> Calendar.DateTime.Parse.rfc3339_utc
+    do
+      {:ok, parsed} -> parsed
+      _             -> nil
     end
   end
 

@@ -21,6 +21,15 @@ defmodule SwarmEngine.Connectors.HTTP.Helpers do
     |> parse_content_length()
   end
 
+  def get_modified_at(headers) do
+    case headers
+    |> extract_value("Last-Modified", "")
+    |> Calendar.DateTime.Parse.httpdate do
+      {:ok, datetime} -> datetime
+      {:bad_format, _}     -> nil
+    end
+  end
+
   def extract_value(opts, key, default) do
     opts
     |> List.keyfind(key, 0, {nil, default})

@@ -23,9 +23,16 @@ defmodule SwarmEngine.Connectors.HTTP do
           filename <-
             Helpers.get_filename(url, response_headers),
           size <-
-            Helpers.get_file_size(response_headers)
+            Helpers.get_file_size(response_headers),
+          modified_at <-
+            Helpers.get_modified_at(response_headers)
     do
-      {:ok, %{filename: filename, size: size, source: source}}
+      {:ok, %{filename: filename,
+              size: size,
+              modified_at: modified_at,
+              source: source
+            }
+      }
     else
       sink ->
         {:error, {url, sink}}

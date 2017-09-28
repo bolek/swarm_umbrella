@@ -13,7 +13,12 @@ defmodule SwarmEngine.Connectors.LocalFile do
     with  {:ok, info} <-
             File.stat(path, opts)
     do
-      {:ok, %{filename: Path.basename(path), size: info.size, source: source}}
+      {:ok, %{filename: Path.basename(path),
+              size: info.size,
+              modified_at: info.mtime |> Calendar.NaiveDateTime.to_date_time_utc,
+              source: source
+            }
+      }
     else
       {:error, reason} -> {:error, reason}
     end

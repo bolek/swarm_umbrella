@@ -1,7 +1,6 @@
 defmodule SwarmEngine.Resource do
-  alias __MODULE__
+  alias SwarmEngine.{Resource, Connector}
   alias SwarmEngine.Util.{UUID,Zip}
-  alias SwarmEngine.Connector
 
   @enforce_keys [:id, :name, :connectors]
   defstruct [:id, :name, :connectors]

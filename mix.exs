@@ -14,9 +14,11 @@ defmodule SwarmEngine.Mixfile do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger,
+      extra_applications: [
+        :calendar,
         :goth,
-        :hackney
+        :hackney,
+        :logger
       ],
       mod: {SwarmEngine.Application, []}
     ]
@@ -25,10 +27,11 @@ defmodule SwarmEngine.Mixfile do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:goth, "~> 0.4.0"},
-      {:postgrex, ">= 0.0.0"},
+      {:calendar, "~> 0.17.2"},
       {:ecto, "~> 2.1"},
-      {:hackney, "~> 1.9"}
+      {:goth, "~> 0.4.0"},
+      {:hackney, "~> 1.9"},
+      {:postgrex, ">= 0.0.0"}
 
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"},
