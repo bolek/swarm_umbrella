@@ -34,12 +34,12 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
                       }
                 }
 
-    assert expected == LocalFile.request_metadata(source)
+    assert expected == LocalFile.metadata(source)
   end
 
   test "storing a resource in a new location" do
     source = LocalFile.create(%{path: "test/fixtures/dummy.csv"})
-    {:ok, resource} = LocalFile.request_metadata(source)
+    {:ok, resource} = LocalFile.metadata(source)
 
     target = LocalFile.create(%{path: "/tmp/dummy2.csv"})
 

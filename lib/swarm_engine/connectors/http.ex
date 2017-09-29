@@ -15,7 +15,7 @@ defmodule SwarmEngine.Connectors.HTTP do
                     &finish_download/1)
   end
 
-  def request_metadata({__MODULE__, %{url: url}, opts} = source) do
+  def metadata({__MODULE__, %{url: url}, opts} = source) do
     {headers, body, opts} = initialize_opts(opts)
 
     with  {:ok, 200, response_headers} <-

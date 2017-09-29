@@ -24,7 +24,7 @@ defmodule SwarmEngine.Connectors.GoogleDrive do
     end
   end
 
-  def request_metadata({__MODULE, %{file_id: id}, _opts} = source) do
+  def metadata({__MODULE, %{file_id: id}, _opts} = source) do
     with  {:ok, %{token: token}}
             <- get_token(),
           url

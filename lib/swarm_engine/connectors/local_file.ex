@@ -11,7 +11,7 @@ defmodule SwarmEngine.Connectors.LocalFile do
     File.stream!(path, [], 2048)
   end
 
-  def request_metadata({__MODULE__, %{path: path}, opts} = source) do
+  def metadata({__MODULE__, %{path: path}, opts} = source) do
     with  {:ok, info} <-
             File.stat(path, opts)
     do
@@ -39,6 +39,6 @@ defmodule SwarmEngine.Connectors.LocalFile do
     |> Stream.into(File.stream!(path))
     |> Stream.run
 
-    request_metadata(source)
+    metadata(source)
   end
 end
