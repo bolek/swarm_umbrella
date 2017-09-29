@@ -23,7 +23,7 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
       LocalFileTest.request(source)
   end
 
-  test "retrieving metadata" do
+  test "metadata happy path" do
     source = LocalFile.create(%{path: "test/fixtures/test.xlsx"})
 
     expected = {:ok, %{filename: "test.xlsx",
@@ -35,6 +35,29 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
                 }
 
     assert expected == LocalFile.metadata(source)
+  end
+
+  test "metadata for inexisting file" do
+    source = LocalFile.create(%{path: "some_weird_file"})
+
+    assert {:error, :enoent} = LocalFile.metadata(source)
+  end
+
+  test "metadata! - happy path" do
+    source = LocalFile.create(%{path: "test/fixtures/test.xlsx"})
+
+    assert %{ filename: "test.xlsx",
+                size: 3847,
+                source: source,
+                modified_at: %DateTime{year: 2017, month: 9, day: 24, hour: 14, minute: 51, second: 13,
+                                       time_zone: "Etc/UTC", zone_abbr: "UTC", utc_offset: 0, std_offset: 0}
+            } == LocalFile.metadata!(source)
+  end
+
+  test "metadata! for inexsting file" do
+    source = LocalFile.create(%{path: "some_weird_file"})
+
+    assert_raise RuntimeError, fn -> LocalFile.metadata!(source) end
   end
 
   test "storing a resource in a new location" do

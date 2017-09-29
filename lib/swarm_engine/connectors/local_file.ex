@@ -26,6 +26,13 @@ defmodule SwarmEngine.Connectors.LocalFile do
     end
   end
 
+  def metadata!(source) do
+    case metadata(source) do
+      {:ok, m} -> m
+      {:error, reason} -> raise Kernel.inspect(reason)
+    end
+  end
+
   def store(resource, {__MODULE__, %{path: path}, _opts} = new_location) do
     Connector.request(resource.source)
     |> Stream.into(File.stream!(path))
