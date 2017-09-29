@@ -48,4 +48,12 @@ defmodule SwarmEngine.Connectors.LocalFile do
 
     metadata(source)
   end
+
+  def list({__MODULE__, %{path: path}, _opts} = location) do
+    {:ok ,  Path.wildcard(path)
+            |> Stream.map(&(put_elem(location, 1, %{path: &1})))
+            |> Stream.map(&metadata!(&1))
+            |> Enum.to_list
+    }
+  end
 end

@@ -103,4 +103,14 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
     # cleanup
     File.rm("/tmp/stream2.csv")
   end
+
+  test "list resouces under given location" do
+    location = LocalFile.create(%{path: "test/fixtures/*"})
+
+    assert {:ok, [
+      %{filename: "archive.zip", modified_at: %DateTime{}, size: 354, source: {SwarmEngine.Connectors.LocalFile, %{path: "test/fixtures/archive.zip"}, []}},
+      %{filename: "dummy.csv", modified_at: %DateTime{}, size: 30, source: {SwarmEngine.Connectors.LocalFile, %{path: "test/fixtures/dummy.csv"}, []}},
+      %{filename: "test.xlsx", modified_at: %DateTime{}, size: 3847, source: {SwarmEngine.Connectors.LocalFile, %{path: "test/fixtures/test.xlsx"}, []}}
+    ]} = LocalFile.list(location)
+  end
 end
