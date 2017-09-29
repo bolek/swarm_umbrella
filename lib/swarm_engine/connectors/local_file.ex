@@ -1,4 +1,6 @@
 defmodule SwarmEngine.Connectors.LocalFile do
+  alias SwarmEngine.Connector
+
   @type t :: {module, Map.t, Keyword.t}
 
   def create(params, options \\ []) do
@@ -22,5 +24,21 @@ defmodule SwarmEngine.Connectors.LocalFile do
     else
       {:error, reason} -> {:error, reason}
     end
+  end
+
+  def store(resource, {__MODULE__, %{path: path}, _opts} = new_location) do
+    Connector.request(resource.source)
+    |> Stream.into(File.stream!(path))
+    |> Stream.run
+
+    {:ok, %{resource | source: new_location}}
+  end
+
+  def store_stream(stream, {__MODULE__, %{path: path}, _opts} = source) do
+    stream
+    |> Stream.into(File.stream!(path))
+    |> Stream.run
+
+    request_metadata(source)
   end
 end

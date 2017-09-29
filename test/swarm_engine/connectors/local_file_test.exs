@@ -36,4 +36,48 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
 
     assert expected == LocalFile.request_metadata(source)
   end
+
+  test "storing a resource in a new location" do
+    source = LocalFile.create(%{path: "test/fixtures/dummy.csv"})
+    {:ok, resource} = LocalFile.request_metadata(source)
+
+    target = LocalFile.create(%{path: "/tmp/dummy2.csv"})
+
+    expected = {:ok, %{ filename: "dummy.csv",
+                        size: 30,
+                        source: target,
+                        modified_at: %DateTime{
+                          year: 2017, month: 9, day: 24,
+                          hour: 5, minute: 43, second: 40,
+                          time_zone: "Etc/UTC", zone_abbr: "UTC",
+                          utc_offset: 0, std_offset: 0
+                        }
+                      }
+                }
+
+    assert expected == LocalFile.store(resource, target)
+
+    assert File.read("test/fixtures/dummy.csv") == File.read("/tmp/dummy2.csv")
+
+    # cleanup
+    File.rm("/tmp/dummy2.csv")
+  end
+
+  test "storing a stream in a new location" do
+    target = LocalFile.create(%{path: "/tmp/stream2.csv"})
+
+    result = ["col1,col2,col13\n", "123,234,345\n"]
+    |> Stream.map(&(&1))
+    |> LocalFile.store_stream(target)
+
+    assert {:ok, %{ filename: "stream2.csv",
+                    size: 28,
+                    source: {LocalFile, %{path: "/tmp/stream2.csv"}, []},
+                    modified_at: %DateTime{},
+                  }
+            } = result
+
+    # cleanup
+    File.rm("/tmp/stream2.csv")
+  end
 end
