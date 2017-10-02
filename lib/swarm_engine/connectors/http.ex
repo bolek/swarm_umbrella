@@ -39,6 +39,10 @@ defmodule SwarmEngine.Connectors.HTTP do
     end
   end
 
+  def list(source) do
+    {:error, :not_supported}
+  end
+
   defp initialize_opts(opts) do
     headers = Helpers.extract_value(opts, :headers, [])
     body = Helpers.extract_value(opts, :body, "")

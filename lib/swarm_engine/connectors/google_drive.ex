@@ -45,6 +45,10 @@ defmodule SwarmEngine.Connectors.GoogleDrive do
     end
   end
 
+  def list(source) do
+    {:error, :not_supported}
+  end
+
   defp get_filename(%{"filename" => filename}), do: filename
 
   defp get_size(%{"size" => size}) do

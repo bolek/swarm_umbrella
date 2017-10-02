@@ -1,5 +1,6 @@
 defmodule SwarmEngine.Connectors.LocalFile do
   alias SwarmEngine.Connector
+  alias SwarmEngine.Util.UUID
 
   @type t :: {module, Map.t, Keyword.t}
 
@@ -33,7 +34,16 @@ defmodule SwarmEngine.Connectors.LocalFile do
     end
   end
 
-  def store(resource, {__MODULE__, %{path: path}, _opts} = new_location) do
+  def store(resource, {__MODULE__, %{base_path: path}, _opts} = location) do
+    ext = Path.extname(resource.filename)
+    new_location = put_elem(location, 1, %{path: new_path(path,ext)})
+
+    store(resource, new_location)
+  end
+
+  def store(resource, {__MODULE__, %{path: path}, _o} = new_location) do
+    File.mkdir_p(Path.dirname(path))
+
     Connector.request(resource.source)
     |> Stream.into(File.stream!(path))
     |> Stream.run
@@ -55,5 +65,11 @@ defmodule SwarmEngine.Connectors.LocalFile do
             |> Stream.map(&metadata!(&1))
             |> Enum.to_list
     }
+  end
+
+  defp new_path(base_path, extension) do
+    base_path
+    |> Path.join(Date.to_iso8601(Date.utc_today, :basic))
+    |> Path.join("#{UUID.generate}#{extension}")
   end
 end

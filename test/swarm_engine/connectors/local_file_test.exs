@@ -104,6 +104,28 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
     File.rm("/tmp/stream2.csv")
   end
 
+  test "storing resource at a base path" do
+    store = LocalFile.create(%{base_path: "/tmp"})
+    con = LocalFile.create(%{path: "test/fixtures/dummy.csv"})
+    resource = LocalFile.metadata!(con)
+
+    assert {:ok, %{filename: "dummy.csv",
+                   size: 30,
+                   modified_at: %DateTime{
+                     year: 2017, month: 9, day: 24,
+                     hour: 5, minute: 43, second: 40,
+                     time_zone: "Etc/UTC", zone_abbr: "UTC",
+                     utc_offset: 0, std_offset: 0
+                   },
+                   source: {LocalFile, %{path: path}, []}
+            }} = LocalFile.store(resource, store)
+
+    assert String.starts_with?(path, "/tmp/#{Date.to_iso8601(Date.utc_today, :basic)}")
+    assert File.read("test/fixtures/dummy.csv") == File.read(path)
+
+    File.rm(path)
+  end
+
   test "list resouces under given location" do
     location = LocalFile.create(%{path: "test/fixtures/*"})
 
