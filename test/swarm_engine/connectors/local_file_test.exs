@@ -24,12 +24,14 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
   end
 
   test "metadata happy path" do
-    source = LocalFile.create(%{path: "test/fixtures/test.xlsx"})
+    fixture_path = "test/fixtures/test.xlsx"
+    source = LocalFile.create(%{path: fixture_path})
+    {{y, m, d}, {h, min, s}} = File.stat!(fixture_path).mtime
 
     expected = {:ok, %{filename: "test.xlsx",
                        size: 3847,
                        source: source,
-                       modified_at: %DateTime{year: 2017, month: 9, day: 24, hour: 14, minute: 51, second: 13,
+                       modified_at: %DateTime{year: y, month: m, day: d, hour: h, minute: min, second: s,
                                               time_zone: "Etc/UTC", zone_abbr: "UTC", utc_offset: 0, std_offset: 0}
                       }
                 }
@@ -44,12 +46,14 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
   end
 
   test "metadata! - happy path" do
-    source = LocalFile.create(%{path: "test/fixtures/test.xlsx"})
+    fixture_path = "test/fixtures/test.xlsx"
+    source = LocalFile.create(%{path: fixture_path})
+    {{y, m, d}, {h, min, s}} = File.stat!(fixture_path).mtime
 
     assert %{ filename: "test.xlsx",
                 size: 3847,
                 source: source,
-                modified_at: %DateTime{year: 2017, month: 9, day: 24, hour: 14, minute: 51, second: 13,
+                modified_at: %DateTime{year: y, month: m, day: d, hour: h, minute: min, second: s,
                                        time_zone: "Etc/UTC", zone_abbr: "UTC", utc_offset: 0, std_offset: 0}
             } == LocalFile.metadata!(source)
   end
@@ -61,7 +65,10 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
   end
 
   test "storing a resource in a new location" do
-    source = LocalFile.create(%{path: "test/fixtures/dummy.csv"})
+    fixture_path = "test/fixtures/dummy.csv"
+    source = LocalFile.create(%{path: fixture_path})
+    {{y, m, d}, {h, min, s}} = File.stat!(fixture_path).mtime
+
     {:ok, resource} = LocalFile.metadata(source)
 
     target = LocalFile.create(%{path: "/tmp/dummy2.csv"})
@@ -70,8 +77,8 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
                         size: 30,
                         source: target,
                         modified_at: %DateTime{
-                          year: 2017, month: 9, day: 24,
-                          hour: 5, minute: 43, second: 40,
+                          year: y, month: m, day: d,
+                          hour: h, minute: min, second: s,
                           time_zone: "Etc/UTC", zone_abbr: "UTC",
                           utc_offset: 0, std_offset: 0
                         }
@@ -107,13 +114,15 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
   test "storing resource at a base path" do
     store = LocalFile.create(%{base_path: "/tmp"})
     con = LocalFile.create(%{path: "test/fixtures/dummy.csv"})
+    {{y, m, d}, {h, min, s}} = File.stat!("test/fixtures/dummy.csv").mtime
+
     resource = LocalFile.metadata!(con)
 
     assert {:ok, %{filename: "dummy.csv",
                    size: 30,
                    modified_at: %DateTime{
-                     year: 2017, month: 9, day: 24,
-                     hour: 5, minute: 43, second: 40,
+                     year: ^y, month: ^m, day: ^d,
+                     hour: ^h, minute: ^min, second: ^s,
                      time_zone: "Etc/UTC", zone_abbr: "UTC",
                      utc_offset: 0, std_offset: 0
                    },
