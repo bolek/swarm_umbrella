@@ -1,6 +1,7 @@
 module Main exposing (..)
 
-import Html exposing (Html, div, text, program)
+import Html exposing (..)
+import Html.Attributes exposing (..)
 
 type alias Model =
   String
@@ -18,8 +19,14 @@ type Msg
 
 view : Model -> Html Msg
 view model =
-  div []
-    [ text model ]
+  div
+    [ class "container" ]
+    [ h1
+        []
+        [text "Swarm"]
+    , hr [] []
+    , text model
+    ]
 
 -- UPDATE
 
