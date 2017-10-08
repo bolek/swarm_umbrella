@@ -6,6 +6,11 @@ import Html.Attributes exposing (..)
 type alias Model =
   String
 
+type alias Dataset =
+  { name : String
+  , url : String
+  }
+
 init : ( Model, Cmd Msg)
 init =
   ( "Hello", Cmd.none )
