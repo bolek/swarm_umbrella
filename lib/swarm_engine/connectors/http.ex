@@ -40,7 +40,12 @@ defmodule SwarmEngine.Connectors.HTTP do
   end
 
   def list(source) do
-    {:error, :not_supported}
+    case metadata(source) do
+      {:ok, resource} ->
+        {:ok, [resource]}
+      {:error, error} ->
+        {:error, error}
+    end
   end
 
   defp initialize_opts(opts) do
