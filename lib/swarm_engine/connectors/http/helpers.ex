@@ -16,8 +16,10 @@ defmodule SwarmEngine.Connectors.HTTP.Helpers do
   defp get_filename(_, false, type),do: "#{UUID.generate()}.#{type}"
 
   def get_file_size(headers) do
-    headers
-    |> extract_header("Content-Length")
+    ["Content-Length", "Content-Range"]
+    |> Enum.map(&({&1, extract_header(headers, &1)}))
+    |> Enum.filter(fn {_, v} -> v != "" end)
+    |> List.first
     |> parse_content_length()
   end
 
@@ -67,8 +69,15 @@ defmodule SwarmEngine.Connectors.HTTP.Helpers do
   defp valid_extension?(""), do: false
   defp valid_extension?(_), do: true
 
-  defp parse_content_length(""), do: nil
-  defp parse_content_length(i), do: Integer.parse(i) |> elem(0)
+  defp parse_content_length(nil), do: nil
+  defp parse_content_length({"Content-Length", v}), do: Integer.parse(v) |> elem(0)
+  defp parse_content_length({"Content-Range", v}) do
+    ~r/bytes (?<range_start>\d+)-(?<range_end>\d+)\/(?<size>\d+)/
+    |> Regex.named_captures(v)
+    |> Map.get("size")
+    |> Integer.parse()
+    |> elem(0)
+  end
 
   defp map_content_type("application/zip"), do: 'zip'
   defp map_content_type("text/html"), do: 'html'

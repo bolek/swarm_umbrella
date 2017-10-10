@@ -44,4 +44,10 @@ defmodule SwarmEngine.Connectors.HTTP.HelpersTest do
 
     assert nil == Helpers.get_file_size(headers)
   end
+
+  test "get_file_size when Content-Range provided" do
+    headers = [{"Content-Range", "bytes 0-654/654"}]
+
+    assert 654 == Helpers.get_file_size(headers)
+  end
 end
