@@ -46,7 +46,12 @@ defmodule SwarmEngine.Connectors.GoogleDrive do
   end
 
   def list(source) do
-    {:error, :not_supported}
+    case metadata(source) do
+      {:ok, resource} ->
+        {:ok, [resource]}
+      {:error, error} ->
+        {:error, error}
+    end
   end
 
   defp get_filename(%{"filename" => filename}), do: filename
