@@ -4,7 +4,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 
 type alias Model =
-  String
+  List Dataset
 
 type alias Dataset =
   { name : String
@@ -13,7 +13,11 @@ type alias Dataset =
 
 init : ( Model, Cmd Msg)
 init =
-  ( "Hello", Cmd.none )
+  ( [ {id = 1, name = "Sample.csv", url = "www.example.com/sample.csv"}
+    , {id = 2, name = "Sample.csv", url = "www.example.com/sample.csv"}
+    ]
+    , Cmd.none
+  )
 
 -- MESSAGES
 
@@ -30,8 +34,76 @@ view model =
         []
         [text "Swarm"]
     , hr [] []
-    , text model
+    , div
+      [class "row"]
+      [ div
+        [class "col"]
+        [table
+          [ classList
+            [ ("table", True)
+            , ("table-sm", True)
+            , ("table-bordered ", True)
+            ]
+          ]
+          [ thead
+              []
+              [ tr
+                []
+                [ th [] [text "#"]
+                , th [] [text "name "]
+                , th [] [text "url"]
+                ]
+              ]
+          , tbody
+            []
+            [ tr
+              []
+              [ th
+                [attribute "scope" "row"]
+                [text "1"]
+              , td
+                []
+                [text "sample.csv"]
+              , td
+                []
+                [text "example.com/sample.csv"]
+              ]
+            ]
+          ]
+        ]
+      ]
+    , div
+      [class "row"]
+      [ div
+        [class "col"]
+        [button
+          [ class "btn btn-primary"
+          , attribute "type" "button"
+          ] [text "Add"]]
+
+      ]
+    --, div
+    --    []
+    --    (List.map datasetView model)
     ]
+
+datasetView : Dataset -> Html Msg
+datasetView model =
+  div
+    []
+    [span
+      []
+      [ text model.name
+      , text " - "
+      , text model.url
+      ]
+    ]
+
+--datasetList : Model -> Html Msg
+--datasetList model =
+--  model
+--    |> List.map datasetView
+
 
 -- UPDATE
 
