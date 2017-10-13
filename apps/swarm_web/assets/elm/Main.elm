@@ -1,117 +1,58 @@
 module Main exposing (..)
 
 import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html.Attributes exposing(..)
+import Datasets.List
+import Datasets.Show
+import Datasets.New
+import Models exposing (initialModel, Model, Dataset)
+import Msgs exposing (Msg)
+import Update exposing(update)
+import Navigation exposing(program, Location)
+import Routing exposing (..)
 
-type alias Model =
-  List Dataset
+init : Location -> ( Model, Cmd Msg )
+init location =
+  let
+    currentRoute =
+      Routing.parseLocation location
+  in
+    (initialModel currentRoute, Cmd.none)
 
-type alias Dataset =
-  { name : String
-  , url : String
-  }
-
-init : ( Model, Cmd Msg)
-init =
-  ( [ {id = 1, name = "Sample.csv", url = "www.example.com/sample.csv"}
-    , {id = 2, name = "Sample.csv", url = "www.example.com/sample.csv"}
-    ]
-    , Cmd.none
-  )
-
--- MESSAGES
-
-type Msg
-  = NoOp
 
 -- VIEW
 
 view : Model -> Html Msg
 view model =
   div
-    [ class "container" ]
-    [ h1
-        []
-        [text "Swarm"]
-    , hr [] []
-    , div
-      [class "row"]
-      [ div
-        [class "col"]
-        [table
-          [ classList
-            [ ("table", True)
-            , ("table-sm", True)
-            , ("table-bordered ", True)
-            ]
-          ]
-          [ thead
-              []
-              [ tr
-                []
-                [ th [] [text "#"]
-                , th [] [text "name "]
-                , th [] [text "url"]
-                ]
-              ]
-          , tbody
-            []
-            [ tr
-              []
-              [ th
-                [attribute "scope" "row"]
-                [text "1"]
-              , td
-                []
-                [text "sample.csv"]
-              , td
-                []
-                [text "example.com/sample.csv"]
-              ]
-            ]
-          ]
-        ]
-      ]
-    , div
-      [class "row"]
-      [ div
-        [class "col"]
-        [button
-          [ class "btn btn-primary"
-          , attribute "type" "button"
-          ] [text "Add"]]
+  [ class "container" ]
+  [ headerView
+  , hr [] []
+  , case model.route of
+      Models.DatasetsRoute ->
+        Datasets.List.view model.datasets
 
-      ]
-    --, div
-    --    []
-    --    (List.map datasetView model)
-    ]
+      Models.DatasetRoute id ->
+        Datasets.Show.view model
 
-datasetView : Dataset -> Html Msg
-datasetView model =
-  div
-    []
-    [span
-      []
-      [ text model.name
-      , text " - "
-      , text model.url
-      ]
-    ]
+      Models.DatasetNewRoute ->
+        Datasets.New.view
 
---datasetList : Model -> Html Msg
---datasetList model =
---  model
---    |> List.map datasetView
+      Models.NotFoundRoute ->
+        notFoundView
+  ]
 
+notFoundView : Html Msg
+notFoundView =
+  h1
+  []
+  [text "Not FOUND"]
 
--- UPDATE
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-  case msg of
-    NoOp ->
-      ( model, Cmd.none )
+headerView : Html Msg
+headerView =
+  h1
+  []
+  [text "Swarm"]
 
 -- Subscriptions
 
@@ -123,7 +64,7 @@ subscriptions model =
 
 main : Program Never Model Msg
 main =
-  program
+  Navigation.program Msgs.OnLocationChange
     { init = init
     , view = view
     , update = update
