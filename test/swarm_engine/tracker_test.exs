@@ -41,4 +41,21 @@ defmodule SwarmEngine.TrackerTest do
 
     File.rm("/tmp/fooboo.csv")
   end
+
+  test "current - return current resource based on modified_at" do
+    datetime_1 = Timex.now
+    datetime_2 = Timex.shift(datetime_1, minutes: 3)
+
+    tracker = %Tracker {
+      resources: [%{modified_at: datetime_1}, %{modified_at: datetime_2}]
+    }
+
+    assert Tracker.current(tracker) == %{modified_at: datetime_2}
+
+    tracker = %Tracker {
+      resources: [%{modified_at: datetime_2}, %{modified_at: datetime_1}]
+    }
+
+    assert Tracker.current(tracker) == %{modified_at: datetime_2}
+  end
 end
