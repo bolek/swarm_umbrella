@@ -1,6 +1,5 @@
 defmodule SwarmEngine.Tracker do
-  alias SwarmEngine.Connector
-  alias __MODULE__
+  alias SwarmEngine.{Tracker, Connector}
 
   defstruct [:source, :store, :resources]
 
