@@ -1,0 +1,46 @@
+defmodule SwarmEngine.Datasets.CSVTest do
+  use ExUnit.Case, async: true
+
+  alias SwarmEngine.Connectors.LocalFile
+  alias SwarmEngine.Datasets.CSV
+  alias SwarmEngine.Tracker
+
+  test "creating a CSV dataset by providing name and source" do
+    source = LocalFile.create(%{path: "test/fixtures/dummy.csv"})
+    columns = MapSet.new(["col_1", "col_2", "col_3"])
+
+    assert  %CSV{ name: "dummy",
+                  tracker: %Tracker{},
+                  columns: ^columns
+                } = CSV.create("dummy", source)
+  end
+
+  test "stream a CSV dataset" do
+    source = LocalFile.create(%{path: "test/fixtures/goofy.csv"})
+    csv_dataset = CSV.create("goofy", source)
+
+    assert  [%{"col_4" => "ABC", "col_5" => "def", "col_6" => "123"},
+             %{"col_4" => "KLM", "col_5" => "edd", "col_6" => "678"}] =
+      CSV.stream(csv_dataset) |> Enum.to_list
+  end
+
+  test "syncing dataset with no changes" do
+    source = LocalFile.create(%{path: "test/fixtures/goofy.csv"})
+    csv_dataset = CSV.create("goofy", source)
+
+    {:ok, synced_dataset} = CSV.sync(csv_dataset)
+
+    assert synced_dataset == csv_dataset
+  end
+
+  test "syncing dataset with updated resource with different columns" do
+    source = LocalFile.create(%{path: "test/fixtures/goofy.csv"})
+    csv_dataset = CSV.create("goofy", source)
+    new_tracker = LocalFile.create(%{path: "test/fixtures/dummy.csv"})
+      |>Tracker.create(LocalFile.create(%{base_path: "tmp/"}))
+
+    csv_dataset = %{csv_dataset | tracker: new_tracker}
+
+    assert {:error, "no common columns"} = CSV.sync(csv_dataset)
+  end
+end

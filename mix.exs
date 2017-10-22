@@ -29,6 +29,7 @@ defmodule SwarmEngine.Mixfile do
   defp deps do
     [
       {:calendar, "~> 0.17.2"},
+      {:csv, "~> 2.0.0"},
       {:ecto, "~> 2.1"},
       {:goth, "~> 0.4.0"},
       {:hackney, "~> 1.9"},
