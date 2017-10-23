@@ -12,7 +12,7 @@ defmodule SwarmEngine.ResourceTest do
   test "pulling resource" do
     target = 'test_1'
     {:ok, resource} = Resource.create('dummy')
-    source = LocalFile.create(%{path: 'test/fixtures/dummy.csv'})
+    source = LocalFile.create('test/fixtures/dummy.csv')
 
     assert {:ok, [file_path]} =
       Resource.pull(resource, target, source)
@@ -26,7 +26,7 @@ defmodule SwarmEngine.ResourceTest do
 
   test "pulling zipped resource" do
     filename = 'test.csv'
-    source = LocalFile.create(%{path: 'test/fixtures/archive.zip'})
+    source = LocalFile.create('test/fixtures/archive.zip')
 
     {:ok, resource} = Resource.create('archive')
 

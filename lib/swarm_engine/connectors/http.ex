@@ -1,31 +1,36 @@
 defmodule SwarmEngine.Connectors.HTTP do
-  alias __MODULE__.{Helpers, Error}
+  alias __MODULE__
 
-  @http Application.get_env(:swarm_engine, :http_client)
+  defstruct [:url, :options]
 
-  def create(params, options \\ []) do
-    {__MODULE__, params, options}
+  def create(url, options \\ []) do
+    %HTTP{url: url, options: options}
+  end
+end
+
+defimpl SwarmEngine.Connector, for: SwarmEngine.Connectors.HTTP do
+  alias SwarmEngine.Connectors.HTTP
+
+  def list(source) do
+    case metadata(source) do
+      {:ok, resource} ->
+        {:ok, [resource]}
+      {:error, error} ->
+        {:error, error}
+    end
   end
 
-  def request({__MODULE__, %{url: url}, opts}) do
-    {headers, body, opts} = initialize_opts(opts)
-
-    Stream.resource(fn -> begin_download(:get, url, headers, body, opts) end,
-                    &continue_download/1,
-                    &finish_download/1)
-  end
-
-  def metadata({__MODULE__, %{url: url}, opts} = source) do
-    {headers, body, opts} = initialize_opts(opts)
+  def metadata(%HTTP{url: url, options: opts} = source) do
+    {headers, body, opts} = HTTP.Utils.initialize_opts(opts)
 
     with  {:ok, 200, response_headers} <-
-            @http.request(:head, url, headers, body, opts),
+            HTTP.Utils.http.request(:head, url, headers, body, opts),
           filename <-
-            Helpers.get_filename(url, response_headers),
+            HTTP.Utils.get_filename(url, response_headers),
           size <-
-            Helpers.get_file_size(response_headers),
+            HTTP.Utils.get_file_size(response_headers),
           modified_at <-
-            Helpers.get_modified_at(response_headers)
+            HTTP.Utils.get_modified_at(response_headers)
     do
       {:ok, %{filename: filename,
               size: size,
@@ -39,43 +44,11 @@ defmodule SwarmEngine.Connectors.HTTP do
     end
   end
 
-  def list(source) do
-    case metadata(source) do
-      {:ok, resource} ->
-        {:ok, [resource]}
-      {:error, error} ->
-        {:error, error}
-    end
-  end
+  def request(%HTTP{url: url, options: opts}) do
+    {headers, body, opts} = HTTP.Utils.initialize_opts(opts)
 
-  defp initialize_opts(opts) do
-    headers = Helpers.extract_value(opts, :headers, [])
-    body = Helpers.extract_value(opts, :body, "")
-
-    {headers, body, opts}
-  end
-
-  defp begin_download(term, url, req_headers, body, opts) do
-    case @http.request(term, url, req_headers, body, opts) do
-      {:ok, 200, _headers, client} ->
-        {client, url}
-      sink ->
-        raise Error, {url, sink}
-    end
-  end
-
-  defp continue_download({client, url}) do
-    case @http.stream(client) do
-      {:ok, data} ->
-        {[data], {client, url}}
-      :done ->
-        # IO.puts "No more data"
-        {:halt, {client, url}}
-      _ ->
-        raise Error, url
-    end
-  end
-
-  defp finish_download({_client, _url}) do
+    Stream.resource(fn -> HTTP.Utils.begin_download(:get, url, headers, body, opts) end,
+                    &HTTP.Utils.continue_download/1,
+                    &HTTP.Utils.finish_download/1)
   end
 end

@@ -1,20 +1,53 @@
 defmodule SwarmEngine.Connectors.LocalFile do
+  alias __MODULE__
   alias SwarmEngine.Connector
-  alias SwarmEngine.Util.UUID
 
-  @type t :: {module, Map.t, Keyword.t}
+  defstruct [:path, :options]
 
-  def create(params, options \\ []) do
-    {__MODULE__, params, options}
+  def create(path, options \\ []) do
+    %LocalFile{path: path, options: options}
   end
 
-  def request({__MODULE__, %{path: path}, _opts}) do
-    File.stream!(path, [], 2048)
+  def metadata!(source) do
+    case Connector.metadata(source) do
+      {:ok, m} -> m
+      {:error, reason} -> raise Kernel.inspect(reason)
+    end
   end
 
-  def metadata({__MODULE__, %{path: path}, opts} = source) do
+  def store(resource, %LocalFile{path: path} = new_location) do
+    File.mkdir_p(Path.dirname(path))
+
+    Connector.request(resource.source)
+    |> Stream.into(File.stream!(path))
+    |> Stream.run
+
+    {:ok, %{resource | source: new_location}}
+  end
+
+  def store_stream(stream, %LocalFile{path: path} = source) do
+    stream
+    |> Stream.into(File.stream!(path))
+    |> Stream.run
+
+    Connector.metadata(source)
+  end
+end
+
+defimpl SwarmEngine.Connector, for: SwarmEngine.Connectors.LocalFile do
+  alias SwarmEngine.Connectors.LocalFile
+
+  def list(%LocalFile{path: path} = location) do
+    {:ok ,  Path.wildcard(path)
+            |> Stream.map(&(%{location | path: &1}))
+            |> Stream.map(&LocalFile.metadata!(&1))
+            |> Enum.to_list
+    }
+  end
+
+  def metadata(%LocalFile{path: path} = source) do
     with  {:ok, info} <-
-            File.stat(path, opts)
+            File.stat(path, [])
     do
       {:ok, %{filename: Path.basename(path),
               size: info.size,
@@ -27,49 +60,7 @@ defmodule SwarmEngine.Connectors.LocalFile do
     end
   end
 
-  def metadata!(source) do
-    case metadata(source) do
-      {:ok, m} -> m
-      {:error, reason} -> raise Kernel.inspect(reason)
-    end
-  end
-
-  def store(resource, {__MODULE__, %{base_path: path}, _opts} = location) do
-    ext = Path.extname(resource.filename)
-    new_location = put_elem(location, 1, %{path: new_path(path,ext)})
-
-    store(resource, new_location)
-  end
-
-  def store(resource, {__MODULE__, %{path: path}, _o} = new_location) do
-    File.mkdir_p(Path.dirname(path))
-
-    Connector.request(resource.source)
-    |> Stream.into(File.stream!(path))
-    |> Stream.run
-
-    {:ok, %{resource | source: new_location}}
-  end
-
-  def store_stream(stream, {__MODULE__, %{path: path}, _opts} = source) do
-    stream
-    |> Stream.into(File.stream!(path))
-    |> Stream.run
-
-    metadata(source)
-  end
-
-  def list({__MODULE__, %{path: path}, _opts} = location) do
-    {:ok ,  Path.wildcard(path)
-            |> Stream.map(&(put_elem(location, 1, %{path: &1})))
-            |> Stream.map(&metadata!(&1))
-            |> Enum.to_list
-    }
-  end
-
-  defp new_path(base_path, extension) do
-    base_path
-    |> Path.join(Date.to_iso8601(Date.utc_today, :basic))
-    |> Path.join("#{UUID.generate}#{extension}")
+  def request(%LocalFile{path: path}) do
+    File.stream!(path, [], 2048)
   end
 end

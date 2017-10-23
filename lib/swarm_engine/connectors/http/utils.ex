@@ -1,5 +1,41 @@
-defmodule SwarmEngine.Connectors.HTTP.Helpers do
+defmodule SwarmEngine.Connectors.HTTP.Utils do
   alias SwarmEngine.Util.UUID
+  alias SwarmEngine.Connectors.HTTP.Error
+
+  @http Application.get_env(:swarm_engine, :http_client)
+
+  def http, do: @http
+
+  def initialize_opts(opts) do
+    headers = extract_value(opts, :headers, [])
+    body = extract_value(opts, :body, "")
+
+    {headers, body, opts}
+  end
+
+  def begin_download(term, url, req_headers, body, opts) do
+    case @http.request(term, url, req_headers, body, opts) do
+      {:ok, 200, _headers, client} ->
+        {client, url}
+      sink ->
+        raise Error, {url, sink}
+    end
+  end
+
+  def continue_download({client, url}) do
+    case @http.stream(client) do
+      {:ok, data} ->
+        {[data], {client, url}}
+      :done ->
+        # IO.puts "No more data"
+        {:halt, {client, url}}
+      _ ->
+        raise Error, url
+    end
+  end
+
+  def finish_download({_client, _url}) do
+  end
 
   def get_filename(url, headers) do
     basename = url_basename(url)

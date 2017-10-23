@@ -38,7 +38,7 @@ defmodule SwarmEngine.Tracker do
   def add(tracker, resource) do
     case Tracker.find(tracker, resource) do
       nil ->
-        {:ok, new} = Connector.store(resource, tracker.store)
+        {:ok, new} = tracker.store.__struct__.store(resource, tracker.store)
         put_in(tracker.resources, MapSet.put(tracker.resources, new))
       _ ->
         tracker

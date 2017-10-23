@@ -1,12 +1,12 @@
 defmodule SwarmEngine.Datasets.CSVTest do
   use ExUnit.Case, async: true
 
-  alias SwarmEngine.Connectors.LocalFile
+  alias SwarmEngine.Connectors.{LocalDir, LocalFile}
   alias SwarmEngine.Datasets.CSV
   alias SwarmEngine.Tracker
 
   test "creating a CSV dataset by providing name and source" do
-    source = LocalFile.create(%{path: "test/fixtures/dummy.csv"})
+    source = LocalFile.create("test/fixtures/dummy.csv")
     columns = MapSet.new(["col_1", "col_2", "col_3"])
 
     assert  %CSV{ name: "dummy",
@@ -16,7 +16,7 @@ defmodule SwarmEngine.Datasets.CSVTest do
   end
 
   test "stream a CSV dataset" do
-    source = LocalFile.create(%{path: "test/fixtures/goofy.csv"})
+    source = LocalFile.create("test/fixtures/goofy.csv")
     csv_dataset = CSV.create("goofy", source)
 
     assert  [%{"col_4" => "ABC", "col_5" => "def", "col_6" => "123"},
@@ -25,7 +25,7 @@ defmodule SwarmEngine.Datasets.CSVTest do
   end
 
   test "syncing dataset with no changes" do
-    source = LocalFile.create(%{path: "test/fixtures/goofy.csv"})
+    source = LocalFile.create("test/fixtures/goofy.csv")
     csv_dataset = CSV.create("goofy", source)
 
     {:ok, synced_dataset} = CSV.sync(csv_dataset)
@@ -34,10 +34,10 @@ defmodule SwarmEngine.Datasets.CSVTest do
   end
 
   test "syncing dataset with updated resource with different columns" do
-    source = LocalFile.create(%{path: "test/fixtures/goofy.csv"})
+    source = LocalFile.create("test/fixtures/goofy.csv")
     csv_dataset = CSV.create("goofy", source)
-    new_tracker = LocalFile.create(%{path: "test/fixtures/dummy.csv"})
-      |>Tracker.create(LocalFile.create(%{base_path: "tmp/"}))
+    new_tracker = LocalFile.create("test/fixtures/dummy.csv")
+      |>Tracker.create(%LocalDir{path: "tmp/"})
 
     csv_dataset = %{csv_dataset | tracker: new_tracker}
 

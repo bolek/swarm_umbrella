@@ -1,49 +1,17 @@
 defmodule SwarmEngine.Connectors.GoogleDrive do
-  defexception [:message]
+  alias __MODULE__
 
-  alias SwarmEngine.Connectors.HTTP
+  defstruct [:file_id]
 
-  @google_auth Application.get_env(:swarm_engine, :google_auth_client)
-  @scope "https://www.googleapis.com/auth/drive.readonly"
-  @endpoint "https://www.googleapis.com/drive/v3/"
-
-  def create(params, options \\ []) do
-    {__MODULE__, params, options}
+  def create(file_id) do
+    %GoogleDrive{file_id: file_id}
   end
+end
 
-  def request(%{fileid: id}, _opts \\ []) do
-    with  {:ok, %{token: token}} <- get_token(),
-          url                    <- build_url(id),
-          headers                <- build_headers(token)
-    do
-      HTTP.create(%{url: url}, [{:headers, headers}])
-      |> HTTP.request()
-    else
-      sink ->
-        raise __MODULE__, Kernel.inspect(sink)
-    end
-  end
-
-  def metadata({__MODULE, %{file_id: id}, _opts} = source) do
-    with  {:ok, %{token: token}}
-            <- get_token(),
-          url
-            <- @endpoint <> "files/#{id}?fields=size,name,modifiedTime",
-          headers
-            <- build_headers(token),
-          response
-            <- get_metadata(%{url: url}, [{:headers, headers}])
-    do
-      {:ok, %{
-        filename: get_filename(response),
-        size: get_size(response),
-        modified_at: get_modified_at(response),
-        source: source
-      }}
-    else
-      {:error, reason} -> {:error ,reason}
-    end
-  end
+defimpl SwarmEngine.Connector, for: SwarmEngine.Connectors.GoogleDrive do
+  alias SwarmEngine.Connector
+  alias SwarmEngine.Connectors.{GoogleDrive, HTTP}
+  alias SwarmEngine.Connectors.GoogleDrive.Utils
 
   def list(source) do
     case metadata(source) do
@@ -54,32 +22,37 @@ defmodule SwarmEngine.Connectors.GoogleDrive do
     end
   end
 
-  defp get_filename(%{"filename" => filename}), do: filename
-
-  defp get_size(%{"size" => size}) do
-    size
-    |> Integer.parse
-    |> elem(0)
-  end
-
-  defp get_modified_at(%{"modifiedTime" => modified_at}) do
-    case  modified_at
-          |> Calendar.DateTime.Parse.rfc3339_utc
+  def metadata(%GoogleDrive{file_id: id} = source) do
+    with  {:ok, %{token: token}}
+            <- Utils.get_token(),
+          url
+            <- Utils.endpoint <> "files/#{id}?fields=size,name,modifiedTime",
+          headers
+            <- Utils.build_headers(token),
+          response
+            <- Utils.get_metadata(url, [{:headers, headers}])
     do
-      {:ok, parsed} -> parsed
-      _             -> nil
+      {:ok, %{
+        filename: Utils.get_filename(response),
+        size: Utils.get_size(response),
+        modified_at: Utils.get_modified_at(response),
+        source: source
+      }}
+    else
+      {:error, reason} -> {:error ,reason}
     end
   end
 
-  defp get_token(), do: @google_auth.get_token(@scope)
-  defp build_url(id), do: @endpoint <> "files/#{id}?alt=media"
-  defp build_headers(token), do: [{'Authorization', 'Bearer #{token}'}]
-
-  defp get_metadata(params, opts) do
-    HTTP.create(params, opts)
-    |> HTTP.request()
-    |> Enum.to_list()
-    |> Enum.join()
-    |> Poison.Parser.parse!
+  def request(%GoogleDrive{file_id: id}) do
+    with  {:ok, %{token: token}} <- Utils.get_token(),
+          url                    <- Utils.build_url(id),
+          headers                <- Utils.build_headers(token)
+    do
+      HTTP.create(url, [{:headers, headers}])
+      |> Connector.request()
+    else
+      sink ->
+        raise GoogleDrive.Error, Kernel.inspect(sink)
+    end
   end
 end

@@ -1,7 +1,7 @@
 defmodule SwarmEngine.Datasets.CSV do
   alias __MODULE__
   alias SwarmEngine.{Connector, Tracker, Util}
-  alias SwarmEngine.Connectors.LocalFile
+  alias SwarmEngine.Connectors.LocalDir
 
   defstruct [:name, :tracker, :columns]
 
@@ -11,7 +11,7 @@ defmodule SwarmEngine.Datasets.CSV do
 
   def create(name, source) do
     tracker = source
-    |> Tracker.create(LocalFile.create(%{base_path: "/tmp/swarm_engine_store/"}))
+    |> Tracker.create(%LocalDir{path: "/tmp/swarm_engine_store/"})
     |> Tracker.sync()
 
     %CSV{name: name, tracker: tracker, columns: columns(tracker)}

@@ -1,14 +1,14 @@
-defmodule SwarmEngine.Connectors.HTTP.HelpersTest do
+defmodule SwarmEngine.Connectors.HTTP.UtilsTest do
   use ExUnit.Case, async: true
 
-  alias SwarmEngine.Connectors.HTTP.Helpers
+  alias SwarmEngine.Connectors.HTTP.Utils
 
   test "get_filename when passed url with filename" do
     url = "http://google.drive.com/filename.zip"
     headers = []
 
     assert "filename.zip" =
-      Helpers.get_filename(url, headers)
+      Utils.get_filename(url, headers)
   end
 
   test "get_filename when passed url without extension" do
@@ -16,38 +16,38 @@ defmodule SwarmEngine.Connectors.HTTP.HelpersTest do
     headers = []
 
     refute "filename" ==
-      Helpers.get_filename(url, headers)
+      Utils.get_filename(url, headers)
   end
 
   test "get_filename when passed url without extension but have content-type header" do
     url = "http://google.drive.com/filename"
     headers = [{"Content-Type", "application/zip"}]
 
-    assert Regex.match?(~r/.*\.zip$/, Helpers.get_filename(url, headers))
+    assert Regex.match?(~r/.*\.zip$/, Utils.get_filename(url, headers))
   end
 
   test "get_filename when passed url with extension and content-type header" do
     url = "http://google.drive.com/filename.csv"
     headers = [{"Content-Type", "application/zip"}]
 
-    assert "filename.csv" = Helpers.get_filename(url, headers)
+    assert "filename.csv" = Utils.get_filename(url, headers)
   end
 
   test "get_file_size when Content-Length provided" do
     headers = [{"Content-Length", "12345"}]
 
-    assert 12345 = Helpers.get_file_size(headers)
+    assert 12345 = Utils.get_file_size(headers)
   end
 
   test "get_file_size when Content-Length not provided" do
     headers = []
 
-    assert nil == Helpers.get_file_size(headers)
+    assert nil == Utils.get_file_size(headers)
   end
 
   test "get_file_size when Content-Range provided" do
     headers = [{"Content-Range", "bytes 0-654/654"}]
 
-    assert 654 == Helpers.get_file_size(headers)
+    assert 654 == Utils.get_file_size(headers)
   end
 end

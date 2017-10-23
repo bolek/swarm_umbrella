@@ -1,7 +1,7 @@
 defmodule SwarmEngine.TrackerTest do
   use ExUnit.Case, async: true
 
-  alias SwarmEngine.Connectors.LocalFile
+  alias SwarmEngine.Connectors.{LocalFile, LocalDir}
   alias SwarmEngine.Tracker
 
   test "create" do
@@ -14,8 +14,8 @@ defmodule SwarmEngine.TrackerTest do
 
   test "sync files from source" do
     File.rm("/tmp/fooboo.csv")
-    source = LocalFile.create(%{path: "/tmp/fooboo.csv"})
-    store = LocalFile.create(%{base_path: "/tmp"})
+    source = %LocalFile{path: "/tmp/fooboo.csv"}
+    store = %LocalDir{path: "/tmp"}
 
     tracker = Tracker.create(source, store)
 
