@@ -15,18 +15,25 @@ defmodule SwarmEngine.Dataset do
 
   def insert(%Dataset{} = dataset, data) do
     insert_stream(dataset, data)
-    |> Stream.run
   end
 
   def insert_stream(%Dataset{name: name, columns: columns}, stream) do
-    column_names = [:_full_hash | Enum.map(columns, &(&1.name))]
-    insert_opts = [{:on_conflict, :nothing}, {:conflict_target, [:_full_hash]}]
+    column_names = [:swarm_id | Enum.map(columns, &(&1.name))]
+    insert_opts = [{:on_conflict, :nothing}, {:conflict_target, [:swarm_id]}]
 
-    stream
-    |> Stream.map(&([generate_hash(&1) | &1]))
-    |> Stream.map(&(Enum.zip(column_names, &1)))
-    |> Stream.chunk_every(500)
-    |> Stream.map(&(DataVault.insert_all(name, &1, insert_opts)))
+    DataVault.transaction(fn ->
+      stream
+      |> Stream.map(&([generate_hash(&1) | &1]))
+      |> Stream.map(&(Enum.zip(column_names, &1)))
+      |> Stream.chunk_every(500)
+      |> Stream.map(fn rows ->
+          DataVault.insert_all(name, rows, insert_opts)
+          rows
+        end)
+      |> Stream.map(fn rows -> Enum.map(rows, &([List.first(&1)])) end)
+      |> Stream.map(fn rows -> DataVault.insert_all(name <> "_v", rows) end)
+      |> Stream.run
+    end)
   end
 
   def exists?(%Dataset{name: name}) do
@@ -57,18 +64,22 @@ defmodule SwarmEngine.Dataset do
 
   defp generate_hash(list) do
     :crypto.hash(:md5 , Enum.join(list, ""))
-    |> Base.encode64()
   end
 
   defp create_table(%Dataset{name: name, columns: columns}) do
     SQL.query(DataVault, """
       CREATE TABLE #{name} (
-        _id uuid DEFAULT uuid_generate_v4(),
+        swarm_id uuid,
         #{to_sql_columns(columns)},
-        _created_at timestamptz DEFAULT NOW(),
-        _full_hash varchar,
-        PRIMARY KEY(_full_hash),
-        CONSTRAINT id_unique_idx UNIQUE(_id)
+        swarm_created_at timestamptz NOT NULL DEFAULT NOW(),
+        PRIMARY KEY(swarm_id)
+      );
+    """)
+
+    SQL.query(DataVault, """
+      CREATE TABLE #{name}_v (
+        swarm_id uuid NOT NULL REFERENCES #{name} (swarm_id),
+        loaded_at timestamptz NOT NULL DEFAULT NOW()
       );
     """)
   end
