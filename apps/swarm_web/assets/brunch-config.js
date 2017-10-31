@@ -54,6 +54,12 @@ exports.config = {
     babel: {
       // Do not use ES6 compiler in vendor code
       ignore: [/vendor/]
+    },
+    sass: {
+      options: {
+        includePaths: ["node_modules/bootstrap/scss"], // Tell sass-brunch where to look for files to @import
+        precision: 8 // Minimum precision required by bootstrap-sass
+      }
     }
   },
 
