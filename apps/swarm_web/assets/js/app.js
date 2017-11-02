@@ -25,5 +25,7 @@ import Elm from '../elm/priv/main';
 const elmDiv = document.querySelector('#elm-app');
 
 if (elmDiv) {
-  Elm.Main.embed(elmDiv);
+  const socketUrl = window.socketUrl;
+
+  Elm.Main.embed(elmDiv, {socketUrl });
 }

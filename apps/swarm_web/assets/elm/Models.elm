@@ -1,16 +1,21 @@
 module Models exposing (..)
 
+type alias Flags =
+  { socketUrl : String }
+
 type alias Model =
   { datasets: List Dataset
-  , route : Route }
+  , route : Route
+  , flags: Flags }
 
-initialModel : Route -> Model
-initialModel route =
+initialModel : Flags -> Route -> Model
+initialModel flags route =
     { datasets =
       [ {id = 1, name = "Sample.csv", url = "www.example.com/sample.csv"}
       , {id = 2, name = "Sample.csv", url = "www.example.com/sample.csv"}
       ]
-    , route = route }
+    , route = route
+    , flags = flags }
 
 type alias DatasetId =
     Int

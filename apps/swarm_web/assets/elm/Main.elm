@@ -5,19 +5,19 @@ import Html.Attributes exposing(..)
 import Datasets.List
 import Datasets.Show
 import Datasets.New
-import Models exposing (initialModel, Model, Dataset)
+import Models exposing (initialModel, Flags, Model, Dataset)
 import Msgs exposing (Msg)
 import Update exposing(update)
 import Navigation exposing(program, Location)
 import Routing exposing (..)
 
-init : Location -> ( Model, Cmd Msg )
-init location =
+init : Flags -> Location -> ( Model, Cmd Msg )
+init flags location =
   let
     currentRoute =
       Routing.parseLocation location
   in
-    (initialModel currentRoute, Cmd.none)
+    (initialModel flags currentRoute, Cmd.none)
 
 
 -- VIEW
@@ -33,7 +33,18 @@ view model =
         Datasets.List.view model.datasets
 
       Models.DatasetRoute id ->
-        Datasets.Show.view model
+        let
+          maybeDataset =
+            model.datasets
+              |> List.filter (\dataset -> dataset.id == id)
+              |> List.head
+        in
+          case maybeDataset of
+            Just dataset ->
+              Datasets.Show.view dataset
+
+            Nothing ->
+                notFoundView
 
       Models.DatasetNewRoute ->
         Datasets.New.view
@@ -62,9 +73,9 @@ subscriptions model =
 
 -- MAIN
 
-main : Program Never Model Msg
+main : Program Flags Model Msg
 main =
-  Navigation.program Msgs.OnLocationChange
+  Navigation.programWithFlags Msgs.OnLocationChange
     { init = init
     , view = view
     , update = update
