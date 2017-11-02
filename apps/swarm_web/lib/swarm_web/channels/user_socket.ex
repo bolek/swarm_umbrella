@@ -3,6 +3,7 @@ defmodule SwarmWeb.UserSocket do
 
   ## Channels
   # channel "room:*", SwarmWeb.RoomChannel
+  channel "datasets", SwarmWeb.DatasetsChannel
 
   ## Transports
   transport :websocket, Phoenix.Transports.WebSocket

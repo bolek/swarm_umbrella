@@ -1,6 +1,8 @@
 defmodule SwarmWeb.Router do
   use SwarmWeb, :router
 
+  alias SwarmWeb.DatasetController
+
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
@@ -11,6 +13,8 @@ defmodule SwarmWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
+
+    resources "/datasets", DatasetController, except: [:new, :edit]
   end
 
   scope "/", SwarmWeb do
