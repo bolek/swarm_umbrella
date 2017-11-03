@@ -1,83 +1,82 @@
-module Main exposing (..)
+module Main exposing(..)
 
-import Html exposing (..)
-import Html.Attributes exposing(..)
-import Datasets.List
-import Datasets.Show
-import Datasets.New
-import Models exposing (initialModel, Flags, Model, Dataset)
-import Msgs exposing (Msg)
-import Update exposing(update)
-import Navigation exposing(program, Location)
-import Routing exposing (..)
-
-init : Flags -> Location -> ( Model, Cmd Msg )
-init flags location =
-  let
-    currentRoute =
-      Routing.parseLocation location
-  in
-    (initialModel flags currentRoute, Cmd.none)
-
-
--- VIEW
-
-view : Model -> Html Msg
-view model =
-  div
-  [ class "container" ]
-  [ headerView
-  , hr [] []
-  , case model.route of
-      Models.DatasetsRoute ->
-        Datasets.List.view model.datasets
-
-      Models.DatasetRoute id ->
-        let
-          maybeDataset =
-            model.datasets
-              |> List.filter (\dataset -> dataset.id == id)
-              |> List.head
-        in
-          case maybeDataset of
-            Just dataset ->
-              Datasets.Show.view dataset
-
-            Nothing ->
-                notFoundView
-
-      Models.DatasetNewRoute ->
-        Datasets.New.view
-
-      Models.NotFoundRoute ->
-        notFoundView
-  ]
-
-notFoundView : Html Msg
-notFoundView =
-  h1
-  []
-  [text "Not FOUND"]
-
-headerView : Html Msg
-headerView =
-  h1
-  []
-  [text "Swarm"]
-
--- Subscriptions
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-  Sub.none
-
--- MAIN
+import Html exposing(..)
+import Phoenix
+import Phoenix.Socket as Socket exposing (Socket, AbnormalClose)
+import Phoenix.Channel as Channel
 
 main : Program Flags Model Msg
 main =
-  Navigation.programWithFlags Msgs.OnLocationChange
+  Html.programWithFlags
     { init = init
-    , view = view
     , update = update
     , subscriptions = subscriptions
+    , view = view
     }
+
+-- MODEL
+
+type alias Flags =
+  { socketUrl : String }
+
+type alias Model =
+  { flags : Flags
+  , connectionStatus : ConnectionStatus }
+
+type ConnectionStatus
+  = Connected
+  | Disconnected
+
+initModel : Flags -> Model
+initModel flags =
+  { connectionStatus = Disconnected
+  , flags = flags }
+
+
+init : Flags -> ( Model, Cmd Msg )
+init flags =
+  (initModel flags, Cmd.none)
+
+-- UPDATE
+
+type Msg
+  = ConnectionStatusChanged ConnectionStatus
+
+update : Msg -> Model -> (Model, Cmd Msg)
+update message model =
+  case message of
+    ConnectionStatusChanged connectionStatus ->
+      { model | connectionStatus = connectionStatus } ! []
+
+-- Subscriptions
+channel =
+    Channel.init "datasets"
+        -- register an handler for messages with a "new_msg" event
+        --|> Channel.on "new_msg" NewMsg
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+  Phoenix.connect (socket model) [channel]
+
+socket : Model -> Socket Msg
+socket model =
+  Socket.init model.flags.socketUrl
+    |> Socket.onOpen (ConnectionStatusChanged Connected)
+    |> Socket.onClose (\_ -> ConnectionStatusChanged Disconnected)
+
+-- View
+
+connectionStatusDescription : ConnectionStatus -> String
+connectionStatusDescription connectionStatus =
+  case connectionStatus of
+    Connected ->
+      "Connected"
+    Disconnected ->
+      "Disconnected"
+
+view : Model -> Html Msg
+view model =
+  Html.div []
+    [ Html.p []
+      [ text (connectionStatusDescription model.connectionStatus) ]
+    ]

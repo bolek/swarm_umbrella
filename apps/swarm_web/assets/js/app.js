@@ -27,5 +27,5 @@ const elmDiv = document.querySelector('#elm-app');
 if (elmDiv) {
   const socketUrl = window.socketUrl;
 
-  Elm.Main.embed(elmDiv, {socketUrl });
+  Elm.Main.embed(elmDiv, { socketUrl });
 }
