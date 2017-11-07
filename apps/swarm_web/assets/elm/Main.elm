@@ -49,6 +49,7 @@ update message model =
       { model | connectionStatus = connectionStatus } ! []
 
 -- Subscriptions
+channel : Channel.Channel msg
 channel =
     Channel.init "datasets"
         -- register an handler for messages with a "new_msg" event
