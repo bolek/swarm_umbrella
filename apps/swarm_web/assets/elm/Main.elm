@@ -1,9 +1,17 @@
 module Main exposing(..)
 
+import Json.Decode as JD exposing (Decoder)
+import Json.Decode.Pipeline exposing (decode, required)
+
 import Html exposing(..)
+--import Json.Encode as JE
 import Phoenix
 import Phoenix.Socket as Socket exposing (Socket, AbnormalClose)
 import Phoenix.Channel as Channel
+import Phoenix.Push as Push
+--import Phoenix.Presence as Presence exposing (Presence)
+
+import ConnectionStatus exposing(ConnectionStatus)
 
 main : Program Flags Model Msg
 main =
@@ -16,44 +24,84 @@ main =
 
 -- MODEL
 
+type alias Dataset = { title : String }
+
+type alias Datasets =
+  { datasets : List Dataset }
+
 type alias Flags =
   { socketUrl : String }
 
 type alias Model =
   { flags : Flags
-  , connectionStatus : ConnectionStatus }
-
-type ConnectionStatus
-  = Connected
-  | Disconnected
+  , connectionStatus : ConnectionStatus
+  , data : Datasets }
 
 initModel : Flags -> Model
 initModel flags =
-  { connectionStatus = Disconnected
-  , flags = flags }
-
+  { connectionStatus = ConnectionStatus.Disconnected
+  , flags = flags
+  , data = { datasets = [] } }
 
 init : Flags -> ( Model, Cmd Msg )
 init flags =
   (initModel flags, Cmd.none)
 
+-- decoders
+
+datasetDecoder : Decoder Dataset
+datasetDecoder =
+  decode Dataset
+    |> required "title" JD.string
+
+dataset : String -> Result String Dataset
+dataset jsonString =
+  JD.decodeString datasetDecoder jsonString
+
+datasetsDecoder : Decoder Datasets
+datasetsDecoder =
+  decode
+    Datasets
+    |> required "datasets" (JD.list datasetDecoder)
+
+datasets : String -> Result String Datasets
+datasets jsonString =
+  JD.decodeString datasetsDecoder jsonString
+
 -- UPDATE
 
 type Msg
-  = ConnectionStatusChanged ConnectionStatus
+  = Connected
+  | Disconnected
+  | FetchedDatasets JD.Value
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update message model =
   case message of
-    ConnectionStatusChanged connectionStatus ->
-      { model | connectionStatus = connectionStatus } ! []
+    Connected ->
+      { model | connectionStatus = ConnectionStatus.Connected } ! [(fetchDatasets model)]
+    Disconnected ->
+      { model | connectionStatus = ConnectionStatus.Disconnected } ! []
+    FetchedDatasets payload ->
+      case JD.decodeValue datasetsDecoder payload of
+        Ok datasets ->
+          { model | data = datasets } ! []
+        Err err ->
+          model ! []
+
+fetchDatasets : Model -> Cmd Msg
+fetchDatasets model =
+  let
+    push =
+      Push.init "datasets" "fetch"
+  in
+    Phoenix.push (socketUrl model) push
 
 -- Subscriptions
-channel : Channel.Channel msg
 channel =
     Channel.init "datasets"
+        |> Channel.on "datasets" (\msg -> FetchedDatasets msg)
         -- register an handler for messages with a "new_msg" event
-        --|> Channel.on "new_msg" NewMsg
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -61,18 +109,22 @@ subscriptions model =
 
 socket : Model -> Socket Msg
 socket model =
-  Socket.init model.flags.socketUrl
-    |> Socket.onOpen (ConnectionStatusChanged Connected)
-    |> Socket.onClose (\_ -> ConnectionStatusChanged Disconnected)
+  Socket.init (socketUrl model)
+    |> Socket.onOpen (Connected)
+    |> Socket.onClose (\_ -> Disconnected)
+
+socketUrl : Model -> String
+socketUrl model =
+  model.flags.socketUrl
 
 -- View
 
 connectionStatusDescription : ConnectionStatus -> String
 connectionStatusDescription connectionStatus =
   case connectionStatus of
-    Connected ->
+    ConnectionStatus.Connected ->
       "Connected"
-    Disconnected ->
+    ConnectionStatus.Disconnected ->
       "Disconnected"
 
 view : Model -> Html Msg
@@ -80,4 +132,7 @@ view model =
   Html.div []
     [ Html.p []
       [ text (connectionStatusDescription model.connectionStatus) ]
+    , Html.h1 [] [text "Datasets"]
+    , Html.ul []
+      (List.map (\dataset -> Html.li [] [text dataset.title]) model.data.datasets)
     ]
