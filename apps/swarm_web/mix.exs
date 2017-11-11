@@ -46,8 +46,7 @@ defmodule SwarmWeb.Mixfile do
       {:swarm, in_umbrella: true},
 
       {:bcrypt_elixir, "~> 1.0"},
-      {:cowboy, "~> 1.0"},
-      {:comeonin, "~> 2.0"}
+      {:cowboy, "~> 1.0"}
     ]
   end
 
