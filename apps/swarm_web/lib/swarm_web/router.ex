@@ -1,6 +1,7 @@
 defmodule SwarmWeb.Router do
   use SwarmWeb, :router
 
+  alias SwarmWeb.Router.Helpers
   alias SwarmWeb.DatasetController
   alias SwarmWeb.UserController
 
@@ -14,19 +15,40 @@ defmodule SwarmWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
+    plug :fetch_session
+  end
 
+  pipeline :authenticate_user do
+    plug :authenticate
+  end
+
+  scope "/auth", SwarmWeb do
+    pipe_through [:browser]
+
+    get "/:provider", AuthController, :request
+    get "/:provider/callback", AuthController, :callback
+    post "/:provider/callback", AuthController, :callback
+    delete "/logout", AuthController, :delete
+  end
+
+  scope "/api" do
+    pipe_through [:api, :authenticate_user]
     resources "/datasets", DatasetController, except: [:new, :edit]
     resources "/users", UserController, except: [:new, :edit]
   end
 
   scope "/", SwarmWeb do
-    pipe_through :browser # Use the default browser stack
+    pipe_through [:browser, :authenticate_user]
 
     get "/", PageController, :index
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", SwarmWeb do
-  #   pipe_through :api
-  # end
+  defp authenticate(conn, _) do
+    case get_session(conn, :current_user) do
+      nil ->  conn
+              |> redirect(to: Helpers.auth_path(conn, :request, :identity, %{}))
+              |> halt()
+      _ -> conn
+    end
+  end
 end

@@ -80,5 +80,25 @@ defmodule Swarm.AccountsTest do
       user = user_fixture()
       assert %Ecto.Changeset{} = Accounts.change_user(user)
     end
+
+    test "authenticate_by_email_password/1 authenticates valid credentials" do
+      user = user_fixture()
+      user = put_in(user.credential.password, nil)
+
+      assert {:ok, user} ==
+        Accounts.authenticate_by_email_password("dd@dd.com", "hokuspokus")
+    end
+
+    test "authenticate_by_email_password/1 does not authenticate invalid credentials" do
+      user_fixture()
+
+      assert {:error, "invalid password"} ==
+        Accounts.authenticate_by_email_password("dd@dd.com", "abrakadabra")
+    end
+
+    test "authenticate_by_email_password/1 for non-exsting user" do
+      assert {:error, "inexistent user"} ==
+        Accounts.authenticate_by_email_password("dd@dd.com", "abrakadabra")
+    end
   end
 end

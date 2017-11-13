@@ -36,10 +36,10 @@ defmodule Swarm.Mixfile do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:postgrex, ">= 0.0.0"},
-      {:ecto, "~> 2.1"},
+      {:argon2_elixir, "~> 1.2"},
       {:comeonin, "~> 4.0"},
-      {:argon2_elixir, "~> 1.2"}
+      {:ecto, "~> 2.1"},
+      {:postgrex, ">= 0.0.0"}
     ]
   end
 

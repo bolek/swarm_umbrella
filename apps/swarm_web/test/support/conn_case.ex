@@ -23,6 +23,18 @@ defmodule SwarmWeb.ConnCase do
 
       # The default endpoint for testing
       @endpoint SwarmWeb.Endpoint
+
+      def sign_in(%{conn: conn} = context) do
+        context = case context[:user] do
+          nil -> put_in(context[:user], %{id: 123})
+          _ -> context
+        end
+
+        conn = conn
+        |> Plug.Test.init_test_session(current_user: context.user.id)
+
+        put_in(context[:conn], conn)
+      end
     end
   end
 

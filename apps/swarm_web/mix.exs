@@ -24,7 +24,7 @@ defmodule SwarmWeb.Mixfile do
   def application do
     [
       mod: {SwarmWeb.Application, []},
-      extra_applications: [:logger, :runtime_tools, :comeonin]
+      extra_applications: [:logger, :runtime_tools, :comeonin, :ueberauth]
     ]
   end
 
@@ -46,7 +46,9 @@ defmodule SwarmWeb.Mixfile do
       {:swarm, in_umbrella: true},
 
       {:bcrypt_elixir, "~> 1.0"},
-      {:cowboy, "~> 1.0"}
+      {:cowboy, "~> 1.0"},
+      {:ueberauth, "~> 0.4"},
+      {:ueberauth_identity, "~> 0.2"}
     ]
   end
 

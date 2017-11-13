@@ -18,6 +18,8 @@ defmodule SwarmWeb.DatasetControllerTest do
   end
 
   describe "index" do
+    setup [:sign_in]
+
     test "lists all datasets", %{conn: conn} do
       conn = get conn, dataset_path(conn, :index)
       assert json_response(conn, 200)["data"] == []
@@ -25,6 +27,8 @@ defmodule SwarmWeb.DatasetControllerTest do
   end
 
   describe "create dataset" do
+    setup [:sign_in]
+
     test "renders dataset when data is valid", %{conn: conn} do
       conn = post conn, dataset_path(conn, :create), dataset: @create_attrs
       assert %{"id" => id} = json_response(conn, 201)["data"]
@@ -43,7 +47,7 @@ defmodule SwarmWeb.DatasetControllerTest do
   end
 
   describe "update dataset" do
-    setup [:create_dataset]
+    setup [:sign_in, :create_dataset]
 
     test "renders dataset when data is valid", %{conn: conn, dataset: %Dataset{id: id} = dataset} do
       conn = put conn, dataset_path(conn, :update, dataset), dataset: @update_attrs
@@ -63,7 +67,7 @@ defmodule SwarmWeb.DatasetControllerTest do
   end
 
   describe "delete dataset" do
-    setup [:create_dataset]
+    setup [:sign_in, :create_dataset]
 
     test "deletes chosen dataset", %{conn: conn, dataset: dataset} do
       conn = delete conn, dataset_path(conn, :delete, dataset)

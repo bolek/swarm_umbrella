@@ -18,6 +18,8 @@ defmodule SwarmWeb.UserControllerTest do
   end
 
   describe "index" do
+    setup [:sign_in]
+
     test "lists all users", %{conn: conn} do
       conn = get conn, user_path(conn, :index)
       assert json_response(conn, 200)["data"] == []
@@ -25,6 +27,8 @@ defmodule SwarmWeb.UserControllerTest do
   end
 
   describe "create user" do
+    setup [:sign_in]
+
     test "renders user when data is valid", %{conn: conn} do
       conn = post conn, user_path(conn, :create), user: @create_attrs
       assert %{"id" => id} = json_response(conn, 201)["data"]
@@ -42,7 +46,7 @@ defmodule SwarmWeb.UserControllerTest do
   end
 
   describe "update user" do
-    setup [:create_user]
+    setup [:create_user, :sign_in]
 
     test "renders user when data is valid", %{conn: conn, user: %User{id: id} = user} do
       conn = put conn, user_path(conn, :update, user), user: @update_attrs
@@ -61,7 +65,7 @@ defmodule SwarmWeb.UserControllerTest do
   end
 
   describe "delete user" do
-    setup [:create_user]
+    setup [:create_user, :sign_in]
 
     test "deletes chosen user", %{conn: conn, user: user} do
       conn = delete conn, user_path(conn, :delete, user)

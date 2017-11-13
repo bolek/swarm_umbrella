@@ -43,6 +43,26 @@ defmodule Swarm.Accounts do
     |> Repo.preload(:credential)
   end
 
+
+  def authenticate_by_email_password(nil, _), do: {:error, "email required"}
+  def authenticate_by_email_password(_, nil), do: {:error, "password required"}
+  def authenticate_by_email_password(email, password) do
+    user = Repo.one from u in User,
+      join: c in assoc(u, :credential),
+      where: c.email == ^email,
+      preload: [credential: c]
+
+    validate_credentials(user, password)
+  end
+
+  defp validate_credentials(nil, _), do: {:error, "inexistent user"}
+  defp validate_credentials(user, password) do
+    case Comeonin.Argon2.check_pass(user.credential,password) do
+      {:ok, _} -> {:ok, user}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
   @doc """
   Creates a user.
 
