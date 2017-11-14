@@ -6,7 +6,7 @@ defmodule SwarmWeb.DatasetsChannel do
 
   def join("datasets", _, socket), do: {:ok, socket}
 
-  def handle_in("fetch", params, socket) do
+  def handle_in("fetch", _params, socket) do
     Logger.info "Handling datasets..."
 
     payload = [%{"title" => "Sample.csv"}, %{"title" => "Another.csv"}]
