@@ -24,7 +24,7 @@ main =
 
 -- MODEL
 
-type alias Dataset = { title : String }
+type alias Dataset = { title : String, url : String }
 
 type alias Datasets =
   { datasets : List Dataset }
@@ -53,6 +53,7 @@ datasetDecoder : Decoder Dataset
 datasetDecoder =
   decode Dataset
     |> required "title" JD.string
+    |> required "url" (JD.map (Maybe.withDefault "") (JD.nullable JD.string))
 
 dataset : String -> Result String Dataset
 dataset jsonString =
@@ -134,5 +135,9 @@ view model =
       [ text (connectionStatusDescription model.connectionStatus) ]
     , Html.h1 [] [text "Datasets"]
     , Html.ul []
-      (List.map (\dataset -> Html.li [] [text dataset.title]) model.data.datasets)
+      (List.map (\dataset ->
+        Html.li []
+          [text (String.join " " [dataset.title, dataset.url])]
+        ) model.datasets
+      )
     ]
