@@ -4,6 +4,9 @@ import Json.Decode as JD exposing (Decoder)
 import Json.Decode.Pipeline exposing (decode, required)
 
 import Html exposing(..)
+import Html.Attributes exposing(class, for, type_, value)
+import Html.Events exposing (onInput)
+
 --import Json.Encode as JE
 import Phoenix
 import Phoenix.Socket as Socket exposing (Socket, AbnormalClose)
@@ -35,13 +38,15 @@ type alias Flags =
 type alias Model =
   { flags : Flags
   , connectionStatus : ConnectionStatus
-  , data : Datasets }
+  , newDataset : Dataset
+  , datasets : List Dataset }
 
 initModel : Flags -> Model
 initModel flags =
   { connectionStatus = ConnectionStatus.Disconnected
   , flags = flags
-  , data = { datasets = [] } }
+  , newDataset = Dataset "" ""
+  , datasets = [] }
 
 init : Flags -> ( Model, Cmd Msg )
 init flags =
@@ -75,6 +80,7 @@ type Msg
   = Connected
   | Disconnected
   | FetchedDatasets JD.Value
+  | NewDatasetState Dataset
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update message model =
@@ -86,9 +92,11 @@ update message model =
     FetchedDatasets payload ->
       case JD.decodeValue datasetsDecoder payload of
         Ok datasets ->
-          { model | data = datasets } ! []
+          { model | datasets = datasets.datasets } ! []
         Err err ->
           model ! []
+    NewDatasetState dataset ->
+      { model | newDataset = dataset } ! []
 
 fetchDatasets : Model -> Cmd Msg
 fetchDatasets model =
@@ -128,12 +136,44 @@ connectionStatusDescription connectionStatus =
     ConnectionStatus.Disconnected ->
       "Disconnected"
 
+onUpdateTitle : Dataset -> String -> Msg
+onUpdateTitle dataset value =
+  NewDatasetState {dataset | title = value}
+
+onUpdateUrl : Dataset -> String -> Msg
+onUpdateUrl dataset value =
+  NewDatasetState {dataset | url = value}
+
+
 view : Model -> Html Msg
 view model =
   Html.div []
     [ Html.p []
       [ text (connectionStatusDescription model.connectionStatus) ]
     , Html.h1 [] [text "Datasets"]
+    , Html.form [class "form"]
+      [ Html.div [class "form-group"]
+        [ Html.label [class "mr-sm-2"] [text "Title"]
+        , Html.input
+          [ type_ "text"
+          , for "title"
+          , class "form-control mb-2 mr-sm-2 mb-sm-0"
+          , value model.newDataset.title
+          , onInput <| onUpdateTitle model.newDataset] []
+        ]
+      , Html.div [class "form-group"]
+        [ Html.label [class "mr-sm-2"] [text "URL"]
+        , Html.input
+          [ type_ "text"
+          , for "url"
+          , class "form-control mb-2 mr-sm-2 mb-sm-0"
+          , value model.newDataset.url
+          , onInput <| onUpdateUrl model.newDataset] []
+        ]
+      , Html.button [type_ "button", class "btn btn-primary"] [text "Track"]
+      ]
+    , Html.hr [] []
+    , Html.h2 [] [text "Tracked"]
     , Html.ul []
       (List.map (\dataset ->
         Html.li []
