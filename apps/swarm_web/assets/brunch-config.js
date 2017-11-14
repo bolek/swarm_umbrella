@@ -48,7 +48,7 @@ exports.config = {
       elmFolder: 'elm',
       mainModules: ['Main.elm'],
       outputFolder: 'priv',
-      makeParameters: ['--warn']
+      makeParameters: ['--warn', '--debug']
     },
     babel: {
       // Do not use ES6 compiler in vendor code
