@@ -44,6 +44,7 @@ defmodule SwarmWeb.Mixfile do
       {:phoenix_live_reload, "~> 1.0", only: :dev},
       {:gettext, "~> 0.11"},
       {:swarm, in_umbrella: true},
+      {:swarm_engine, in_umbrella: true},
 
       {:bcrypt_elixir, "~> 1.0"},
       {:cowboy, "~> 1.0"},
