@@ -1,11 +1,12 @@
 module Main exposing(..)
 
 import Json.Decode as JD exposing (Decoder)
+import Json.Encode as JE
 import Json.Decode.Pipeline exposing (decode, required)
 
 import Html exposing(..)
 import Html.Attributes exposing(class, for, type_, value)
-import Html.Events exposing (onInput)
+import Html.Events exposing (onClick, onInput)
 
 --import Json.Encode as JE
 import Phoenix
@@ -74,6 +75,13 @@ datasets : String -> Result String Datasets
 datasets jsonString =
   JD.decodeString datasetsDecoder jsonString
 
+encodeDataset : Dataset -> JE.Value
+encodeDataset dataset =
+  JE.object
+    [ ("title", JE.string dataset.title)
+    , ("url", JE.string dataset.url)
+    ]
+
 -- UPDATE
 
 type Msg
@@ -81,6 +89,7 @@ type Msg
   | Disconnected
   | FetchedDatasets JD.Value
   | NewDatasetState Dataset
+  | TrackDataset Dataset
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update message model =
@@ -97,6 +106,13 @@ update message model =
           model ! []
     NewDatasetState dataset ->
       { model | newDataset = dataset } ! []
+    TrackDataset dataset ->
+      let
+        newDatasets = model.datasets ++ [dataset]
+      in
+        { model | newDataset = Dataset "" ""
+                , datasets = newDatasets } ! [(trackDataset model dataset)]
+
 
 fetchDatasets : Model -> Cmd Msg
 fetchDatasets model =
@@ -105,6 +121,14 @@ fetchDatasets model =
       Push.init "datasets" "fetch"
   in
     Phoenix.push (socketUrl model) push
+
+trackDataset : Model -> Dataset -> Cmd Msg
+trackDataset model dataset =
+  let
+    push =
+      Push.init "datasets" "track"
+        |> Push.withPayload (JE.object [ ( "msg", encodeDataset dataset ) ])
+  in Phoenix.push (socketUrl model) push
 
 -- Subscriptions
 channel =
@@ -136,14 +160,17 @@ connectionStatusDescription connectionStatus =
     ConnectionStatus.Disconnected ->
       "Disconnected"
 
-onUpdateTitle : Dataset -> String -> Msg
-onUpdateTitle dataset value =
+setTitle : Dataset -> String -> Msg
+setTitle dataset value =
   NewDatasetState {dataset | title = value}
 
-onUpdateUrl : Dataset -> String -> Msg
-onUpdateUrl dataset value =
+setUrl : Dataset -> String -> Msg
+setUrl dataset value =
   NewDatasetState {dataset | url = value}
 
+onTrackDataset : Dataset -> Msg
+onTrackDataset dataset =
+  TrackDataset dataset
 
 view : Model -> Html Msg
 view model =
@@ -159,7 +186,7 @@ view model =
           , for "title"
           , class "form-control mb-2 mr-sm-2 mb-sm-0"
           , value model.newDataset.title
-          , onInput <| onUpdateTitle model.newDataset] []
+          , onInput <| setTitle model.newDataset] []
         ]
       , Html.div [class "form-group"]
         [ Html.label [class "mr-sm-2"] [text "URL"]
@@ -168,9 +195,9 @@ view model =
           , for "url"
           , class "form-control mb-2 mr-sm-2 mb-sm-0"
           , value model.newDataset.url
-          , onInput <| onUpdateUrl model.newDataset] []
+          , onInput <| setUrl model.newDataset] []
         ]
-      , Html.button [type_ "button", class "btn btn-primary"] [text "Track"]
+      , Html.button [type_ "button", class "btn btn-primary", onClick <| onTrackDataset model.newDataset] [text "Track"]
       ]
     , Html.hr [] []
     , Html.h2 [] [text "Tracked"]

@@ -1,7 +1,6 @@
 defmodule SwarmWeb.DatasetsChannel do
   use Phoenix.Channel
 
-
   require Logger
 
   def join("datasets", _, socket), do: {:ok, socket}
@@ -15,6 +14,16 @@ defmodule SwarmWeb.DatasetsChannel do
     ]
 
     broadcast(socket, "datasets", %{datasets: payload})
+    {:reply, :ok, socket}
+  end
+
+  def handle_in("track", params, socket) do
+    Logger.info "Handling track new dataset"
+
+    IO.inspect params
+
+    broadcast(socket, "datasets", %{datasets: [params["msg"]]})
+
     {:reply, :ok, socket}
   end
 end
