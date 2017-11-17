@@ -1,4 +1,18 @@
 defmodule SwarmEngine.Datasets.CSV do
+  use GenServer, start: {__MODULE__, :start_link, []}, restart: :transient
+
+  alias SwarmEngine.Connector
+
+  def start_link(%{id: id} = params) do
+    GenServer.start_link(__MODULE__, params, name: via_tuple(id))
+  end
+
+  def init(%{name: name, source: source}) do
+    {:ok, create(name, source)}
+  end
+
+  def via_tuple(id), do: {:via, Registry, {Registry.Dataset, id}}
+
   alias __MODULE__
   alias SwarmEngine.{Connector, Tracker, Util}
   alias SwarmEngine.Connectors.LocalDir

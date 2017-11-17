@@ -8,7 +8,9 @@ defmodule SwarmEngine.Application do
   def start(_type, _args) do
     # List all child processes to be supervised
     children = [
-      SwarmEngine.DataVault
+      SwarmEngine.DataVault,
+      {Registry, keys: :unique, name: Registry.Dataset},
+      SwarmEngine.DatasetSupervisor
       # Starts a worker by calling: SwarmEngine.Worker.start_link(arg)
       # {SwarmEngine.Worker, arg},
     ]
