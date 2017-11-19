@@ -58,4 +58,18 @@ defmodule SwarmEngine.TrackerTest do
 
     assert Tracker.current(tracker) == %{modified_at: datetime_2}
   end
+
+  test "find by version" do
+    datetime_1 = Timex.now
+    datetime_2 = Timex.shift(datetime_1, minutes: 3)
+    datetime_3 = Timex.shift(datetime_1, minutes: 5)
+
+    tracker = %Tracker {
+      resources: [%{modified_at: datetime_1}, %{modified_at: datetime_2}]
+    }
+
+    assert Tracker.find(tracker, %{version: datetime_1}) == {:ok, %{modified_at: datetime_1}}
+    assert Tracker.find(tracker, %{version: datetime_2}) == {:ok, %{modified_at: datetime_2}}
+    assert Tracker.find(tracker, %{version: datetime_3}) == {:error, :not_found}
+  end
 end

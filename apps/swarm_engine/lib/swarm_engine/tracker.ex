@@ -21,6 +21,13 @@ defmodule SwarmEngine.Tracker do
                 )
   end
 
+  def find(tracker, %{version: version}) do
+    case tracker.resources |> Enum.find(&(&1.modified_at == version)) do
+      nil -> {:error, :not_found}
+      resource -> {:ok, resource}
+    end
+  end
+
   def sync(%Tracker{source: source} = tracker) do
     {:ok, resources} = Connector.list(source)
 
