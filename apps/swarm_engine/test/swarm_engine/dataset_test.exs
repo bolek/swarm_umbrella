@@ -139,6 +139,48 @@ defmodule SwarmEngine.DatasetTest do
     assert Dataset.versions(dataset) == [version_1, version_2]
   end
 
+  test "inserting a dataset twice with the same version" do
+        dataset = %Dataset{name: "test_table", columns: [
+        %{name: "column_1", type: "varchar"},
+        %{name: "column_2", type: "integer"}
+      ]
+    }
+
+    data = [["foo", 123], ["bar", 234], ["car", 345], ["tar", 456]]
+
+    version = DateTime.utc_now
+
+    Dataset.create(dataset)
+    Dataset.insert(dataset, data, version)
+    Dataset.insert(dataset, data, version)
+
+    assert {:ok,
+            %{
+              num_rows: 4,
+              columns: ["swarm_id", "column_1", "column_2"],
+              rows: [
+                [<<239, 35, 142, 160, 10, 38, 82, 141, 228, 15, 242, 49, 229, 169, 127, 80>>, "foo", 123],
+                [<<146, 133, 207, 198, 58, 39, 183, 29, 135, 228, 210, 35, 155, 232, 147, 130>>, "bar", 234],
+                [<<245, 229, 38, 130, 173, 136, 244, 190, 161, 221, 177, 65, 220, 212, 222, 206>>, "car", 345],
+                [<<189, 123, 180, 16, 6, 121, 214, 121, 40, 9, 42, 66, 170, 225, 62, 218>>, "tar", 456]
+              ]
+            }
+          } = SQL.query(DataVault, "SELECT * FROM test_table")
+
+    assert {:ok,
+            %{
+              num_rows: 4,
+              columns: ["swarm_id", "version", "loaded_at"],
+              rows: [
+                [<<239, 35, 142, 160, 10, 38, 82, 141, 228, 15, 242, 49, 229, 169, 127, 80>>, version, _],
+                [<<146, 133, 207, 198, 58, 39, 183, 29, 135, 228, 210, 35, 155, 232, 147, 130>>, version, _],
+                [<<245, 229, 38, 130, 173, 136, 244, 190, 161, 221, 177, 65, 220, 212, 222, 206>>, version, _],
+                [<<189, 123, 180, 16, 6, 121, 214, 121, 40, 9, 42, 66, 170, 225, 62, 218>>, version, _]
+              ]
+            }
+          } = SQL.query(DataVault, "SELECT * FROM test_table_v")
+  end
+
   test "inserting duplicates inserts unique records" do
     dataset = %Dataset{name: "test_table", columns: [
         %{name: "column_1", type: "varchar"},

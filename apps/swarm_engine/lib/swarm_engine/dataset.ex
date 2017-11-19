@@ -25,6 +25,9 @@ defmodule SwarmEngine.Dataset do
     insert_opts = [{:on_conflict, :nothing}, {:conflict_target, [:swarm_id]}]
 
     DataVault.transaction(fn ->
+      from("#{name}_v", where: [version: ^version])
+      |> DataVault.delete_all()
+
       stream
       |> Stream.map(&([generate_hash(&1) | &1]))
       |> Stream.map(&(Enum.zip(column_names, &1)))
