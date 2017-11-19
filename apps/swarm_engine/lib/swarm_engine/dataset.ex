@@ -13,11 +13,11 @@ defmodule SwarmEngine.Dataset do
     end
   end
 
-  def insert(%Dataset{} = dataset, data) do
-    insert_stream(dataset, data)
+  def insert(%Dataset{} = dataset, data, version \\ DateTime.utc_now) do
+    insert_stream(dataset, data, version)
   end
 
-  def insert_stream(%Dataset{name: name, columns: columns}, stream) do
+  def insert_stream(%Dataset{name: name, columns: columns}, stream, version \\ DateTime.utc_now) do
     column_names = [:swarm_id | Enum.map(columns, &(&1.name))]
     insert_opts = [{:on_conflict, :nothing}, {:conflict_target, [:swarm_id]}]
 
@@ -30,7 +30,7 @@ defmodule SwarmEngine.Dataset do
           DataVault.insert_all(name, rows, insert_opts)
           rows
         end)
-      |> Stream.map(fn rows -> Enum.map(rows, &([List.first(&1)])) end)
+      |> Stream.map(fn rows -> Enum.map(rows, &([List.first(&1), version: version])) end)
       |> Stream.map(fn rows -> DataVault.insert_all(name <> "_v", rows) end)
       |> Stream.run
     end)
@@ -71,7 +71,6 @@ defmodule SwarmEngine.Dataset do
       CREATE TABLE #{name} (
         swarm_id uuid,
         #{to_sql_columns(columns)},
-        swarm_created_at timestamptz NOT NULL DEFAULT NOW(),
         PRIMARY KEY(swarm_id)
       );
     """)
@@ -79,6 +78,7 @@ defmodule SwarmEngine.Dataset do
     SQL.query(DataVault, """
       CREATE TABLE #{name}_v (
         swarm_id uuid NOT NULL REFERENCES #{name} (swarm_id),
+        version timestamptz NOT NULL,
         loaded_at timestamptz NOT NULL DEFAULT NOW()
       );
     """)
