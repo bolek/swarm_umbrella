@@ -1,7 +1,10 @@
-alias Ecto.Adapters.SQL
+require IEx
 
 defmodule SwarmEngine.Dataset do
+  alias Ecto.Adapters.SQL
   alias SwarmEngine.{Dataset, DataVault}
+
+  import Ecto.Query
 
   @enforce_keys [:name, :columns]
   defstruct [:name, :columns]
@@ -60,6 +63,15 @@ defmodule SwarmEngine.Dataset do
     else
       false -> {:error, :dataset_without_table}
     end
+  end
+
+  def versions(%Dataset{name: name}) do
+    query = from(v in "#{name}_v",
+      distinct: [desc: v.version],
+      select: type(v.version, :utc_datetime),
+      order_by: [desc: v.version])
+
+    DataVault.all(query)
   end
 
   defp generate_hash(list) do

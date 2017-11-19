@@ -119,6 +119,26 @@ defmodule SwarmEngine.DatasetTest do
           } = SQL.query(DataVault, "SELECT * FROM test_table_v")
   end
 
+  test "retrieving dataset versions" do
+    dataset = %Dataset{name: "test_table", columns: [
+        %{name: "column_1", type: "varchar"},
+        %{name: "column_2", type: "integer"}
+      ]
+    }
+
+    data = [["foo", 123], ["bar", 234], ["car", 345], ["tar", 456]]
+
+    version_1 = DateTime.utc_now
+    version_2 = DateTime.from_naive!(~N[2016-05-24 13:26:08.000000], "Etc/UTC")
+
+    Dataset.create(dataset)
+
+    Dataset.insert(dataset, data, version_1)
+    Dataset.insert(dataset, data, version_2)
+
+    assert Dataset.versions(dataset) == [version_1, version_2]
+  end
+
   test "inserting duplicates inserts unique records" do
     dataset = %Dataset{name: "test_table", columns: [
         %{name: "column_1", type: "varchar"},
