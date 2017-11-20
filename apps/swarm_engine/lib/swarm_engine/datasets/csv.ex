@@ -1,7 +1,7 @@
 defmodule SwarmEngine.Datasets.CSV do
   use GenServer, start: {__MODULE__, :start_link, []}, restart: :transient
 
-  alias SwarmEngine.Connector
+  alias SwarmEngine.{Connector, Dataset}
 
   def start_link(%{id: id} = params) do
     GenServer.start_link(__MODULE__, params, name: via_tuple(id))
@@ -17,7 +17,7 @@ defmodule SwarmEngine.Datasets.CSV do
   alias SwarmEngine.{Connector, Tracker, Util}
   alias SwarmEngine.Connectors.LocalDir
 
-  defstruct [:name, :tracker, :columns]
+  defstruct [:name, :tracker, :columns, :dataset]
 
   def create(name, %Tracker{} = tracker) do
     %CSV{name: name, tracker: tracker, columns: columns(tracker)}
@@ -28,16 +28,46 @@ defmodule SwarmEngine.Datasets.CSV do
     |> Tracker.create(%LocalDir{path: "/tmp/swarm_engine_store/"})
     |> Tracker.sync()
 
-    %CSV{name: name, tracker: tracker, columns: columns(tracker)}
+    columns = columns(tracker)
+    dataset = %Dataset{
+      name: name |> String.downcase() |> String.replace(~r/\s+/, "_"),
+      columns: sql_columns(columns)
+    }
+
+    Dataset.create(dataset)
+
+    %CSV{
+      name: name,
+      tracker: tracker,
+      columns: columns,
+      dataset: dataset
+    }
+  end
+
+  def stream(%CSV{tracker: tracker}, version) do
+    with {:ok, resource} <- Tracker.find(tracker, %{version: version}),
+      source <- resource.source
+    do
+      source
+      |> _stream()
+    else
+      {:error, reason} -> {:error, reason}
+      any -> {:error, any}
+    end
   end
 
   def stream(%CSV{tracker: tracker}) do
-    tmp_file_path = "/tmp/#{Util.UUID.generate}"
-
     tracker
     |> Tracker.current()
     |> get_in([:source])
-    |> Connector.request()
+    |> _stream()
+  end
+
+  defp _stream(resource) do
+    tmp_file_path = "/tmp/#{Util.UUID.generate}"
+
+    resource
+    |> Connector.request
     |> Stream.into(File.stream!(tmp_file_path))
     |> Stream.run
 
@@ -53,6 +83,26 @@ defmodule SwarmEngine.Datasets.CSV do
       true -> {:error, "no common columns"}
       false -> {:ok, %{dataset | tracker: tracker}}
     end
+  end
+
+  def load(%CSV{tracker: tracker} = csv) do
+    resource = Tracker.current(tracker)
+    _load(csv, resource)
+  end
+
+  def load(%CSV{tracker: tracker} = csv, version) do
+    resource = Tracker.find(tracker, %{version: version})
+
+    _load(csv, resource)
+  end
+
+  defp _load(%CSV{dataset: dataset}, resource) do
+    version = resource.modified_at
+    stream = _stream(resource.source) |> Stream.map(fn(row) ->
+      Enum.map(dataset.columns, &(row[&1.original]))
+    end)
+
+    Dataset.insert_stream(dataset, stream, version)
   end
 
   defp columns(%Tracker{} = tracker) do
@@ -71,5 +121,16 @@ defmodule SwarmEngine.Datasets.CSV do
     |> Enum.to_list()
     |> List.first()
     |> MapSet.new()
+  end
+
+  defp sql_columns(columns) do
+    columns
+    |> Enum.map(fn c ->
+      name = c
+      |> String.downcase()
+      |> String.replace(~r/\s+/, "_")
+
+      %{name: name, type: "character varying", original: c}
+    end)
   end
 end

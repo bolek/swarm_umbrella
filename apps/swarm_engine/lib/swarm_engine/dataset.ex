@@ -21,25 +21,29 @@ defmodule SwarmEngine.Dataset do
   end
 
   def insert_stream(%Dataset{name: name, columns: columns}, stream, version \\ DateTime.utc_now) do
-    column_names = [:swarm_id | Enum.map(columns, &(&1.name))]
-    insert_opts = [{:on_conflict, :nothing}, {:conflict_target, [:swarm_id]}]
+    with column_names <- [:swarm_id | Enum.map(columns, &(&1.name))],
+      insert_opts <- [{:on_conflict, :nothing}, {:conflict_target, [:swarm_id]}],
+      {:ok, :ok} <- DataVault.transaction(fn ->
+        from("#{name}_v", where: [version: ^version])
+        |> DataVault.delete_all()
 
-    DataVault.transaction(fn ->
-      from("#{name}_v", where: [version: ^version])
-      |> DataVault.delete_all()
-
-      stream
-      |> Stream.map(&([generate_hash(&1) | &1]))
-      |> Stream.map(&(Enum.zip(column_names, &1)))
-      |> Stream.chunk_every(500)
-      |> Stream.map(fn rows ->
-          DataVault.insert_all(name, rows, insert_opts)
-          rows
-        end)
-      |> Stream.map(fn rows -> Enum.map(rows, &([List.first(&1), version: version])) end)
-      |> Stream.map(fn rows -> DataVault.insert_all(name <> "_v", rows) end)
-      |> Stream.run
-    end)
+        stream
+        |> Stream.map(&([generate_hash(&1) | &1]))
+        |> Stream.map(&(Enum.zip(column_names, &1)))
+        |> Stream.chunk_every(500)
+        |> Stream.map(fn rows ->
+            DataVault.insert_all(name, rows, insert_opts)
+            rows
+          end)
+        |> Stream.map(fn rows -> Enum.map(rows, &([List.first(&1), version: version])) end)
+        |> Stream.map(fn rows -> DataVault.insert_all(name <> "_v", rows) end)
+        |> Stream.run
+      end)
+    do
+      :ok
+    else
+      any -> {:error, any}
+    end
   end
 
   def exists?(%Dataset{name: name}) do

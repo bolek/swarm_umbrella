@@ -3,7 +3,14 @@ defmodule SwarmEngine.Datasets.CSVTest do
 
   alias SwarmEngine.Connectors.{LocalDir, LocalFile}
   alias SwarmEngine.Datasets.CSV
-  alias SwarmEngine.Tracker
+  alias SwarmEngine.{DataVault, Tracker}
+
+
+  setup do
+    # Explicitly get a connection before each test
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(DataVault)
+  end
+
 
   test "creating a CSV dataset by providing name and source" do
     source = LocalFile.create("test/fixtures/dummy.csv")
@@ -42,5 +49,12 @@ defmodule SwarmEngine.Datasets.CSVTest do
     csv_dataset = %{csv_dataset | tracker: new_tracker}
 
     assert {:error, "no common columns"} = CSV.sync(csv_dataset)
+  end
+
+  test "loading the current version of a csv resource" do
+    source = LocalFile.create("test/fixtures/goofy.csv")
+    csv_dataset = CSV.create("goofy", source)
+
+    assert CSV.load(csv_dataset) == :ok
   end
 end
