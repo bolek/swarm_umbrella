@@ -1,8 +1,10 @@
 defmodule SwarmEngine.Connectors.HTTP do
   alias __MODULE__
 
+  @type t :: %__MODULE__{url: String.t, options: keyword}
   defstruct [:url, :options]
 
+  @spec create(String.t, keyword) :: HTTP.t
   def create(url, options \\ []) do
     %HTTP{url: url, options: options}
   end
@@ -10,7 +12,9 @@ end
 
 defimpl SwarmEngine.Connector, for: SwarmEngine.Connectors.HTTP do
   alias SwarmEngine.Connectors.HTTP
+  alias SwarmEngine.Resource
 
+  @spec list(Connector.t) :: {:ok, list(Resource.t)} | {:error, any}
   def list(source) do
     case metadata(source) do
       {:ok, resource} ->
@@ -20,6 +24,7 @@ defimpl SwarmEngine.Connector, for: SwarmEngine.Connectors.HTTP do
     end
   end
 
+  @spec metadata(HTTP.t) :: {:ok, Resource.t}
   def metadata(%HTTP{url: url, options: opts} = source) do
     {headers, body, opts} = HTTP.Utils.initialize_opts(opts)
 
@@ -32,11 +37,12 @@ defimpl SwarmEngine.Connector, for: SwarmEngine.Connectors.HTTP do
           modified_at <-
             HTTP.Utils.get_modified_at(response_headers)
     do
-      {:ok, %{filename: filename,
-              size: size,
-              modified_at: modified_at,
-              source: source
-            }
+      {:ok, %Resource{
+          name: filename,
+          size: size,
+          modified_at: modified_at,
+          source: source
+        }
       }
     else
       sink ->
@@ -44,6 +50,7 @@ defimpl SwarmEngine.Connector, for: SwarmEngine.Connectors.HTTP do
     end
   end
 
+  @spec request(HTTP.t) :: Enumerable.t
   def request(%HTTP{url: url, options: opts}) do
     {headers, body, opts} = HTTP.Utils.initialize_opts(opts)
 

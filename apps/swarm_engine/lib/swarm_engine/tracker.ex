@@ -11,10 +11,10 @@ defmodule SwarmEngine.Tracker do
     find(tracker, resource) != nil
   end
 
-  def find(tracker, %{filename: filename, size: size, modified_at: modified_at}) do
+  def find(tracker, %{name: name, size: size, modified_at: modified_at}) do
     tracker.resources
     |> Enum.find(fn(x) ->
-                    x.filename == filename
+                    x.name == name
                     && x.size == size
                     && x.modified_at == modified_at
                  end

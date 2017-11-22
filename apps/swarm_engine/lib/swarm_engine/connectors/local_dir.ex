@@ -1,11 +1,14 @@
 defmodule SwarmEngine.Connectors.LocalDir do
   alias SwarmEngine.Connectors.{LocalDir, LocalFile}
+  alias SwarmEngine.Resource
   alias SwarmEngine.Util.UUID
 
+  @type t :: %__MODULE__{ path: String.t }
   defstruct [:path]
 
-  def store(resource, %LocalDir{path: path}) do
-    ext = Path.extname(resource.filename)
+  @spec store(Resource.t, LocalDir.t) :: {:ok, Resource.t}
+  def store(%Resource{} = resource, %LocalDir{path: path}) do
+    ext = Path.extname(resource.name)
 
     LocalFile.store(resource, LocalFile.create(new_path(path,ext)))
   end

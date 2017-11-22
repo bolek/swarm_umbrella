@@ -59,7 +59,7 @@ defmodule SwarmEngine.Datasets.CSV do
   def stream(%CSV{tracker: tracker}) do
     tracker
     |> Tracker.current()
-    |> get_in([:source])
+    |> Map.get(:source)
     |> _stream()
   end
 
@@ -108,7 +108,7 @@ defmodule SwarmEngine.Datasets.CSV do
   defp columns(%Tracker{} = tracker) do
     tracker
       |> Tracker.current()
-      |> get_in([:source])
+      |> Map.get(:source)
       |> columns()
   end
 

@@ -3,7 +3,7 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
 
   alias __MODULE__
   alias SwarmEngine.Connectors.LocalFile
-  alias SwarmEngine.Connector
+  alias SwarmEngine.{Connector, Resource}
 
   def request(source) do
     source
@@ -29,7 +29,7 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
     source = LocalFile.create(fixture_path)
     {{y, m, d}, {h, min, s}} = File.stat!(fixture_path).mtime
 
-    expected = {:ok, %{filename: "test.xlsx",
+    expected = {:ok, %Resource{name: "test.xlsx",
                        size: 3847,
                        source: source,
                        modified_at: %DateTime{year: y, month: m, day: d, hour: h, minute: min, second: s,
@@ -51,12 +51,13 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
     source = LocalFile.create(fixture_path)
     {{y, m, d}, {h, min, s}} = File.stat!(fixture_path).mtime
 
-    assert %{ filename: "test.xlsx",
-                size: 3847,
-                source: source,
-                modified_at: %DateTime{year: y, month: m, day: d, hour: h, minute: min, second: s,
-                                       time_zone: "Etc/UTC", zone_abbr: "UTC", utc_offset: 0, std_offset: 0}
-            } == LocalFile.metadata!(source)
+    assert %Resource{
+      name: "test.xlsx",
+      size: 3847,
+      source: source,
+      modified_at: %DateTime{year: y, month: m, day: d, hour: h, minute: min, second: s,
+                             time_zone: "Etc/UTC", zone_abbr: "UTC", utc_offset: 0, std_offset: 0}
+    } == LocalFile.metadata!(source)
   end
 
   test "metadata! for inexsting file" do
@@ -74,17 +75,18 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
 
     target = LocalFile.create("/tmp/dummy2.csv")
 
-    expected = {:ok, %{ filename: "dummy.csv",
-                        size: 30,
-                        source: target,
-                        modified_at: %DateTime{
-                          year: y, month: m, day: d,
-                          hour: h, minute: min, second: s,
-                          time_zone: "Etc/UTC", zone_abbr: "UTC",
-                          utc_offset: 0, std_offset: 0
-                        }
-                      }
-                }
+    expected = {:ok, %Resource{
+        name: "dummy.csv",
+        size: 30,
+        source: target,
+        modified_at: %DateTime{
+          year: y, month: m, day: d,
+          hour: h, minute: min, second: s,
+          time_zone: "Etc/UTC", zone_abbr: "UTC",
+          utc_offset: 0, std_offset: 0
+        }
+      }
+    }
 
     assert expected == LocalFile.store(resource, target)
 
@@ -101,12 +103,13 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
     |> Stream.map(&(&1))
     |> LocalFile.store_stream(target)
 
-    assert {:ok, %{ filename: "stream2.csv",
-                    size: 28,
-                    source: %LocalFile{path: "/tmp/stream2.csv", options: []},
-                    modified_at: %DateTime{},
-                  }
-            } = result
+    assert {:ok, %Resource{
+        name: "stream2.csv",
+        size: 28,
+        source: %LocalFile{path: "/tmp/stream2.csv", options: []},
+        modified_at: %DateTime{},
+      }
+    } = result
 
     # cleanup
     File.rm("/tmp/stream2.csv")
@@ -116,10 +119,10 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
     location = LocalFile.create("test/fixtures/*")
 
     assert {:ok, [
-      %{filename: "archive.zip", modified_at: %DateTime{}, size: 354, source: %LocalFile{path: "test/fixtures/archive.zip"}},
-      %{filename: "dummy.csv", modified_at: %DateTime{}, size: 30, source: %LocalFile{path: "test/fixtures/dummy.csv"}},
-      %{filename: "goofy.csv", modified_at: %DateTime{}, size: 42, source: %LocalFile{path: "test/fixtures/goofy.csv"}},
-      %{filename: "test.xlsx", modified_at: %DateTime{}, size: 3847, source: %LocalFile{path: "test/fixtures/test.xlsx"}}
+      %Resource{name: "archive.zip", modified_at: %DateTime{}, size: 354, source: %LocalFile{path: "test/fixtures/archive.zip"}},
+      %Resource{name: "dummy.csv", modified_at: %DateTime{}, size: 30, source: %LocalFile{path: "test/fixtures/dummy.csv"}},
+      %Resource{name: "goofy.csv", modified_at: %DateTime{}, size: 42, source: %LocalFile{path: "test/fixtures/goofy.csv"}},
+      %Resource{name: "test.xlsx", modified_at: %DateTime{}, size: 3847, source: %LocalFile{path: "test/fixtures/test.xlsx"}}
     ]} = Connector.list(location)
   end
 end
