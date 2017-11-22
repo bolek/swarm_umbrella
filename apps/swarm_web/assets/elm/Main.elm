@@ -2,7 +2,7 @@ module Main exposing(..)
 
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
-import Json.Decode.Pipeline exposing (decode, required)
+import Json.Decode.Pipeline exposing (decode, required, optional)
 
 import Html exposing(..)
 import Html.Attributes exposing(class, for, type_, value)
@@ -28,7 +28,12 @@ main =
 
 -- MODEL
 
-type alias Dataset = { title : String, url : String }
+type Source
+  = GDriveSource { file_id : Int }
+  | LocalFileSource { path : String }
+
+
+type alias Dataset = { title : String, url : String, source : Maybe Source }
 
 type alias Datasets =
   { datasets : List Dataset }
@@ -46,7 +51,7 @@ initModel : Flags -> Model
 initModel flags =
   { connectionStatus = ConnectionStatus.Disconnected
   , flags = flags
-  , newDataset = Dataset "" ""
+  , newDataset = Dataset "" "" Nothing
   , datasets = [] }
 
 init : Flags -> ( Model, Cmd Msg )
@@ -55,11 +60,26 @@ init flags =
 
 -- decoders
 
+gDriveSourceDecoder : Decoder Source
+gDriveSourceDecoder =
+  decode GDriveSource
+    |> required "file_id" JD.int
+
+localFileSourceDecoder : Decoder Source
+localFileSourceDecoder =
+  decode LocalFileSource
+    |> required "path" JD.string
+
+sourceDecoder : Decoder Source
+sourceDecoder =
+  JD.oneOf [gDriveSourceDecoder, localFileSourceDecoder]
+
 datasetDecoder : Decoder Dataset
 datasetDecoder =
   decode Dataset
     |> required "title" JD.string
     |> required "url" (JD.map (Maybe.withDefault "") (JD.nullable JD.string))
+    |> optional "source" (JD.nullable sourceDecoder)
 
 dataset : String -> Result String Dataset
 dataset jsonString =
@@ -131,6 +151,7 @@ trackDataset model dataset =
   in Phoenix.push (socketUrl model) push
 
 -- Subscriptions
+channel : Channel.Channel Msg
 channel =
     Channel.init "datasets"
         |> Channel.on "datasets" (\msg -> FetchedDatasets msg)
@@ -172,14 +193,35 @@ onTrackDataset : Dataset -> Msg
 onTrackDataset dataset =
   TrackDataset dataset
 
+
+-- Create dataset style
+
+sourceBtn : String -> Html msg
+sourceBtn name =
+  Html.div
+    [ class "source-btn"
+    ]
+    [ text name
+    ]
+
 view : Model -> Html Msg
 view model =
   Html.div []
     [ Html.p []
       [ text (connectionStatusDescription model.connectionStatus) ]
     , Html.h1 [] [text "Datasets"]
+-- Create New Dataset
     , Html.form [class "form"]
-      [ Html.div [class "form-group"]
+      [
+        Html.div [class "container-fluid create-dataset"]
+        [ Html.div [class "row"] [Html.h2 [] [text "Create new dataset"]]
+        , Html.div [class "row"] [Html.h3 [] [text "Select source:"]]
+        , Html.div [class "row d-flex flex-wrap"]
+          [ Html.div [class "p-2"] [sourceBtn "Local File"]
+          , Html.div [class "p-2"] [sourceBtn "Google Drive"]
+          ]
+        ]
+      , Html.div [class "form-group"]
         [ Html.label [class "mr-sm-2"] [text "Title"]
         , Html.input
           [ type_ "text"
@@ -199,6 +241,7 @@ view model =
         ]
       , Html.button [type_ "button", class "btn btn-primary", onClick <| onTrackDataset model.newDataset] [text "Track"]
       ]
+
     , Html.hr [] []
     , Html.h2 [] [text "Tracked"]
     , Html.ul []
