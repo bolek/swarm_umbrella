@@ -32,12 +32,6 @@ type Source
   = GDriveSource Int
   | LocalFile LocalFileInfo
 
-type alias SourceBtn
-  = { id : Int, source : Source, name : String, selected : Bool }
-
-type alias SourceBtns
-  = List SourceBtn
-
 type alias LocalFileInfo =
   { path : String }
 
@@ -53,25 +47,20 @@ type alias Flags =
 type alias Model =
   { flags : Flags
   , connectionStatus : ConnectionStatus
-  , newDataset : Dataset
+  , datasetCreatorModel : DatasetCreatorModel
   , datasets : List Dataset
-  , sourceBtns : SourceBtns}
+  }
 
 initModel : Flags -> Model
 initModel flags =
   { connectionStatus = ConnectionStatus.Disconnected
   , flags = flags
-  , newDataset = initDataset
+  , datasetCreatorModel = initDatasetCreator
   , datasets = []
-  , sourceBtns = initSourceBtns }
+  }
 
 initDataset : Dataset
 initDataset = Dataset "" "" Nothing
-
-initSourceBtns : SourceBtns
-initSourceBtns =
-  [ SourceBtn 1 (LocalFile {path = ""}) "Local File" False
-  , SourceBtn 2 (GDriveSource 1) "Google Drive" False]
 
 init : Flags -> ( Model, Cmd Msg )
 init flags =
@@ -144,7 +133,7 @@ type Msg
   = Connected
   | Disconnected
   | FetchedDatasets JD.Value
-  | NewDatasetState Dataset SourceBtns
+  | NewDatasetState DatasetCreatorModel
   | TrackDataset Dataset
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -160,13 +149,13 @@ update message model =
           { model | datasets = datasets.datasets } ! []
         Err err ->
           model ! []
-    NewDatasetState dataset sourceBtns ->
-      { model | newDataset = dataset, sourceBtns = sourceBtns } ! []
+    NewDatasetState datasetCreatorModel ->
+      { model | datasetCreatorModel = datasetCreatorModel } ! []
     TrackDataset dataset ->
       let
         newDatasets = model.datasets ++ [dataset]
       in
-        { model | newDataset = initDataset
+        { model | datasetCreatorModel = initDatasetCreator
                 , datasets = newDatasets } ! [(trackDataset model dataset)]
 
 
@@ -217,74 +206,13 @@ connectionStatusDescription connectionStatus =
     ConnectionStatus.Disconnected ->
       "Disconnected"
 
-setTitle : Dataset -> SourceBtns -> String -> Msg
-setTitle dataset sourceBtns value =
-  NewDatasetState {dataset | title = value} sourceBtns
-
-setUrl : Dataset -> SourceBtns -> String -> Msg
-setUrl dataset sourceBtns value =
-  NewDatasetState {dataset | url = value} sourceBtns
-
-onTrackDataset : Dataset -> Msg
-onTrackDataset dataset =
-  TrackDataset dataset
-
-
-sourceBtn : SourceBtn -> Dataset -> Html Msg
-sourceBtn sbtn dataset =
-  Html.div
-    [ class "source-btn",
-      classList [("active", sbtn.selected)]
-    , onClick (
-      NewDatasetState {dataset | source = (Just sbtn.source)}
-        (List.map (\x -> if sbtn.id == x.id then {x | selected = not sbtn.selected} else x) initSourceBtns)
-      )
-    ]
-    [ text sbtn.name
-    ]
-
 view : Model -> Html Msg
 view model =
   Html.div []
     [ Html.p []
       [ text (connectionStatusDescription model.connectionStatus) ]
     , Html.h1 [] [text "Datasets"]
--- Create New Dataset
-    , Html.form [class "form"]
-      [
-        Html.div [class "container-fluid create-dataset"]
-        [ Html.div [class "row"] [Html.h2 [] [text "Create new dataset"]]
-        , Html.div [class "row"] [Html.h3 [] [text "Select source:"]]
-        , Html.div [class "row d-flex flex-wrap"]
-          (List.map (\x ->
-            Html.div [class "p-2"] [sourceBtn x model.newDataset]
-          ) model.sourceBtns)
-        , case model.newDataset.source of
-            Just (LocalFile s) -> Html.div [class "row"] [text "Source"]
-            Just (GDriveSource _) -> Html.text ""
-            Nothing -> Html.text ""
-        ]
-      , Html.div [class "form-group"]
-        [ Html.label [class "mr-sm-2"] [text "Title"]
-        , Html.input
-          [ type_ "text"
-          , for "title"
-          , class "form-control mb-2 mr-sm-2 mb-sm-0"
-          , value model.newDataset.title
-          , onInput <| setTitle model.newDataset model.sourceBtns] []
-        ]
-      , Html.div [class "form-group"]
-        [ Html.label [class "mr-sm-2"] [text "URL"]
-        , Html.input
-          [ type_ "text"
-          , for "url"
-          , class "form-control mb-2 mr-sm-2 mb-sm-0"
-          , value model.newDataset.url
-          , onInput <| setUrl model.newDataset model.sourceBtns] []
-        ]
-      , Html.button [type_ "button", class "btn btn-primary", onClick <| onTrackDataset model.newDataset] [text "Track"]
-      ]
-
+    , datasetCreatorView model.datasetCreatorModel
     , Html.hr [] []
     , Html.h2 [] [text "Tracked"]
     , Html.ul []
@@ -298,4 +226,90 @@ view model =
           ])]
         ) model.datasets
       )
+    ]
+
+-- Create Dataset Wizard
+
+type alias SourceOption
+  = { id : Int, source : Source, name : String, selected : Bool }
+
+type alias SourceOptions
+  = List SourceOption
+
+type alias DatasetCreatorModel
+  = {newDataset : Dataset, sourceOptions : SourceOptions}
+
+initSourceOptions : SourceOptions
+initSourceOptions =
+  [ SourceOption 1 (LocalFile {path = ""}) "Local File" False
+  , SourceOption 2 (GDriveSource 1) "Google Drive" False
+  ]
+
+initDatasetCreator : DatasetCreatorModel
+initDatasetCreator = {newDataset = initDataset, sourceOptions = initSourceOptions}
+
+sourceOption : DatasetCreatorModel -> SourceOption -> Html Msg
+sourceOption model option =
+  Html.div
+    [ class "source-btn",
+      classList [("active", option.selected)]
+    , onClick <| (selectSourceOption model option)
+    ]
+    [ text option.name
+    ]
+
+selectSourceOption : DatasetCreatorModel -> SourceOption -> Msg
+selectSourceOption ({newDataset, sourceOptions} as model) option =
+  NewDatasetState {model
+    | newDataset = { newDataset | source = Just option.source}
+    , sourceOptions = (List.map (\x -> if option.id == x.id then {x | selected = not option.selected} else x) initSourceOptions)
+    }
+
+setTitle : DatasetCreatorModel -> String -> Msg
+setTitle ({newDataset} as model) value =
+  NewDatasetState {model | newDataset = {newDataset | title = value}}
+
+setUrl : DatasetCreatorModel -> String -> Msg
+setUrl ({newDataset} as model) value =
+  NewDatasetState {model | newDataset = {newDataset | url = value}}
+
+createDataset : DatasetCreatorModel -> Msg
+createDataset model =
+  TrackDataset model.newDataset
+
+datasetCreatorView : DatasetCreatorModel -> Html Msg
+datasetCreatorView model =
+  Html.form [class "form"]
+    [
+      Html.div [class "container-fluid create-dataset"]
+      [ Html.div [class "row"] [Html.h2 [] [text "Create new dataset"]]
+      , Html.div [class "row"] [Html.h3 [] [text "Select source:"]]
+      , Html.div [class "row d-flex flex-wrap"]
+        (List.map (\option ->
+          Html.div [class "p-2"] [sourceOption model option]
+        ) model.sourceOptions)
+      , case model.newDataset.source of
+          Just (LocalFile s) -> Html.div [class "row"] [text "Source"]
+          Just (GDriveSource _) -> Html.text ""
+          Nothing -> Html.text ""
+      ]
+    , Html.div [class "form-group"]
+      [ Html.label [class "mr-sm-2"] [text "Title"]
+      , Html.input
+        [ type_ "text"
+        , for "title"
+        , class "form-control mb-2 mr-sm-2 mb-sm-0"
+        , value model.newDataset.title
+        , onInput <| setTitle model] []
+      ]
+    , Html.div [class "form-group"]
+      [ Html.label [class "mr-sm-2"] [text "URL"]
+      , Html.input
+        [ type_ "text"
+        , for "url"
+        , class "form-control mb-2 mr-sm-2 mb-sm-0"
+        , value model.newDataset.url
+        , onInput <| setUrl model] []
+      ]
+    , Html.button [type_ "button", class "btn btn-primary", onClick <| createDataset model] [text "Track"]
     ]
