@@ -1,6 +1,6 @@
 @import "bootstrap";
 
-/*.create-dataset {
+.create-dataset {
   .source-btn {
     background-color: #f5f5f5;
     padding: 2rem;
@@ -13,9 +13,9 @@
       cursor: pointer;
     }
 
-    .active {
+    &.active {
       background-color: darken(#f5f5f5, 10%);
       border: 1px solid #aaa;
     }
   }
-}*/
+}
