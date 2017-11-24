@@ -261,7 +261,7 @@ sourceOption model option =
 selectSourceOption : DatasetCreatorModel -> SourceOption -> Msg
 selectSourceOption ({newDataset, sourceOptions} as model) option =
   NewDatasetState {model
-    | newDataset = { newDataset | source = Just option.source}
+    | newDataset = { newDataset | source = (if not option.selected then (Just option.source) else Nothing)}
     , sourceOptions = (List.map (\x -> if option.id == x.id then {x | selected = not option.selected} else x) initSourceOptions)
     }
 
