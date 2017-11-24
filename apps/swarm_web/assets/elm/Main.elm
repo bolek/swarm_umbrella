@@ -29,11 +29,14 @@ main =
 -- MODEL
 
 type Source
-  = GDriveSource Int
+  = GDriveSource GDriveInfo
   | LocalFile LocalFileInfo
 
 type alias LocalFileInfo =
   { path : String }
+
+type alias GDriveInfo =
+  { file_id : Int }
 
 type alias Dataset =
   { title : String, url : String, source : Maybe Source }
@@ -70,7 +73,11 @@ init flags =
 
 gDriveSourceDecoder : Decoder Source
 gDriveSourceDecoder =
-  decode GDriveSource
+  JD.map GDriveSource gDriveInfoDecoder
+
+gDriveInfoDecoder : Decoder GDriveInfo
+gDriveInfoDecoder =
+  decode GDriveInfo
     |> required "file_id" JD.int
 
 localFileSourceDecoder : Decoder Source
@@ -242,7 +249,7 @@ type alias DatasetCreatorModel
 initSourceOptions : SourceOptions
 initSourceOptions =
   [ SourceOption 1 (LocalFile {path = ""}) "Local File" False
-  , SourceOption 2 (GDriveSource 1) "Google Drive" False
+  , SourceOption 2 (GDriveSource {file_id = 1}) "Google Drive" False
   ]
 
 initDatasetCreator : DatasetCreatorModel
