@@ -5,7 +5,7 @@ import Json.Encode as JE
 import Json.Decode.Pipeline exposing (decode, required, optional)
 
 import Html exposing(..)
-import Html.Attributes exposing(class, for, type_, value)
+import Html.Attributes exposing(class, classList, for, type_, value)
 import Html.Events exposing (onClick, onInput)
 
 --import Json.Encode as JE
@@ -29,11 +29,20 @@ main =
 -- MODEL
 
 type Source
-  = GDriveSource { file_id : Int }
-  | LocalFileSource { path : String }
+  = GDriveSource Int
+  | LocalFile LocalFileInfo
 
+type alias SourceBtn
+  = { id : Int, source : Source, name : String, selected : Bool }
 
-type alias Dataset = { title : String, url : String, source : Maybe Source }
+type alias SourceBtns
+  = List SourceBtn
+
+type alias LocalFileInfo =
+  { path : String }
+
+type alias Dataset =
+  { title : String, url : String, source : Maybe Source }
 
 type alias Datasets =
   { datasets : List Dataset }
@@ -45,14 +54,24 @@ type alias Model =
   { flags : Flags
   , connectionStatus : ConnectionStatus
   , newDataset : Dataset
-  , datasets : List Dataset }
+  , datasets : List Dataset
+  , sourceBtns : SourceBtns}
 
 initModel : Flags -> Model
 initModel flags =
   { connectionStatus = ConnectionStatus.Disconnected
   , flags = flags
-  , newDataset = Dataset "" "" Nothing
-  , datasets = [] }
+  , newDataset = initDataset
+  , datasets = []
+  , sourceBtns = initSourceBtns }
+
+initDataset : Dataset
+initDataset = Dataset "" "" Nothing
+
+initSourceBtns : SourceBtns
+initSourceBtns =
+  [ SourceBtn 1 (LocalFile {path = ""}) "Local File" False
+  , SourceBtn 2 (GDriveSource 1) "Google Drive" False]
 
 init : Flags -> ( Model, Cmd Msg )
 init flags =
@@ -67,19 +86,36 @@ gDriveSourceDecoder =
 
 localFileSourceDecoder : Decoder Source
 localFileSourceDecoder =
-  decode LocalFileSource
+  JD.map LocalFile localFileInfoDecoder
+
+localFileInfoDecoder : Decoder LocalFileInfo
+localFileInfoDecoder =
+  decode LocalFileInfo
     |> required "path" JD.string
 
 sourceDecoder : Decoder Source
 sourceDecoder =
-  JD.oneOf [gDriveSourceDecoder, localFileSourceDecoder]
+  JD.field "type" JD.string
+    |> JD.andThen sourceHelp
+
+sourceHelp : String -> Decoder Source
+sourceHelp type_ =
+  case type_ of
+    "LocalFile" ->
+      localFileSourceDecoder
+    "GDrive" ->
+      gDriveSourceDecoder
+    _ ->
+      JD.fail <|
+        "Trying to decode source, but type "
+        ++ type_ ++ " is not supported"
 
 datasetDecoder : Decoder Dataset
 datasetDecoder =
   decode Dataset
     |> required "title" JD.string
     |> required "url" (JD.map (Maybe.withDefault "") (JD.nullable JD.string))
-    |> optional "source" (JD.nullable sourceDecoder)
+    |> optional "source" (sourceDecoder |> JD.maybe) Nothing
 
 dataset : String -> Result String Dataset
 dataset jsonString =
@@ -108,7 +144,7 @@ type Msg
   = Connected
   | Disconnected
   | FetchedDatasets JD.Value
-  | NewDatasetState Dataset
+  | NewDatasetState Dataset SourceBtns
   | TrackDataset Dataset
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -124,13 +160,13 @@ update message model =
           { model | datasets = datasets.datasets } ! []
         Err err ->
           model ! []
-    NewDatasetState dataset ->
-      { model | newDataset = dataset } ! []
+    NewDatasetState dataset sourceBtns ->
+      { model | newDataset = dataset, sourceBtns = sourceBtns } ! []
     TrackDataset dataset ->
       let
         newDatasets = model.datasets ++ [dataset]
       in
-        { model | newDataset = Dataset "" ""
+        { model | newDataset = initDataset
                 , datasets = newDatasets } ! [(trackDataset model dataset)]
 
 
@@ -181,27 +217,30 @@ connectionStatusDescription connectionStatus =
     ConnectionStatus.Disconnected ->
       "Disconnected"
 
-setTitle : Dataset -> String -> Msg
-setTitle dataset value =
-  NewDatasetState {dataset | title = value}
+setTitle : Dataset -> SourceBtns -> String -> Msg
+setTitle dataset sourceBtns value =
+  NewDatasetState {dataset | title = value} sourceBtns
 
-setUrl : Dataset -> String -> Msg
-setUrl dataset value =
-  NewDatasetState {dataset | url = value}
+setUrl : Dataset -> SourceBtns -> String -> Msg
+setUrl dataset sourceBtns value =
+  NewDatasetState {dataset | url = value} sourceBtns
 
 onTrackDataset : Dataset -> Msg
 onTrackDataset dataset =
   TrackDataset dataset
 
 
--- Create dataset style
-
-sourceBtn : String -> Html msg
-sourceBtn name =
+sourceBtn : SourceBtn -> Dataset -> Html Msg
+sourceBtn sbtn dataset =
   Html.div
-    [ class "source-btn"
+    [ class "source-btn",
+      classList [("active", sbtn.selected)]
+    , onClick (
+      NewDatasetState {dataset | source = (Just sbtn.source)}
+        (List.map (\x -> if sbtn.id == x.id then {x | selected = not sbtn.selected} else x) initSourceBtns)
+      )
     ]
-    [ text name
+    [ text sbtn.name
     ]
 
 view : Model -> Html Msg
@@ -217,9 +256,13 @@ view model =
         [ Html.div [class "row"] [Html.h2 [] [text "Create new dataset"]]
         , Html.div [class "row"] [Html.h3 [] [text "Select source:"]]
         , Html.div [class "row d-flex flex-wrap"]
-          [ Html.div [class "p-2"] [sourceBtn "Local File"]
-          , Html.div [class "p-2"] [sourceBtn "Google Drive"]
-          ]
+          (List.map (\x ->
+            Html.div [class "p-2"] [sourceBtn x model.newDataset]
+          ) model.sourceBtns)
+        , case model.newDataset.source of
+            Just (LocalFile s) -> Html.div [class "row"] [text "Source"]
+            Just (GDriveSource _) -> Html.text ""
+            Nothing -> Html.text ""
         ]
       , Html.div [class "form-group"]
         [ Html.label [class "mr-sm-2"] [text "Title"]
@@ -228,7 +271,7 @@ view model =
           , for "title"
           , class "form-control mb-2 mr-sm-2 mb-sm-0"
           , value model.newDataset.title
-          , onInput <| setTitle model.newDataset] []
+          , onInput <| setTitle model.newDataset model.sourceBtns] []
         ]
       , Html.div [class "form-group"]
         [ Html.label [class "mr-sm-2"] [text "URL"]
@@ -237,7 +280,7 @@ view model =
           , for "url"
           , class "form-control mb-2 mr-sm-2 mb-sm-0"
           , value model.newDataset.url
-          , onInput <| setUrl model.newDataset] []
+          , onInput <| setUrl model.newDataset model.sourceBtns] []
         ]
       , Html.button [type_ "button", class "btn btn-primary", onClick <| onTrackDataset model.newDataset] [text "Track"]
       ]
@@ -247,7 +290,12 @@ view model =
     , Html.ul []
       (List.map (\dataset ->
         Html.li []
-          [text (String.join " " [dataset.title, dataset.url])]
+          [text (String.join " " [dataset.title, dataset.url,
+            case dataset.source of
+              Just (LocalFile l) -> "LocalFile, path: " ++ l.path
+              Just (GDriveSource _) -> "Google Drive"
+              Nothing -> "boom"
+          ])]
         ) model.datasets
       )
     ]
