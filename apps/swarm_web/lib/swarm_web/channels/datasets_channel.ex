@@ -20,14 +20,15 @@ defmodule SwarmWeb.DatasetsChannel do
   def handle_in("track", params, socket) do
     Logger.info "Handling track new dataset"
 
-    <<separator::utf8>> = params["msg"]["format"]["separator"]
     id = SwarmEngine.Util.UUID.generate
 
-    {:ok, pid } = SwarmEngine.DatasetSupervisor.activate_dataset(%{
+    IO.inspect(id)
+
+    {:ok, _} = SwarmEngine.DatasetSupervisor.activate_dataset(%{
       id: id,
       name: params["msg"]["title"],
       source: %SwarmEngine.Connectors.LocalFile{path: params["msg"]["source"]["path"]},
-      csv_params: [separator: separator]
+      decoder: SwarmEngine.Decoders.CSV.create [separator: params["msg"]["format"]["separator"]]
     })
 
     broadcast(socket, "datasets", %{datasets: [params["msg"]]})
