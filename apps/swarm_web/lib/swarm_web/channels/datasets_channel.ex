@@ -9,7 +9,7 @@ defmodule SwarmWeb.DatasetsChannel do
     Logger.info "Handling datasets..."
 
     payload =[
-      %{"title" => "Sample.csv", "url" => "google.com"},
+      %{"title" => "Sample.csv", "url" => "google.com", source: %{ type: "LocalFile", path: "abc"}},
       %{"title" => "Another.csv", "url" => nil}
     ]
 
@@ -20,7 +20,15 @@ defmodule SwarmWeb.DatasetsChannel do
   def handle_in("track", params, socket) do
     Logger.info "Handling track new dataset"
 
-    IO.inspect params
+    <<separator::utf8>> = params["msg"]["format"]["separator"]
+    id = SwarmEngine.Util.UUID.generate
+
+    {:ok, pid } = SwarmEngine.DatasetSupervisor.activate_dataset(%{
+      id: id,
+      name: params["msg"]["title"],
+      source: %SwarmEngine.Connectors.LocalFile{path: params["msg"]["source"]["path"]},
+      csv_params: [separator: separator]
+    })
 
     broadcast(socket, "datasets", %{datasets: [params["msg"]]})
 

@@ -28,6 +28,7 @@ main =
 
 -- MODEL
 
+-- Source types
 type Source
   = GDriveSource GDriveInfo
   | LocalFile LocalFileInfo
@@ -38,8 +39,18 @@ type alias LocalFileInfo =
 type alias GDriveInfo =
   { file_id : Int }
 
+-- Format types
+type Format
+  = CSVFormat CSVInfo
+
+type alias CSVInfo
+  = { separator : String }
+
 type alias Dataset =
-  { title : String, url : String, source : Maybe Source }
+  { title : String
+  , url : String
+  , source : Maybe Source
+  , format : Maybe Format }
 
 type alias Datasets =
   { datasets : List Dataset }
@@ -63,7 +74,7 @@ initModel flags =
   }
 
 initDataset : Dataset
-initDataset = Dataset "" "" Nothing
+initDataset = Dataset "" "" Nothing Nothing
 
 init : Flags -> ( Model, Cmd Msg )
 init flags =
@@ -106,12 +117,37 @@ sourceHelp type_ =
         "Trying to decode source, but type "
         ++ type_ ++ " is not supported"
 
+csvInfoDecoder : Decoder CSVInfo
+csvInfoDecoder
+  = decode CSVInfo
+    |> required "separator" JD.string
+
+csvFormatDecoder : Decoder Format
+csvFormatDecoder
+  = JD.map CSVFormat csvInfoDecoder
+
+formatDecoder : Decoder Format
+formatDecoder
+  = JD.field "format_type" JD.string
+    |> JD.andThen formatHelp
+
+formatHelp : String -> Decoder Format
+formatHelp type_ =
+  case type_ of
+    "CSV" ->
+      csvFormatDecoder
+    _ ->
+      JD.fail <|
+        "Trying to decode format, but type "
+        ++ type_ ++ " is not supported"
+
 datasetDecoder : Decoder Dataset
 datasetDecoder =
   decode Dataset
     |> required "title" JD.string
     |> required "url" (JD.map (Maybe.withDefault "") (JD.nullable JD.string))
     |> optional "source" (sourceDecoder |> JD.maybe) Nothing
+    |> optional "format" (formatDecoder |> JD.maybe) Nothing
 
 dataset : String -> Result String Dataset
 dataset jsonString =
@@ -132,6 +168,24 @@ encodeDataset dataset =
   JE.object
     [ ("title", JE.string dataset.title)
     , ("url", JE.string dataset.url)
+    , ("source", case dataset.source of
+        Just (LocalFile l) -> JE.object
+                              [ ("type", JE.string "LocalFile")
+                              , ("path", JE.string l.path)
+                              ]
+        Just (GDriveSource d) -> JE.object
+                              [ ("type", JE.string "GDrive")
+                              , ("file_id", JE.int d.file_id)
+                              ]
+        Nothing -> JE.null
+      )
+    , ("format", case dataset.format of
+        Just (CSVFormat f) -> JE.object
+                              [ ("type", JE.string "CSV")
+                              , ("separator", JE.string f.separator)
+                              ]
+        Nothing -> JE.null
+      )
     ]
 
 -- UPDATE
@@ -243,8 +297,22 @@ type alias SourceOption
 type alias SourceOptions
   = List SourceOption
 
+type alias FormatOption
+  = { id : Int, format : Format, name : String, selected : Bool}
+
+type alias FormatOptions
+  = List FormatOption
+
 type alias DatasetCreatorModel
-  = {newDataset : Dataset, sourceOptions : SourceOptions}
+  = { formatOptions : FormatOptions
+    , newDataset : Dataset
+    , sourceOptions : SourceOptions
+    }
+
+initFormatOptions : FormatOptions
+initFormatOptions =
+  [ FormatOption 1 (CSVFormat {separator = ","})"CSV" False
+  ]
 
 initSourceOptions : SourceOptions
 initSourceOptions =
@@ -253,7 +321,11 @@ initSourceOptions =
   ]
 
 initDatasetCreator : DatasetCreatorModel
-initDatasetCreator = {newDataset = initDataset, sourceOptions = initSourceOptions}
+initDatasetCreator
+  = { formatOptions = initFormatOptions
+    , newDataset = initDataset
+    , sourceOptions = initSourceOptions
+    }
 
 sourceOption : DatasetCreatorModel -> SourceOption -> Html Msg
 sourceOption model option =
@@ -265,11 +337,28 @@ sourceOption model option =
     [ text option.name
     ]
 
+formatOption : DatasetCreatorModel -> FormatOption -> Html Msg
+formatOption model format =
+  Html.div
+    [ class "source-btn",
+      classList [("active", format.selected)]
+    , onClick <| (selectFormatOption model format)
+    ]
+    [ text format.name
+    ]
+
 selectSourceOption : DatasetCreatorModel -> SourceOption -> Msg
 selectSourceOption ({newDataset, sourceOptions} as model) option =
   NewDatasetState {model
     | newDataset = { newDataset | source = (if not option.selected then (Just option.source) else Nothing)}
     , sourceOptions = (List.map (\x -> if option.id == x.id then {x | selected = not option.selected} else x) initSourceOptions)
+    }
+
+selectFormatOption : DatasetCreatorModel -> FormatOption -> Msg
+selectFormatOption ({newDataset, formatOptions} as model) option =
+  NewDatasetState {model
+    | newDataset = { newDataset | format = (if not option.selected then (Just option.format) else Nothing)}
+    , formatOptions = (List.map (\x -> if option.id == x.id then {x | selected = not option.selected} else x) initFormatOptions)
     }
 
 setTitle : DatasetCreatorModel -> String -> Msg
@@ -284,39 +373,72 @@ createDataset : DatasetCreatorModel -> Msg
 createDataset model =
   TrackDataset model.newDataset
 
+setLocalFilePath : DatasetCreatorModel -> LocalFileInfo -> String -> Msg
+setLocalFilePath ({newDataset} as model) source value =
+  NewDatasetState {model | newDataset = {newDataset | source = (Just (LocalFile { source | path = value}))}}
+
+setCSVFormatSeparator : DatasetCreatorModel -> CSVInfo -> String -> Msg
+setCSVFormatSeparator ({newDataset} as model) format value =
+  NewDatasetState {model | newDataset = {newDataset | format = (Just (CSVFormat { format | separator = value}))}}
+
 datasetCreatorView : DatasetCreatorModel -> Html Msg
 datasetCreatorView model =
   Html.form [class "form"]
     [
       Html.div [class "container-fluid create-dataset"]
       [ Html.div [class "row"] [Html.h2 [] [text "Create new dataset"]]
+      , Html.div [class "form-group"]
+        [ Html.label [class "mr-sm-2"] [text "Title"]
+        , Html.input
+          [ type_ "text"
+          , for "title"
+          , class "form-control mb-2 mr-sm-2 mb-sm-0"
+          , value model.newDataset.title
+          , onInput <| setTitle model] []
+        ]
       , Html.div [class "row"] [Html.h3 [] [text "Select source:"]]
       , Html.div [class "row d-flex flex-wrap"]
         (List.map (\option ->
           Html.div [class "p-2"] [sourceOption model option]
         ) model.sourceOptions)
       , case model.newDataset.source of
-          Just (LocalFile s) -> Html.div [class "row"] [text "Source"]
+          Just (LocalFile s) ->
+            Html.div [class "container-fluid"]
+            [ Html.div [class "row"] [Html.h3 [] [text "Configure:"]]
+            , Html.div [class "form-group"]
+              [ Html.label [] [text "Path"]
+              , Html.input
+                [ type_ "text"
+                , for "local_file_path"
+                , class "form-control"
+                , value s.path
+                , onInput <| setLocalFilePath model s
+                ] []
+              ]
+            , Html.div [class "row"] [Html.h3 [] [text "Data format:"]]
+            , Html.div [class "row d-flex flex-wrap"]
+              (List.map (\format ->
+                Html.div [class "p-2"] [formatOption model format]
+              ) model.formatOptions)
+            , case model.newDataset.format of
+                Just (CSVFormat f) ->
+                  Html.div [class "container-fluid"]
+                  [ Html.div [class "row"] [Html.h3 [] [text "Parameters:"]]
+                  , Html.div [class "form-group"]
+                    [ Html.label [] [text "separator"]
+                    , Html.input
+                      [ type_ "text"
+                      , for "format_csv_separator"
+                      , class "form-control"
+                      , value f.separator
+                      , onInput <| setCSVFormatSeparator model f
+                      ] []
+                    ]
+                  ]
+                Nothing -> Html.text ""
+            ]
           Just (GDriveSource _) -> Html.text ""
           Nothing -> Html.text ""
-      ]
-    , Html.div [class "form-group"]
-      [ Html.label [class "mr-sm-2"] [text "Title"]
-      , Html.input
-        [ type_ "text"
-        , for "title"
-        , class "form-control mb-2 mr-sm-2 mb-sm-0"
-        , value model.newDataset.title
-        , onInput <| setTitle model] []
-      ]
-    , Html.div [class "form-group"]
-      [ Html.label [class "mr-sm-2"] [text "URL"]
-      , Html.input
-        [ type_ "text"
-        , for "url"
-        , class "form-control mb-2 mr-sm-2 mb-sm-0"
-        , value model.newDataset.url
-        , onInput <| setUrl model] []
       ]
     , Html.button [type_ "button", class "btn btn-primary", onClick <| createDataset model] [text "Track"]
     ]
