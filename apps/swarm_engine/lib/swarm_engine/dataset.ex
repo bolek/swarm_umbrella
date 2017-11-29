@@ -17,7 +17,7 @@ defmodule SwarmEngine.Dataset do
   alias SwarmEngine.{Tracker}
   alias SwarmEngine.Connectors.LocalDir
 
-  defstruct [:name, :tracker, :columns, :dataset, :decoder]
+  defstruct [:name, :tracker, :columns, :store, :decoder]
 
   def create(name, source, decoder \\ Decoders.CSV.create()) do
     tracker = source
@@ -26,18 +26,18 @@ defmodule SwarmEngine.Dataset do
 
     cols = columns(tracker, decoder)
 
-    dataset = %DatasetStore{
+    store = %DatasetStore{
       name: name |> String.downcase() |> String.replace(~r/\s+/, "_"),
       columns: cols
     }
 
-    DatasetStore.create(dataset)
+    DatasetStore.create(store)
 
     %Dataset{
       name: name,
       tracker: tracker,
       columns: columns_mapset(cols),
-      dataset: dataset,
+      store: store,
       decoder: decoder
     }
   end
@@ -82,13 +82,13 @@ defmodule SwarmEngine.Dataset do
     _load(csv, resource)
   end
 
-  defp _load(%Dataset{dataset: dataset, decoder: decoder}, resource) do
+  defp _load(%Dataset{store: store, decoder: decoder}, resource) do
     version = resource.modified_at
     stream = Decoder.decode!(resource.source, decoder) |> Stream.map(fn(row) ->
-      Enum.map(dataset.columns, &(row[&1.original]))
+      Enum.map(store.columns, &(row[&1.original]))
     end)
 
-    DatasetStore.insert_stream(dataset, stream, version)
+    DatasetStore.insert_stream(store, stream, version)
   end
 
   defp columns_mapset(columns) do
