@@ -1,133 +1,106 @@
-require IEx
-
 defmodule SwarmEngine.Dataset do
-  alias Ecto.Adapters.SQL
-  alias SwarmEngine.{Dataset, DataVault}
+  use GenServer, start: {__MODULE__, :start_link, []}, restart: :transient
 
-  import Ecto.Query
+  alias SwarmEngine.{DatasetStore, Decoder, Decoders}
 
-  @enforce_keys [:name, :columns]
-  defstruct [:name, :columns]
-
-  def create(%Dataset{} = dataset) do
-    case create_table(dataset) do
-      {:ok, _} -> :ok
-      {:error, %Postgrex.Error{postgres: %{code: :duplicate_table}}} -> :ok
-    end
+  def start_link(%{id: id} = params) do
+    GenServer.start_link(__MODULE__, params, name: via_tuple(id))
   end
 
-  def insert(%Dataset{} = dataset, data, version \\ DateTime.utc_now) do
-    insert_stream(dataset, data, version)
+  def init(%{name: name, source: source, decoder: decoder}) do
+    {:ok, create(name, source, decoder)}
   end
 
-  def insert_stream(%Dataset{name: name, columns: columns}, stream, version \\ DateTime.utc_now) do
-    with column_names <- [:swarm_id | Enum.map(columns, &(&1.name))],
-      insert_opts <- [{:on_conflict, :nothing}, {:conflict_target, [:swarm_id]}],
-      {:ok, :ok} <- DataVault.transaction(fn ->
-        from("#{name}_v", where: [version: ^version])
-        |> DataVault.delete_all()
+  def via_tuple(id), do: {:via, Registry, {Registry.Dataset, id}}
 
-        stream
-        |> Stream.map(&([generate_hash(&1) | &1]))
-        |> Stream.map(&(Enum.zip(column_names, &1)))
-        |> Stream.chunk_every(500)
-        |> Stream.map(fn rows ->
-            DataVault.insert_all(name, rows, insert_opts)
-            rows
-          end)
-        |> Stream.map(fn rows -> Enum.map(rows, &([List.first(&1), version: version])) end)
-        |> Stream.map(fn rows -> DataVault.insert_all(name <> "_v", rows) end)
-        |> Stream.run
-      end)
+  alias __MODULE__
+  alias SwarmEngine.{Tracker}
+  alias SwarmEngine.Connectors.LocalDir
+
+  defstruct [:name, :tracker, :columns, :dataset, :decoder]
+
+  def create(name, source, decoder \\ Decoders.CSV.create()) do
+    tracker = source
+    |> Tracker.create(%LocalDir{path: "/tmp/swarm_engine_store/"})
+    |> Tracker.sync()
+
+    cols = columns(tracker, decoder)
+
+    dataset = %DatasetStore{
+      name: name |> String.downcase() |> String.replace(~r/\s+/, "_"),
+      columns: cols
+    }
+
+    DatasetStore.create(dataset)
+
+    %Dataset{
+      name: name,
+      tracker: tracker,
+      columns: columns_mapset(cols),
+      dataset: dataset,
+      decoder: decoder
+    }
+  end
+
+  def stream(%Dataset{tracker: tracker, decoder: decoder}, version) do
+    with {:ok, resource} <- Tracker.find(tracker, %{version: version}),
+      source <- resource.source
     do
-      :ok
+      source
+      |> Decoder.decode!(decoder)
     else
+      {:error, reason} -> {:error, reason}
       any -> {:error, any}
     end
   end
 
-  def exists?(%Dataset{name: name}) do
-    case SQL.query(DataVault, """
-      SELECT EXISTS (
-        SELECT 1
-        FROM   pg_catalog.pg_class c
-        JOIN   pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-        WHERE  n.nspname = 'public'
-        AND    c.relname = '#{name}'
-      );
-      """) do
-      {:ok, %Postgrex.Result{rows: [[true]]}} -> true
-      {:ok, %Postgrex.Result{rows: [[false]]}} -> false
+  def stream(%Dataset{tracker: tracker, decoder: decoder}) do
+    tracker
+    |> Tracker.current()
+    |> Map.get(:source)
+    |> Decoder.decode!(decoder)
+  end
+
+  def sync(%Dataset{tracker: tracker, columns: columns, decoder: decoder} = dataset) do
+    tracker = Tracker.sync(tracker)
+    new_columns = columns_mapset(columns(tracker, decoder))
+
+    case MapSet.disjoint?(columns, new_columns) do
+      true -> {:error, "no common columns"}
+      false -> {:ok, %{dataset | tracker: tracker}}
     end
   end
 
-  def columns(%Dataset{} = dataset) do
-    with true <- Dataset.exists?(dataset),
-      {:ok, result} <- query_columns(dataset),
-      columns <- parse_columns(result.rows)
-    do
-      {:ok, columns}
-    else
-      false -> {:error, :dataset_without_table}
-    end
+  def load(%Dataset{tracker: tracker} = csv) do
+    resource = Tracker.current(tracker)
+    _load(csv, resource)
   end
 
-  def versions(%Dataset{name: name}) do
-    query = from(v in "#{name}_v",
-      distinct: [desc: v.version],
-      select: type(v.version, :utc_datetime),
-      order_by: [desc: v.version])
+  def load(%Dataset{tracker: tracker} = csv, version) do
+    resource = Tracker.find(tracker, %{version: version})
 
-    DataVault.all(query)
+    _load(csv, resource)
   end
 
-  defp generate_hash(list) do
-    :crypto.hash(:md5 , Enum.join(list, ""))
+  defp _load(%Dataset{dataset: dataset, decoder: decoder}, resource) do
+    version = resource.modified_at
+    stream = Decoder.decode!(resource.source, decoder) |> Stream.map(fn(row) ->
+      Enum.map(dataset.columns, &(row[&1.original]))
+    end)
+
+    DatasetStore.insert_stream(dataset, stream, version)
   end
 
-  defp create_table(%Dataset{name: name, columns: columns}) do
-    SQL.query(DataVault, """
-      CREATE TABLE #{name} (
-        swarm_id uuid,
-        #{to_sql_columns(columns)},
-        PRIMARY KEY(swarm_id)
-      );
-    """)
-
-    SQL.query(DataVault, """
-      CREATE TABLE #{name}_v (
-        swarm_id uuid NOT NULL REFERENCES #{name} (swarm_id),
-        version timestamptz NOT NULL,
-        loaded_at timestamptz NOT NULL DEFAULT NOW()
-      );
-    """)
-  end
-
-  defp query_columns(%Dataset{name: name}) do
-    SQL.query(DataVault, """
-      SELECT
-        a.attnum AS col_order,
-        a.attname AS col_name,
-        pg_catalog.format_type(a.atttypid, a.atttypmod) AS col_type
-      FROM pg_catalog.pg_class c
-        LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-        INNER JOIN pg_catalog.pg_attribute a ON a.attrelid = c.oid
-      WHERE a.attnum > 0
-        AND NOT a.attisdropped
-        AND c.relname = '#{name}'
-        AND n.nspname ~ 'public'
-      ORDER BY a.attnum
-    """)
-  end
-
-  defp parse_columns(raw_columns) do
-    raw_columns
-    |> Enum.map(fn [order, name, type] -> %{order: order, name: name, type: type} end)
-  end
-
-  defp to_sql_columns(columns) do
+  defp columns_mapset(columns) do
     columns
-      |> Enum.map(&("#{&1.name} #{&1.type}"))
-      |> Enum.join(",")
+    |> Enum.map(&(Map.get(&1, :original)))
+    |> MapSet.new
+  end
+
+  defp columns(%Tracker{} = tracker, decoder) do
+    tracker
+      |> Tracker.current()
+      |> Map.get(:source)
+      |> Decoder.columns(decoder)
   end
 end
