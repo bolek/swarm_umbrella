@@ -3,27 +3,31 @@ defmodule SwarmEngine.Decoders.CSV do
   alias SwarmEngine.Decoders.CSV
   alias SwarmEngine.{Connector, Util}
 
-  @default_options [headers: true, separator: ",", delimiter: "\n"]
-
   @type t :: %CSV{
-    options: keyword
+    headers: Boolean.t,
+    separator: String.t,
+    delimiter: String.t
   }
+  defstruct [:headers, :separator, :delimiter]
 
-  defstruct [:options]
-
-  @spec create(Keyword) :: CSV.t
-  def create(options \\ []), do: %CSV{options: init_options(options)}
+  @spec create(Keyword.t) :: CSV.t
+  def create(options \\ []) do
+    %CSV{
+      headers: Keyword.get(options, :headers, true),
+      separator: Keyword.get(options, :separator, ","),
+      delimiter: Keyword.get(options, :delimiter, "\n")
+    }
+  end
 
   @spec columns(Connector.t, CSV.t) :: Map
-  def columns(source, %CSV{options: opts}) do
+  def columns(source, %CSV{delimiter: delimiter} = opts) do
     opts = column_options(opts)
-    delimiter = Keyword.get(opts, :delimiter, "\n")
 
     source
     |> Connector.request()
     |> Stream.take(1)
     |> Enum.map(&(:binary.split(&1, delimiter) |> List.first))
-    |> Util.CSV.decode!(opts)
+    |> Util.CSV.decode!(Map.to_list(opts))
     |> Enum.to_list()
     |> List.first()
     |> Enum.map(fn c ->
@@ -36,7 +40,7 @@ defmodule SwarmEngine.Decoders.CSV do
   end
 
   @spec decode!(Connector.t, CSV.t) :: Enumerable.t
-  def decode!(source, %CSV{options: opts}) do
+  def decode!(source, %CSV{} = opts) do
     tmp_file_path = "/tmp/#{Util.UUID.generate}"
 
     source
@@ -45,12 +49,9 @@ defmodule SwarmEngine.Decoders.CSV do
     |> Stream.run
 
     File.stream!(tmp_file_path)
-    |> Util.CSV.decode!(opts)
+    |> Util.CSV.decode!(Map.to_list(opts))
   end
 
-  defp column_options(opts) do
-    Keyword.merge(opts, [headers: false])
-  end
-
-  defp init_options(options), do: Keyword.merge(@default_options(), options)
+  defp column_options(opts), do: opts
+    |> Map.replace(:headers, false)
 end
