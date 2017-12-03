@@ -20,9 +20,9 @@ defmodule SwarmWeb.UserControllerTest do
   describe "index" do
     setup [:sign_in]
 
-    test "lists all users", %{conn: conn} do
+    test "lists all users", %{conn: conn, user: user} do
       conn = get conn, user_path(conn, :index)
-      assert json_response(conn, 200)["data"] == []
+      assert json_response(conn, 200)["data"] == [%{"id" => user.id, "name" => user.name}]
     end
   end
 

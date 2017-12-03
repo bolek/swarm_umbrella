@@ -1,4 +1,21 @@
+$blue: #0284A8;
+
 @import "bootstrap";
+@import url("https://fonts.googleapis.com/css?family=Raleway:300");
+
+body {
+  margin: 0px;
+  font-family: 'Raleway', sans-serif;
+}
+
+.navbar {
+  border-bottom: 1px solid #E1F7E7;
+  margin-bottom: 1rem;
+
+  a.logout {
+    font-size: 0.8rem;
+  }
+}
 
 .form-signin {
   padding-top: 2rem;

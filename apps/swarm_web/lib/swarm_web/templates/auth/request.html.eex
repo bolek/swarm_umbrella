@@ -1,7 +1,7 @@
 <div class="container">
   <%= form_tag @callback_url, method: "post", class: "form-signin" do %>
     <div class='form-group'>
-      <h2>Sign in</h2>
+      <h1>Sign in</h1>
       <label for='email-input' class="sr-only">Email</label>
       <input class='form-control'
         placeholder="email"

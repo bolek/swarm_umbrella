@@ -26,14 +26,17 @@ defmodule SwarmWeb.ConnCase do
 
       def sign_in(%{conn: conn} = context) do
         context = case context[:user] do
-          nil -> put_in(context[:user], %{id: 123})
+          nil ->
+            {:ok, user } = Swarm.Accounts.create_user(%{name: "Johnny"})
+            put_in(context[:user], user)
           _ -> context
         end
 
         conn = conn
         |> Plug.Test.init_test_session(current_user: context.user.id)
 
-        put_in(context[:conn], conn)
+        context[:conn]
+        |> put_in(conn)
       end
     end
   end

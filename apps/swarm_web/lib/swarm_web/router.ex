@@ -49,6 +49,7 @@ defmodule SwarmWeb.Router do
               |> redirect(to: Helpers.auth_path(conn, :request, :identity, %{}))
               |> halt()
       _ -> conn
+            |> assign(:current_user, SwarmWeb.Session.current_user(conn))
     end
   end
 end

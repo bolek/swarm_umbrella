@@ -270,9 +270,7 @@ connectionStatusDescription connectionStatus =
 view : Model -> Html Msg
 view model =
   Html.div []
-    [ Html.p []
-      [ text (connectionStatusDescription model.connectionStatus) ]
-    , Html.h1 [] [text "Datasets"]
+    [ Html.h1 [] [text "Datasets"]
     , datasetCreatorView model.datasetCreatorModel
     , Html.hr [] []
     , Html.h2 [] [text "Tracked"]
