@@ -328,7 +328,7 @@ initDatasetCreator
 sourceOption : DatasetCreatorModel -> SourceOption -> Html Msg
 sourceOption model option =
   Html.div
-    [ class "source-btn",
+    [ class "option",
       classList [("active", option.selected)]
     , onClick <| (selectSourceOption model option)
     ]
@@ -338,7 +338,7 @@ sourceOption model option =
 formatOption : DatasetCreatorModel -> FormatOption -> Html Msg
 formatOption model format =
   Html.div
-    [ class "source-btn",
+    [ class "option",
       classList [("active", format.selected)]
     , onClick <| (selectFormatOption model format)
     ]
@@ -381,53 +381,48 @@ setCSVFormatSeparator ({newDataset} as model) format value =
 
 datasetCreatorView : DatasetCreatorModel -> Html Msg
 datasetCreatorView model =
-  Html.form [class "form"]
-    [
-      Html.div [class "container-fluid create-dataset"]
-      [ Html.div [class "row"] [Html.h2 [] [text "Create new dataset"]]
-      , Html.div [class "form-group"]
-        [ Html.label [class "mr-sm-2"] [text "Title"]
-        , Html.input
-          [ type_ "text"
-          , for "title"
-          , class "form-control mb-2 mr-sm-2 mb-sm-0"
-          , value model.newDataset.title
-          , onInput <| setTitle model] []
-        ]
-      , Html.div [class "row"] [Html.h3 [] [text "Select source:"]]
-      , Html.div [class "row d-flex flex-wrap"]
-        (List.map (\option ->
-          Html.div [class "p-2"] [sourceOption model option]
-        ) model.sourceOptions)
-      , case model.newDataset.source of
-          Just (LocalFile s) ->
-            Html.div [class "container-fluid"]
-            [ Html.div [class "row"] [Html.h3 [] [text "Configure:"]]
+  Html.form [class "dataset-create"]
+    [ Html.h2 [] [text "Create new dataset"]
+    , Html.div [class "form-group"]
+      [ Html.label [] [text "Title"]
+      , Html.input
+        [ type_ "text"
+        , for "title"
+        , value model.newDataset.title
+        , onInput <| setTitle model] []
+      ]
+    , Html.h3 [] [text "Select source:"]
+    , Html.div [class "options"]
+      (List.map (\option ->
+        sourceOption model option
+      ) model.sourceOptions)
+    , case model.newDataset.source of
+        Just (LocalFile s) ->
+          Html.div []
+            [ Html.h3 [] [text "Configure:"]
             , Html.div [class "form-group"]
               [ Html.label [] [text "Path"]
               , Html.input
                 [ type_ "text"
                 , for "local_file_path"
-                , class "form-control"
                 , value s.path
                 , onInput <| setLocalFilePath model s
                 ] []
               ]
-            , Html.div [class "row"] [Html.h3 [] [text "Data format:"]]
-            , Html.div [class "row d-flex flex-wrap"]
+            , Html.h3 [] [text "Data format:"]
+            , Html.div [class "options"]
               (List.map (\format ->
-                Html.div [class "p-2"] [formatOption model format]
+                formatOption model format
               ) model.formatOptions)
             , case model.newDataset.format of
                 Just (CSVFormat f) ->
-                  Html.div [class "container-fluid"]
-                  [ Html.div [class "row"] [Html.h3 [] [text "Parameters:"]]
+                  Html.div []
+                  [ Html.h3 [] [text "Parameters:"]
                   , Html.div [class "form-group"]
                     [ Html.label [] [text "separator"]
                     , Html.input
                       [ type_ "text"
                       , for "format_csv_separator"
-                      , class "form-control"
                       , value f.separator
                       , onInput <| setCSVFormatSeparator model f
                       ] []
@@ -435,8 +430,7 @@ datasetCreatorView model =
                   ]
                 Nothing -> Html.text ""
             ]
-          Just (GDriveSource _) -> Html.text ""
-          Nothing -> Html.text ""
-      ]
+        Just (GDriveSource _) -> Html.text ""
+        Nothing -> Html.text ""
     , Html.button [type_ "button", class "btn btn-primary", onClick <| createDataset model] [text "Track"]
     ]

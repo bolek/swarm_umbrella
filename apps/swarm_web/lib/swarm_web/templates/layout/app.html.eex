@@ -12,22 +12,26 @@
   </head>
 
   <body>
-    <nav class="navbar navbar-expand-lg navbar-light">
-      <a class="navbar-brand mr-auto" href="#">Swarm</a>
+    <div class="header">
+      <a class="brand" href="#">Swarm</a>
+
       <%= if assigns[:current_user] do %>
         <%= link "Logout (#{@current_user.name})", to: auth_path(@conn, :delete), method: :delete, class: "logout" %>
       <% end %>
-    </nav>
-    <div class="container-fluid">
-      <%= if get_flash(@conn, :info) do %>
-        <p class="alert alert-info" role="alert"><%= get_flash(@conn, :info) %></p>
-      <% end %>
-      <%= if get_flash(@conn, :error) do %>
-        <p class="alert alert-danger" role="alert"><%= get_flash(@conn, :error) %></p>
-      <% end %>
-      <%= render @view_module, @view_template, assigns %>
 
     </div>
+    <div class="content">
+      <div class="container-fluid">
+        <%= if get_flash(@conn, :info) do %>
+          <p class="alert alert-info" role="alert"><%= get_flash(@conn, :info) %></p>
+        <% end %>
+        <%= if get_flash(@conn, :error) do %>
+          <p class="alert alert-danger" role="alert"><%= get_flash(@conn, :error) %></p>
+        <% end %>
+      </div>
+      <%= render @view_module, @view_template, assigns %>
+    </div>
+
     <script src="<%= static_path(@conn, "/js/app.js") %>"></script>
   </body>
 </html>

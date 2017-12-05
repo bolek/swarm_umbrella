@@ -1,53 +1,182 @@
 $blue: #0284A8;
 
-@import "bootstrap";
+@import "node_modules/bootstrap/scss/bootstrap-reboot";
+// @import "bootstrap";
 @import url("https://fonts.googleapis.com/css?family=Raleway:300");
+
+$brand: #02547D;
+$primary: #0284A8;
+$primary-medium: #02BEC4;
+$primary-light: #A9E8DC;
+$primary-super-light: #E1F7E7;
+
+$text-color: #212529;
+
+$link-color: #adb5bd;
+$link-hover-color: $primary;
+
+@mixin sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  border: 0;
+}
+
+@mixin no-select {
+  -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome and Opera */
+}
 
 body {
   margin: 0px;
+  display: grid;
+  grid-template-columns: 1rem auto 1rem;
+
   font-family: 'Raleway', sans-serif;
 }
 
-.navbar {
-  border-bottom: 1px solid #E1F7E7;
-  margin-bottom: 1rem;
+h1, h2, h3 {
+  font-weight: 100;
+  color: $primary;
+}
 
-  a.logout {
+a {
+  color: $link-color;
+  text-decoration: none;
+
+  &:hover {
+    color: $link-hover-color;
+    font-weight: bold;
+  }
+}
+
+input {
+    width: 100%;
+    padding: 0.5rem 1rem;
+    margin: 8px 0;
+    box-sizing: border-box;
+}
+
+button {
+  @include no-select;
+  padding: 0.5rem 1rem;
+  text-align: center;
+
+  &:hover {
+    background-color: #e9ecef;
+  }
+}
+
+button[type='submit'] {
+  border: 1px solid $primary;
+
+  &:hover {
+    background-color: $primary;
+    color: #fff;
+  }
+}
+
+.header {
+  display: inline-grid;
+  grid-column: span 3;
+  grid-template-columns: 1rem 1fr 1fr 1rem;
+
+  height: 3rem;
+  margin-bottom: 0.5rem;
+
+  border-bottom: 1px solid $primary-super-light;
+
+  .brand {
+    align-self: end;
+    color: $brand;
+    font-size: 1.5rem;
+    line-height: 1.5;
+    grid-column-start: 2;
+    text-decoration: none;
+
+    &:hover {
+      color: $brand;
+      font-weight: 100;
+      text-decoration: none;
+    }
+  }
+
+  .logout {
+    grid-column-start: 3;
+    justify-self: end;
+    align-self: end;
+    padding-bottom: 0.35rem;
     font-size: 0.8rem;
   }
 }
 
-.form-signin {
-  padding-top: 2rem;
+.content {
+  grid-column-start: 2;
+}
 
-  h2 {
+.form-signin {
+  margin: 0 auto;
+  max-width: 500px;
+
+  h1 {
     text-align: center;
   }
 
-  max-width: 350px;
-  margin: 0 auto;
+  label {
+    @include sr-only;
+  }
 
-  .btn {
+  button {
     width: 100%;
   }
 }
 
-.create-dataset {
-  .source-btn {
-    background-color: #f5f5f5;
-    padding: 1rem;
-    font-size: 2rem;
-    border: 1px solid #f5f5f5;
+.dataset-create {
+  .form-group {
+    width: 100%;
+    display: inline-grid;
+    grid-template-columns: 10rem auto;
 
-    &:hover {
-      background-color: darken(#f5f5f5, 10%);
-      border: 1px solid #aaa;
-      cursor: pointer;
+    label {
+      align-self: center;
+      justify-self: end;
+      padding-right: 1rem;
+      margin: 0;
+      text-transform: lowercase;
     }
+  }
+}
+
+.options {
+  width: 100%;
+  display: inline-grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-column-gap: 3px;
+  grid-row-gap: 3px;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+
+  .option {
+    padding: 0.5rem;
+    border: 1px solid #e9ecef;
+    text-align: center;
 
     &.active {
-      background-color: darken(#f5f5f5, 10%);
-      border: 1px solid #aaa;
+      background-color: $primary-light;
+    }
+
+    &:hover {
+      background-color: $primary-light;
     }
   }
 }
