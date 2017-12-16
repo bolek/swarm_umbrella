@@ -12,7 +12,7 @@ defmodule SwarmWeb.DatasetView do
 
   def render("dataset.json", %{dataset: dataset}) do
     %{id: dataset.id,
-      name: dataset.name,
-      url: dataset.url}
+      name: dataset.name
+    }
   end
 end

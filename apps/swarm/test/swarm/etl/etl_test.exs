@@ -6,9 +6,9 @@ defmodule Swarm.EtlTest do
   describe "datasets" do
     alias Swarm.Etl.Dataset
 
-    @valid_attrs %{name: "some name", url: "some url"}
-    @update_attrs %{name: "some updated name", url: "some updated url"}
-    @invalid_attrs %{name: nil, url: nil}
+    @valid_attrs %{name: "some name", decoder: %{}, store: %{}, tracker: %{}}
+    @update_attrs %{name: "some updated name", decoder: %{a: 1}, store: %{b: 2}, tracker: %{c: 3}}
+    @invalid_attrs %{name: nil, decoder: nil, store: nil, tracker: nil}
 
     def dataset_fixture(attrs \\ %{}) do
       {:ok, dataset} =
@@ -32,7 +32,9 @@ defmodule Swarm.EtlTest do
     test "create_dataset/1 with valid data creates a dataset" do
       assert {:ok, %Dataset{} = dataset} = Etl.create_dataset(@valid_attrs)
       assert dataset.name == "some name"
-      assert dataset.url == "some url"
+      assert dataset.decoder == %{}
+      assert dataset.store == %{}
+      assert dataset.tracker == %{}
     end
 
     test "create_dataset/1 with invalid data returns error changeset" do
@@ -44,7 +46,9 @@ defmodule Swarm.EtlTest do
       assert {:ok, dataset} = Etl.update_dataset(dataset, @update_attrs)
       assert %Dataset{} = dataset
       assert dataset.name == "some updated name"
-      assert dataset.url == "some updated url"
+      assert dataset.decoder == %{a: 1}
+      assert dataset.store == %{b: 2}
+      assert dataset.tracker == %{c: 3}
     end
 
     test "update_dataset/2 with invalid data returns error changeset" do

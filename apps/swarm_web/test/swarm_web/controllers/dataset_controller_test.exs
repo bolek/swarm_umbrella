@@ -4,9 +4,9 @@ defmodule SwarmWeb.DatasetControllerTest do
   alias Swarm.Etl
   alias Swarm.Etl.Dataset
 
-  @create_attrs %{name: "some name", url: "some url"}
-  @update_attrs %{name: "some updated name", url: "some updated url"}
-  @invalid_attrs %{name: nil, url: nil}
+  @create_attrs %{name: "some name", tracker: %{}, decoder: %{}, store: %{}}
+  @update_attrs %{name: "some updated name"}
+  @invalid_attrs %{name: nil}
 
   def fixture(:dataset) do
     {:ok, dataset} = Etl.create_dataset(@create_attrs)
@@ -36,8 +36,7 @@ defmodule SwarmWeb.DatasetControllerTest do
       conn = get conn, dataset_path(conn, :show, id)
       assert json_response(conn, 200)["data"] == %{
         "id" => id,
-        "name" => "some name",
-        "url" => "some url"}
+        "name" => "some name"}
     end
 
     test "renders errors when data is invalid", %{conn: conn} do
@@ -57,7 +56,7 @@ defmodule SwarmWeb.DatasetControllerTest do
       assert json_response(conn, 200)["data"] == %{
         "id" => id,
         "name" => "some updated name",
-        "url" => "some updated url"}
+      }
     end
 
     test "renders errors when data is invalid", %{conn: conn, dataset: dataset} do

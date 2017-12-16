@@ -6,15 +6,16 @@ defmodule Swarm.Etl.Dataset do
 
   schema "datasets" do
     field :name, :string
-    field :url, :string
-
+    field :decoder, :map
+    field :store, :map
+    field :tracker, :map
     timestamps()
   end
 
   @doc false
   def changeset(%Dataset{} = dataset, attrs) do
     dataset
-    |> cast(attrs, [:name, :url])
-    |> validate_required([:name, :url])
+    |> cast(attrs, [:name, :decoder, :store, :tracker])
+    |> validate_required([:name, :decoder, :store, :tracker])
   end
 end
