@@ -14,9 +14,4 @@ defmodule SwarmWeb.PageControllerTest do
       assert redirected_to(conn) =~ "/auth/identity"
     end
   end
-
-  defp create_user(context) do
-    context
-    |> put_in([:user], fixture(:user))
-  end
 end
