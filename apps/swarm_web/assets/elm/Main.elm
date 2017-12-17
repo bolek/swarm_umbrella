@@ -1,5 +1,6 @@
 module Main exposing(..)
 
+import Data.Dataset as Dataset exposing (Dataset)
 import Data.Decoder
 import Data.Source
 
@@ -31,12 +32,6 @@ main =
 
 -- MODEL
 
-type alias Dataset =
-  { name : String
-  , url : String
-  , source : Maybe Data.Source.Source
-  , decoder : Maybe Data.Decoder.Decoder }
-
 type alias Datasets =
   { datasets : List Dataset }
 
@@ -65,25 +60,15 @@ init : Flags -> ( Model, Cmd Msg )
 init flags =
   (initModel flags, Cmd.none)
 
--- decoders
-
-datasetDecoder : Decoder Dataset
-datasetDecoder =
-  decode Dataset
-    |> required "name" JD.string
-    |> required "url" (JD.map (Maybe.withDefault "") (JD.nullable JD.string))
-    |> optional "source" (Data.Source.decoder |> JD.maybe) Nothing
-    |> optional "decoder" (Data.Decoder.decoder |> JD.maybe) Nothing
-
 dataset : String -> Result String Dataset
 dataset jsonString =
-  JD.decodeString datasetDecoder jsonString
+  JD.decodeString Dataset.decoder jsonString
 
 datasetsDecoder : Decoder Datasets
 datasetsDecoder =
   decode
     Datasets
-    |> required "datasets" (JD.list datasetDecoder)
+    |> required "datasets" (JD.list Dataset.decoder)
 
 datasets : String -> Result String Datasets
 datasets jsonString =
