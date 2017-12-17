@@ -67,47 +67,12 @@ init flags =
 
 -- decoders
 
-gDriveSourceDecoder : Decoder Data.Source.Source
-gDriveSourceDecoder =
-  JD.map Data.Source.GDriveSource gDriveInfoDecoder
-
-gDriveInfoDecoder : Decoder Data.Source.GDriveInfo
-gDriveInfoDecoder =
-  decode Data.Source.GDriveInfo
-    |> required "file_id" JD.int
-
-localFileSourceDecoder : Decoder Data.Source.Source
-localFileSourceDecoder =
-  JD.map Data.Source.LocalFile localFileInfoDecoder
-
-localFileInfoDecoder : Decoder Data.Source.LocalFileInfo
-localFileInfoDecoder =
-  decode Data.Source.LocalFileInfo
-    |> required "path" JD.string
-
-sourceDecoder : Decoder Data.Source.Source
-sourceDecoder =
-  JD.field "type" JD.string
-    |> JD.andThen sourceHelp
-
-sourceHelp : String -> Decoder Data.Source.Source
-sourceHelp type_ =
-  case type_ of
-    "LocalFile" ->
-      localFileSourceDecoder
-    "GDrive" ->
-      gDriveSourceDecoder
-    _ ->
-      JD.fail <|
-        "Trying to decode source, but type "
-        ++ type_ ++ " is not supported"
-
 datasetDecoder : Decoder Dataset
 datasetDecoder =
   decode Dataset
     |> required "name" JD.string
     |> required "url" (JD.map (Maybe.withDefault "") (JD.nullable JD.string))
-    |> optional "source" (sourceDecoder |> JD.maybe) Nothing
+    |> optional "source" (Data.Source.sourceDecoder |> JD.maybe) Nothing
     |> optional "decoder" (Data.Decoder.decoder |> JD.maybe) Nothing
 
 dataset : String -> Result String Dataset
