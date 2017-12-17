@@ -3,6 +3,7 @@ defmodule Swarm.Etl.Dataset do
   import Ecto.Changeset
   alias Swarm.Etl.Dataset
 
+  @derive {Poison.Encoder, only: [:name, :decoder, :store, :tracker]}
 
   schema "datasets" do
     field :name, :string

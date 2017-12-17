@@ -39,6 +39,7 @@ defmodule Swarm.Mixfile do
       {:argon2_elixir, "~> 1.2"},
       {:comeonin, "~> 4.0"},
       {:ecto, "~> 2.1"},
+      {:poison, "~> 3.1"},
       {:postgrex, ">= 0.0.0"}
     ]
   end

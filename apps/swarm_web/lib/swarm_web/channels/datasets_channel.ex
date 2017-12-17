@@ -8,10 +8,11 @@ defmodule SwarmWeb.DatasetsChannel do
   def handle_in("fetch", _params, socket) do
     Logger.info "Handling datasets..."
 
-    payload =[
-      %{"title" => "Sample.csv", "url" => "google.com", source: %{ type: "LocalFile", path: "abc"}},
-      %{"title" => "Another.csv", "url" => nil}
-    ]
+    payload = Swarm.Etl.list_datasets()
+      |> Enum.map(&(Map.take(&1, [:name, :decoder])))
+      |> Enum.map(&(Map.put(&1, :url, nil)))
+
+    IO.inspect(payload)
 
     broadcast(socket, "datasets", %{datasets: payload})
     {:reply, :ok, socket}
@@ -24,14 +25,14 @@ defmodule SwarmWeb.DatasetsChannel do
 
     IO.inspect(id)
 
-    {:ok, _} = SwarmEngine.DatasetSupervisor.activate_dataset(%{
+    {:ok, pid} = SwarmEngine.DatasetSupervisor.activate_dataset(%{
       id: id,
       name: params["msg"]["title"],
       source: %SwarmEngine.Connectors.LocalFile{path: params["msg"]["source"]["path"]},
       decoder: SwarmEngine.Decoders.CSV.create [separator: params["msg"]["format"]["separator"]]
     })
 
-    broadcast(socket, "datasets", %{datasets: [params["msg"]]})
+    broadcast(socket, "datasets", %{datasets: [:sys.get_state(pid)]})
 
     {:reply, :ok, socket}
   end

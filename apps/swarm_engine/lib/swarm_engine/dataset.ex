@@ -8,7 +8,13 @@ defmodule SwarmEngine.Dataset do
   end
 
   def init(%{name: name, source: source, decoder: decoder}) do
-    {:ok, create(name, source, decoder)}
+    dataset = create(name, source, decoder)
+
+    dataset
+    |> SwarmEngine.Persistence.Dataset.serialize()
+    |> Swarm.Etl.create_dataset()
+
+    {:ok, dataset}
   end
 
   def via_tuple(id), do: {:via, Registry, {Registry.Dataset, id}}
