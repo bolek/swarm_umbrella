@@ -47,7 +47,7 @@ type alias CSVInfo
   = { separator : String }
 
 type alias Dataset =
-  { title : String
+  { name : String
   , url : String
   , source : Maybe Source
   , format : Maybe Format }
@@ -144,7 +144,7 @@ formatHelp type_ =
 datasetDecoder : Decoder Dataset
 datasetDecoder =
   decode Dataset
-    |> required "title" JD.string
+    |> required "name" JD.string
     |> required "url" (JD.map (Maybe.withDefault "") (JD.nullable JD.string))
     |> optional "source" (sourceDecoder |> JD.maybe) Nothing
     |> optional "format" (formatDecoder |> JD.maybe) Nothing
@@ -166,7 +166,7 @@ datasets jsonString =
 encodeDataset : Dataset -> JE.Value
 encodeDataset dataset =
   JE.object
-    [ ("title", JE.string dataset.title)
+    [ ("name", JE.string dataset.name)
     , ("url", JE.string dataset.url)
     , ("source", case dataset.source of
         Just (LocalFile l) -> JE.object
@@ -277,7 +277,7 @@ view model =
     , Html.ul []
       (List.map (\dataset ->
         Html.li []
-          [text (String.join " " [dataset.title, dataset.url,
+          [text (String.join " " [dataset.name, dataset.url,
             case dataset.source of
               Just (LocalFile l) -> "LocalFile, path: " ++ l.path
               Just (GDriveSource _) -> "Google Drive"
@@ -359,9 +359,9 @@ selectFormatOption ({newDataset, formatOptions} as model) option =
     , formatOptions = (List.map (\x -> if option.id == x.id then {x | selected = not option.selected} else x) initFormatOptions)
     }
 
-setTitle : DatasetCreatorModel -> String -> Msg
-setTitle ({newDataset} as model) value =
-  NewDatasetState {model | newDataset = {newDataset | title = value}}
+setName : DatasetCreatorModel -> String -> Msg
+setName ({newDataset} as model) value =
+  NewDatasetState {model | newDataset = {newDataset | name = value}}
 
 setUrl : DatasetCreatorModel -> String -> Msg
 setUrl ({newDataset} as model) value =
@@ -384,12 +384,12 @@ datasetCreatorView model =
   Html.form [class "dataset-create"]
     [ Html.h2 [] [text "Create new dataset"]
     , Html.div [class "form-group"]
-      [ Html.label [] [text "Title"]
+      [ Html.label [] [text "Name"]
       , Html.input
         [ type_ "text"
-        , for "title"
-        , value model.newDataset.title
-        , onInput <| setTitle model] []
+        , for "name"
+        , value model.newDataset.name
+        , onInput <| setName model] []
       ]
     , Html.h3 [] [text "Select source:"]
     , Html.div [class "options"]
