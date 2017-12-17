@@ -1,6 +1,7 @@
 module Main exposing(..)
 
 import Data.Decoder
+import Data.Source
 
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
@@ -30,21 +31,10 @@ main =
 
 -- MODEL
 
--- Source types
-type Source
-  = GDriveSource GDriveInfo
-  | LocalFile LocalFileInfo
-
-type alias LocalFileInfo =
-  { path : String }
-
-type alias GDriveInfo =
-  { file_id : Int }
-
 type alias Dataset =
   { name : String
   , url : String
-  , source : Maybe Source
+  , source : Maybe Data.Source.Source
   , decoder : Maybe Data.Decoder.Decoder }
 
 type alias Datasets =
@@ -77,30 +67,30 @@ init flags =
 
 -- decoders
 
-gDriveSourceDecoder : Decoder Source
+gDriveSourceDecoder : Decoder Data.Source.Source
 gDriveSourceDecoder =
-  JD.map GDriveSource gDriveInfoDecoder
+  JD.map Data.Source.GDriveSource gDriveInfoDecoder
 
-gDriveInfoDecoder : Decoder GDriveInfo
+gDriveInfoDecoder : Decoder Data.Source.GDriveInfo
 gDriveInfoDecoder =
-  decode GDriveInfo
+  decode Data.Source.GDriveInfo
     |> required "file_id" JD.int
 
-localFileSourceDecoder : Decoder Source
+localFileSourceDecoder : Decoder Data.Source.Source
 localFileSourceDecoder =
-  JD.map LocalFile localFileInfoDecoder
+  JD.map Data.Source.LocalFile localFileInfoDecoder
 
-localFileInfoDecoder : Decoder LocalFileInfo
+localFileInfoDecoder : Decoder Data.Source.LocalFileInfo
 localFileInfoDecoder =
-  decode LocalFileInfo
+  decode Data.Source.LocalFileInfo
     |> required "path" JD.string
 
-sourceDecoder : Decoder Source
+sourceDecoder : Decoder Data.Source.Source
 sourceDecoder =
   JD.field "type" JD.string
     |> JD.andThen sourceHelp
 
-sourceHelp : String -> Decoder Source
+sourceHelp : String -> Decoder Data.Source.Source
 sourceHelp type_ =
   case type_ of
     "LocalFile" ->
@@ -140,11 +130,11 @@ encodeDataset dataset =
     [ ("name", JE.string dataset.name)
     , ("url", JE.string dataset.url)
     , ("source", case dataset.source of
-        Just (LocalFile l) -> JE.object
+        Just (Data.Source.LocalFile l) -> JE.object
                               [ ("type", JE.string "LocalFile")
                               , ("path", JE.string l.path)
                               ]
-        Just (GDriveSource d) -> JE.object
+        Just (Data.Source.GDriveSource d) -> JE.object
                               [ ("type", JE.string "GDrive")
                               , ("file_id", JE.int d.file_id)
                               ]
@@ -250,8 +240,8 @@ view model =
         Html.li []
           [text (String.join " " [dataset.name, dataset.url,
             case dataset.source of
-              Just (LocalFile l) -> "LocalFile, path: " ++ l.path
-              Just (GDriveSource _) -> "Google Drive"
+              Just (Data.Source.LocalFile l) -> "LocalFile, path: " ++ l.path
+              Just (Data.Source.GDriveSource _) -> "Google Drive"
               Nothing -> ""
           , case dataset.decoder of
               Just (Data.Decoder.CSV f) -> "CSV (delimiter: \"" ++ f.delimiter ++ "\", separator: \""++ f.separator ++"\", headers: "++ (if f.headers then "yes" else "no") ++")"
@@ -264,7 +254,7 @@ view model =
 -- Create Dataset Wizard
 
 type alias SourceOption
-  = { id : Int, source : Source, name : String, selected : Bool }
+  = { id : Int, source : Data.Source.Source, name : String, selected : Bool }
 
 type alias SourceOptions
   = List SourceOption
@@ -288,8 +278,8 @@ initDecoderOptions =
 
 initSourceOptions : SourceOptions
 initSourceOptions =
-  [ SourceOption 1 (LocalFile {path = ""}) "Local File" False
-  , SourceOption 2 (GDriveSource {file_id = 1}) "Google Drive" False
+  [ SourceOption 1 (Data.Source.LocalFile {path = ""}) "Local File" False
+  , SourceOption 2 (Data.Source.GDriveSource {file_id = 1}) "Google Drive" False
   ]
 
 initDatasetCreator : DatasetCreatorModel
@@ -345,9 +335,9 @@ createDataset : DatasetCreatorModel -> Msg
 createDataset model =
   TrackDataset model.newDataset
 
-setLocalFilePath : DatasetCreatorModel -> LocalFileInfo -> String -> Msg
+setLocalFilePath : DatasetCreatorModel -> Data.Source.LocalFileInfo -> String -> Msg
 setLocalFilePath ({newDataset} as model) source value =
-  NewDatasetState {model | newDataset = {newDataset | source = (Just (LocalFile { source | path = value}))}}
+  NewDatasetState {model | newDataset = {newDataset | source = (Just (Data.Source.LocalFile { source | path = value}))}}
 
 setCSVFormatSeparator : DatasetCreatorModel -> Data.Decoder.CSVParams -> String -> Msg
 setCSVFormatSeparator ({newDataset} as model) decoder value =
@@ -371,7 +361,7 @@ datasetCreatorView model =
         sourceOption model option
       ) model.sourceOptions)
     , case model.newDataset.source of
-        Just (LocalFile s) ->
+        Just (Data.Source.LocalFile s) ->
           Html.div []
             [ Html.h3 [] [text "Configure:"]
             , Html.div [class "form-group"]
@@ -404,7 +394,7 @@ datasetCreatorView model =
                   ]
                 Nothing -> Html.text ""
             ]
-        Just (GDriveSource _) -> Html.text ""
+        Just (Data.Source.GDriveSource _) -> Html.text ""
         Nothing -> Html.text ""
     , Html.button [type_ "button", class "btn btn-primary", onClick <| createDataset model] [text "Track"]
     ]
