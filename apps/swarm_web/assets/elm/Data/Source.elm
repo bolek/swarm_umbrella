@@ -3,7 +3,7 @@ module Data.Source
     ( Source(..)
     , LocalFileInfo
     , GDriveInfo
-    , sourceDecoder
+    , decoder
     )
 
 import Json.Decode as JD
@@ -20,6 +20,23 @@ type alias GDriveInfo =
   { file_id : Int }
 
 -- SERIALIZATION --
+
+decoder : JD.Decoder Source
+decoder =
+  JD.field "type" JD.string
+    |> JD.andThen sourceHelp
+
+sourceHelp : String -> JD.Decoder Source
+sourceHelp type_ =
+  case type_ of
+    "LocalFile" ->
+      localFileSourceDecoder
+    "GDrive" ->
+      gDriveSourceDecoder
+    _ ->
+      JD.fail <|
+        "Trying to decode source, but type "
+        ++ type_ ++ " is not supported"
 
 gDriveSourceDecoder : JD.Decoder Source
 gDriveSourceDecoder =
@@ -38,20 +55,3 @@ localFileInfoDecoder : JD.Decoder LocalFileInfo
 localFileInfoDecoder =
   decode LocalFileInfo
     |> required "path" JD.string
-
-sourceDecoder : JD.Decoder Source
-sourceDecoder =
-  JD.field "type" JD.string
-    |> JD.andThen sourceHelp
-
-sourceHelp : String -> JD.Decoder Source
-sourceHelp type_ =
-  case type_ of
-    "LocalFile" ->
-      localFileSourceDecoder
-    "GDrive" ->
-      gDriveSourceDecoder
-    _ ->
-      JD.fail <|
-        "Trying to decode source, but type "
-        ++ type_ ++ " is not supported"

@@ -72,7 +72,7 @@ datasetDecoder =
   decode Dataset
     |> required "name" JD.string
     |> required "url" (JD.map (Maybe.withDefault "") (JD.nullable JD.string))
-    |> optional "source" (Data.Source.sourceDecoder |> JD.maybe) Nothing
+    |> optional "source" (Data.Source.decoder |> JD.maybe) Nothing
     |> optional "decoder" (Data.Decoder.decoder |> JD.maybe) Nothing
 
 dataset : String -> Result String Dataset
