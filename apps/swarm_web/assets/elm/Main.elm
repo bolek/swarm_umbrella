@@ -1,5 +1,7 @@
 module Main exposing(..)
 
+import Data.Decoder
+
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
 import Json.Decode.Pipeline exposing (decode, required, optional)
@@ -39,18 +41,11 @@ type alias LocalFileInfo =
 type alias GDriveInfo =
   { file_id : Int }
 
--- Format types
-type Format
-  = CSVFormat CSVInfo
-
-type alias CSVInfo
-  = { separator : String }
-
 type alias Dataset =
   { name : String
   , url : String
   , source : Maybe Source
-  , format : Maybe Format }
+  , decoder : Maybe Data.Decoder.Decoder }
 
 type alias Datasets =
   { datasets : List Dataset }
@@ -117,37 +112,13 @@ sourceHelp type_ =
         "Trying to decode source, but type "
         ++ type_ ++ " is not supported"
 
-csvInfoDecoder : Decoder CSVInfo
-csvInfoDecoder
-  = decode CSVInfo
-    |> required "separator" JD.string
-
-csvFormatDecoder : Decoder Format
-csvFormatDecoder
-  = JD.map CSVFormat csvInfoDecoder
-
-formatDecoder : Decoder Format
-formatDecoder
-  = JD.field "format_type" JD.string
-    |> JD.andThen formatHelp
-
-formatHelp : String -> Decoder Format
-formatHelp type_ =
-  case type_ of
-    "CSV" ->
-      csvFormatDecoder
-    _ ->
-      JD.fail <|
-        "Trying to decode format, but type "
-        ++ type_ ++ " is not supported"
-
 datasetDecoder : Decoder Dataset
 datasetDecoder =
   decode Dataset
     |> required "name" JD.string
     |> required "url" (JD.map (Maybe.withDefault "") (JD.nullable JD.string))
     |> optional "source" (sourceDecoder |> JD.maybe) Nothing
-    |> optional "format" (formatDecoder |> JD.maybe) Nothing
+    |> optional "decoder" (Data.Decoder.decoder |> JD.maybe) Nothing
 
 dataset : String -> Result String Dataset
 dataset jsonString =
@@ -179,8 +150,8 @@ encodeDataset dataset =
                               ]
         Nothing -> JE.null
       )
-    , ("format", case dataset.format of
-        Just (CSVFormat f) -> JE.object
+    , ("decoder", case dataset.decoder of
+        Just (Data.Decoder.CSV f) -> JE.object
                               [ ("type", JE.string "CSV")
                               , ("separator", JE.string f.separator)
                               ]
@@ -281,7 +252,10 @@ view model =
             case dataset.source of
               Just (LocalFile l) -> "LocalFile, path: " ++ l.path
               Just (GDriveSource _) -> "Google Drive"
-              Nothing -> "boom"
+              Nothing -> ""
+          , case dataset.decoder of
+              Just (Data.Decoder.CSV f) -> "CSV (delimiter: \"" ++ f.delimiter ++ "\", separator: \""++ f.separator ++"\", headers: "++ (if f.headers then "yes" else "no") ++")"
+              Nothing -> ""
           ])]
         ) model.datasets
       )
@@ -295,21 +269,21 @@ type alias SourceOption
 type alias SourceOptions
   = List SourceOption
 
-type alias FormatOption
-  = { id : Int, format : Format, name : String, selected : Bool}
+type alias DecoderOption
+  = { id : Int, decoder : Data.Decoder.Decoder, name : String, selected : Bool}
 
-type alias FormatOptions
-  = List FormatOption
+type alias DecoderOptions
+  = List DecoderOption
 
 type alias DatasetCreatorModel
-  = { formatOptions : FormatOptions
+  = { decoderOptions : DecoderOptions
     , newDataset : Dataset
     , sourceOptions : SourceOptions
     }
 
-initFormatOptions : FormatOptions
-initFormatOptions =
-  [ FormatOption 1 (CSVFormat {separator = ","})"CSV" False
+initDecoderOptions : DecoderOptions
+initDecoderOptions =
+  [ DecoderOption 1 (Data.Decoder.CSV {separator = ",", delimiter = "\n", headers = True}) "CSV" False
   ]
 
 initSourceOptions : SourceOptions
@@ -320,7 +294,7 @@ initSourceOptions =
 
 initDatasetCreator : DatasetCreatorModel
 initDatasetCreator
-  = { formatOptions = initFormatOptions
+  = { decoderOptions = initDecoderOptions
     , newDataset = initDataset
     , sourceOptions = initSourceOptions
     }
@@ -335,14 +309,14 @@ sourceOption model option =
     [ text option.name
     ]
 
-formatOption : DatasetCreatorModel -> FormatOption -> Html Msg
-formatOption model format =
+decoderOption : DatasetCreatorModel -> DecoderOption -> Html Msg
+decoderOption model decoder =
   Html.div
     [ class "option",
-      classList [("active", format.selected)]
-    , onClick <| (selectFormatOption model format)
+      classList [("active", decoder.selected)]
+    , onClick <| (selectDecoderOption model decoder)
     ]
-    [ text format.name
+    [ text decoder.name
     ]
 
 selectSourceOption : DatasetCreatorModel -> SourceOption -> Msg
@@ -352,11 +326,11 @@ selectSourceOption ({newDataset, sourceOptions} as model) option =
     , sourceOptions = (List.map (\x -> if option.id == x.id then {x | selected = not option.selected} else x) initSourceOptions)
     }
 
-selectFormatOption : DatasetCreatorModel -> FormatOption -> Msg
-selectFormatOption ({newDataset, formatOptions} as model) option =
+selectDecoderOption : DatasetCreatorModel -> DecoderOption -> Msg
+selectDecoderOption ({newDataset, decoderOptions} as model) option =
   NewDatasetState {model
-    | newDataset = { newDataset | format = (if not option.selected then (Just option.format) else Nothing)}
-    , formatOptions = (List.map (\x -> if option.id == x.id then {x | selected = not option.selected} else x) initFormatOptions)
+    | newDataset = { newDataset | decoder = (if not option.selected then (Just option.decoder) else Nothing)}
+    , decoderOptions = (List.map (\x -> if option.id == x.id then {x | selected = not option.selected} else x) initDecoderOptions)
     }
 
 setName : DatasetCreatorModel -> String -> Msg
@@ -375,9 +349,9 @@ setLocalFilePath : DatasetCreatorModel -> LocalFileInfo -> String -> Msg
 setLocalFilePath ({newDataset} as model) source value =
   NewDatasetState {model | newDataset = {newDataset | source = (Just (LocalFile { source | path = value}))}}
 
-setCSVFormatSeparator : DatasetCreatorModel -> CSVInfo -> String -> Msg
-setCSVFormatSeparator ({newDataset} as model) format value =
-  NewDatasetState {model | newDataset = {newDataset | format = (Just (CSVFormat { format | separator = value}))}}
+setCSVFormatSeparator : DatasetCreatorModel -> Data.Decoder.CSVParams -> String -> Msg
+setCSVFormatSeparator ({newDataset} as model) decoder value =
+  NewDatasetState {model | newDataset = {newDataset | decoder = (Just (Data.Decoder.CSV { decoder | separator = value}))}}
 
 datasetCreatorView : DatasetCreatorModel -> Html Msg
 datasetCreatorView model =
@@ -411,11 +385,11 @@ datasetCreatorView model =
               ]
             , Html.h3 [] [text "Data format:"]
             , Html.div [class "options"]
-              (List.map (\format ->
-                formatOption model format
-              ) model.formatOptions)
-            , case model.newDataset.format of
-                Just (CSVFormat f) ->
+              (List.map (\decoder ->
+                decoderOption model decoder
+              ) model.decoderOptions)
+            , case model.newDataset.decoder of
+                Just (Data.Decoder.CSV f) ->
                   Html.div []
                   [ Html.h3 [] [text "Parameters:"]
                   , Html.div [class "form-group"]
