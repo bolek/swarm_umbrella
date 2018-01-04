@@ -29,7 +29,7 @@ decoder =
 sourceHelp : String -> JD.Decoder Source
 sourceHelp type_ =
   case type_ of
-    "LocalFile" ->
+    "Elixir.SwarmEngine.Connectors.LocalFile" ->
       localFileSourceDecoder
     "GDrive" ->
       gDriveSourceDecoder
@@ -49,7 +49,7 @@ gDriveInfoDecoder =
 
 localFileSourceDecoder : JD.Decoder Source
 localFileSourceDecoder =
-  JD.map LocalFile localFileInfoDecoder
+  JD.field "args" (JD.map LocalFile localFileInfoDecoder)
 
 localFileInfoDecoder : JD.Decoder LocalFileInfo
 localFileInfoDecoder =

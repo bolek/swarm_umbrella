@@ -35,7 +35,7 @@ decoderHelp type_ =
 
 csvDecoder : JD.Decoder Decoder
 csvDecoder
-  = JD.field "map" (JD.map CSV csvParamsDecoder)
+  = JD.field "args" (JD.map CSV csvParamsDecoder)
 
 csvParamsDecoder : JD.Decoder CSVParams
 csvParamsDecoder

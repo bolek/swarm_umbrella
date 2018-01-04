@@ -54,7 +54,7 @@ initModel flags =
   }
 
 initDataset : Dataset
-initDataset = Dataset "" "" Nothing Nothing
+initDataset = Dataset "" "" Nothing Nothing Nothing
 
 init : Flags -> ( Model, Cmd Msg )
 init flags =
@@ -68,17 +68,16 @@ datasetsDecoder : Decoder Datasets
 datasetsDecoder =
   decode
     Datasets
-    |> required "datasets" (JD.list Dataset.decoder)
+    |> required "data" (JD.list Dataset.decoder)
 
 datasets : String -> Result String Datasets
 datasets jsonString =
   JD.decodeString datasetsDecoder jsonString
 
-encodeDataset : Dataset -> JE.Value
-encodeDataset dataset =
+encodeNewDataset : NewDataset -> JE.Value
+encodeNewDataset dataset =
   JE.object
     [ ("name", JE.string dataset.name)
-    , ("url", JE.string dataset.url)
     , ("source", case dataset.source of
         Just (Data.Source.LocalFile l) -> JE.object
                               [ ("type", JE.string "LocalFile")
@@ -106,7 +105,7 @@ type Msg
   | Disconnected
   | FetchedDatasets JD.Value
   | NewDatasetState DatasetCreatorModel
-  | TrackDataset Dataset
+  | TrackDataset NewDataset
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update message model =
@@ -124,11 +123,7 @@ update message model =
     NewDatasetState datasetCreatorModel ->
       { model | datasetCreatorModel = datasetCreatorModel } ! []
     TrackDataset dataset ->
-      let
-        newDatasets = model.datasets ++ [dataset]
-      in
-        { model | datasetCreatorModel = initDatasetCreator
-                , datasets = newDatasets } ! [(trackDataset model dataset)]
+      { model | datasetCreatorModel = initDatasetCreator } ! [(trackDataset model dataset)]
 
 
 fetchDatasets : Model -> Cmd Msg
@@ -139,12 +134,12 @@ fetchDatasets model =
   in
     Phoenix.push (socketUrl model) push
 
-trackDataset : Model -> Dataset -> Cmd Msg
+trackDataset : Model -> NewDataset -> Cmd Msg
 trackDataset model dataset =
   let
     push =
       Push.init "datasets" "track"
-        |> Push.withPayload (JE.object [ ( "msg", encodeDataset dataset ) ])
+        |> Push.withPayload (JE.object [ ( "msg", encodeNewDataset dataset ) ])
   in Phoenix.push (socketUrl model) push
 
 -- Subscriptions
@@ -215,9 +210,16 @@ type alias DecoderOption
 type alias DecoderOptions
   = List DecoderOption
 
+
+type alias NewDataset =
+  { name : String
+  , source : Maybe Data.Source.Source
+  , decoder : Maybe Data.Decoder.Decoder
+  }
+
 type alias DatasetCreatorModel
   = { decoderOptions : DecoderOptions
-    , newDataset : Dataset
+    , newDataset : NewDataset
     , sourceOptions : SourceOptions
     }
 
@@ -235,7 +237,7 @@ initSourceOptions =
 initDatasetCreator : DatasetCreatorModel
 initDatasetCreator
   = { decoderOptions = initDecoderOptions
-    , newDataset = initDataset
+    , newDataset = NewDataset "" Nothing Nothing
     , sourceOptions = initSourceOptions
     }
 
@@ -276,10 +278,6 @@ selectDecoderOption ({newDataset, decoderOptions} as model) option =
 setName : DatasetCreatorModel -> String -> Msg
 setName ({newDataset} as model) value =
   NewDatasetState {model | newDataset = {newDataset | name = value}}
-
-setUrl : DatasetCreatorModel -> String -> Msg
-setUrl ({newDataset} as model) value =
-  NewDatasetState {model | newDataset = {newDataset | url = value}}
 
 createDataset : DatasetCreatorModel -> Msg
 createDataset model =
