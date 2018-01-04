@@ -54,4 +54,20 @@ defmodule SwarmEngine.Decoders.CSV do
 
   defp column_options(opts), do: opts
     |> Map.replace(:headers, false)
+
+  def from_map(%{"headers" => headers, "separator" => separator, "delimiter" => delimiter}) do
+    from_map(%{headers: headers, separator: separator, delimiter: delimiter})
+  end
+
+  def from_map(c) do
+    struct(CSV, c)
+  end
+end
+
+defimpl SwarmEngine.Mapable, for: SwarmEngine.Decoders.CSV do
+  alias SwarmEngine.Decoders.CSV
+
+  def to_map(%CSV{} = c) do
+    Map.from_struct(c)
+  end
 end

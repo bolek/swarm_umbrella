@@ -130,4 +130,22 @@ defmodule SwarmEngine.DatasetStore do
       |> Enum.map(&("#{&1.name} #{&1.type}"))
       |> Enum.join(",")
   end
+
+  def from_map(%{"name" => name, "columns" => columns}) do
+    from_map(%{name: name, columns: columns})
+  end
+
+  def from_map(%{} = m) do
+    %DatasetStore{name: m.name, columns: m.columns}
+  end
+end
+
+defimpl SwarmEngine.Mapable, for: SwarmEngine.DatasetStore do
+  alias SwarmEngine.DatasetStore
+  def to_map(%DatasetStore{} = ds) do
+    %{
+      name: ds.name,
+      columns: ds.columns
+    }
+  end
 end

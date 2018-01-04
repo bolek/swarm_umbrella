@@ -10,9 +10,11 @@ defmodule SwarmEngine.Dataset do
   def init(%{name: name, source: source, decoder: decoder}) do
     dataset = create(name, source, decoder)
 
-    dataset
-    |> SwarmEngine.Persistence.Dataset.serialize()
+    result = dataset
+    |> SwarmEngine.Mapable.to_map()
     |> Swarm.Etl.create_dataset()
+
+    IO.inspect(result)
 
     {:ok, dataset}
   end
@@ -23,9 +25,9 @@ defmodule SwarmEngine.Dataset do
   alias SwarmEngine.{Tracker}
   alias SwarmEngine.Connectors.LocalDir
 
-  defstruct [:name, :tracker, :columns, :store, :decoder]
+  defstruct [:id, :name, :tracker, :columns, :store, decoder: %Decoder{}]
 
-  def create(name, source, decoder \\ Decoders.CSV.create()) do
+  def create(name, source, decoder \\ Decoder.create(Decoders.CSV.create())) do
     tracker = source
     |> Tracker.create(%LocalDir{path: "/tmp/swarm_engine_store/"})
     |> Tracker.sync()
@@ -40,9 +42,10 @@ defmodule SwarmEngine.Dataset do
     DatasetStore.create(store)
 
     %Dataset{
+      id: SwarmEngine.Util.UUID.generate,
       name: name,
       tracker: tracker,
-      columns: columns_mapset(cols),
+      columns: columns_mapset(store.columns),
       store: store,
       decoder: decoder
     }
@@ -108,5 +111,34 @@ defmodule SwarmEngine.Dataset do
       |> Tracker.current()
       |> Map.get(:source)
       |> Decoder.columns(decoder)
+  end
+
+  def from_map(%{"id" => id, "name" => name, "decoder" => decoder, "store" => store, "tracker" => tracker}) do
+    from_map(%{id: id, name: name, decoder: decoder, store: store, tracker: tracker})
+  end
+
+  def from_map(%{} = m) do
+    store = DatasetStore.from_map(m.store)
+    %Dataset{
+      id: m.id,
+      name: m.name,
+      decoder: Decoder.from_map(m.decoder),
+      store: store,
+      tracker: Tracker.from_map(m.tracker),
+      columns: columns_mapset(store.columns)
+    }
+  end
+end
+
+defimpl SwarmEngine.Mapable, for: SwarmEngine.Dataset do
+  alias SwarmEngine.Dataset
+  def to_map(%Dataset{} = d) do
+    %{
+      id: d.id,
+      name: d.name,
+      decoder: SwarmEngine.Mapable.to_map(d.decoder),
+      store: SwarmEngine.Mapable.to_map(d.store),
+      tracker: SwarmEngine.Mapable.to_map(d.tracker)
+    }
   end
 end

@@ -214,4 +214,32 @@ defmodule SwarmEngine.DatasetStoreTest do
             }
           } = SQL.query(DataVault, "SELECT * FROM test_table_v")
   end
+
+  test "transforming a dataset store to a simple map" do
+    store = %DatasetStore{name: "test_table", columns: [
+        %{name: "column_1", type: "varchar"},
+        %{name: "column_2", type: "integer"}
+      ]
+    }
+
+    assert SwarmEngine.Mapable.to_map(store)
+      ==  %{columns: [
+            %{name: "column_1", type: "varchar"},
+            %{name: "column_2", type: "integer"}
+          ], name: "test_table"}
+  end
+
+  test "creating a dataset store from a simple map" do
+    store = %DatasetStore{name: "test_table", columns: [
+        %{name: "column_1", type: "varchar"},
+        %{name: "column_2", type: "integer"}
+      ]
+    }
+
+    assert (
+      store
+      |> SwarmEngine.Mapable.to_map()
+      |> DatasetStore.from_map()
+    ) == store
+  end
 end
