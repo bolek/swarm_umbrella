@@ -36,7 +36,10 @@ defmodule SwarmWeb.DatasetControllerTest do
       conn = get conn, dataset_path(conn, :show, id)
       assert json_response(conn, 200)["data"] == %{
         "id" => id,
-        "name" => "some name"}
+        "name" => "some name",
+        "decoder" => %{},
+        "tracker" => %{},
+        "url" => nil}
     end
 
     test "renders errors when data is invalid", %{conn: conn} do
@@ -56,6 +59,9 @@ defmodule SwarmWeb.DatasetControllerTest do
       assert json_response(conn, 200)["data"] == %{
         "id" => id,
         "name" => "some updated name",
+        "decoder" => %{},
+        "tracker" => %{},
+        "url" => nil
       }
     end
 

@@ -8,13 +8,13 @@ defmodule SwarmWeb.DatasetsChannel do
   def handle_in("fetch", _params, socket) do
     Logger.info "Handling datasets..."
 
-    payload = Swarm.Etl.list_datasets()
-      |> Enum.map(&(Map.take(&1, [:name, :decoder])))
-      |> Enum.map(&(Map.put(&1, :url, nil)))
+    payload = SwarmWeb.DatasetView.render("index.json", %{
+      datasets: Swarm.Etl.list_datasets()
+    })
 
     IO.inspect(payload)
 
-    broadcast(socket, "datasets", %{datasets: payload})
+    broadcast(socket, "datasets", payload)
     {:reply, :ok, socket}
   end
 
@@ -25,14 +25,20 @@ defmodule SwarmWeb.DatasetsChannel do
 
     IO.inspect(id)
 
-    {:ok, pid} = SwarmEngine.DatasetSupervisor.activate_dataset(%{
+    {:ok, _} = SwarmEngine.DatasetSupervisor.activate_dataset(%{
       id: id,
-      name: params["msg"]["title"],
+      name: params["msg"]["name"],
       source: %SwarmEngine.Connectors.LocalFile{path: params["msg"]["source"]["path"]},
-      decoder: SwarmEngine.Decoders.CSV.create [separator: params["msg"]["format"]["separator"]]
+      decoder: SwarmEngine.Decoder.create(
+        SwarmEngine.Decoders.CSV.create [separator: params["msg"]["decoder"]["separator"]]
+      )
     })
 
-    broadcast(socket, "datasets", %{datasets: [:sys.get_state(pid)]})
+    payload = SwarmWeb.DatasetView.render("index.json", %{
+      datasets: Swarm.Etl.list_datasets()
+    })
+
+    broadcast(socket, "datasets", payload)
 
     {:reply, :ok, socket}
   end
