@@ -181,22 +181,28 @@ view model =
     , Html.hr [] []
     , Html.h2 [] [text "Tracked"]
     , Html.ul []
-      (List.map (\dataset ->
-        Html.li []
-          [text (String.join " " [dataset.name, dataset.url,
-            case dataset.source of
-              Just (Data.Source.LocalFile l) -> "LocalFile, path: " ++ l.path
-              Just (Data.Source.GDriveSource _) -> "Google Drive"
-              Nothing -> ""
-          , case dataset.decoder of
-              Just (Data.Decoder.CSV f) -> "CSV (delimiter: \"" ++ f.delimiter ++ "\", separator: \""++ f.separator ++"\", headers: "++ (if f.headers then "yes" else "no") ++")"
-              Nothing -> ""
-          ])]
-        ) model.datasets
-      )
+      (viewDatasetsList model.datasets)
     ]
 
--- Create Dataset Wizard
+viewDataset : Dataset -> Html Msg
+viewDataset dataset =
+  Html.div [class "dataset"]
+    [text (String.join " " [dataset.name, dataset.url,
+          case dataset.source of
+            Just (Data.Source.LocalFile l) -> "LocalFile, path: " ++ l.path
+            Just (Data.Source.GDriveSource _) -> "Google Drive"
+            Nothing -> ""
+        , case dataset.decoder of
+            Just (Data.Decoder.CSV f) -> "CSV (delimiter: \"" ++ f.delimiter ++ "\", separator: \""++ f.separator ++"\", headers: "++ (if f.headers then "yes" else "no") ++")"
+            Nothing -> ""
+        ])]
+
+viewDatasetItem : Dataset -> Html Msg
+viewDatasetItem dataset =
+  Html.li [] [(viewDataset dataset)]
+
+viewDatasetsList : List Dataset -> List (Html Msg)
+viewDatasetsList datasets = List.map viewDatasetItem datasets
 
 type alias SourceOption
   = { id : Int, source : Data.Source.Source, name : String, selected : Bool }
