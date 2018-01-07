@@ -4,7 +4,6 @@ module Data.Dataset
     , decoder )
 
 import Data.Decoder as Decoder exposing (Decoder)
-import Data.Source as Source exposing (Source)
 import Data.Tracker as Tracker exposing (Tracker)
 import Json.Decode as JD
 import Json.Decode.Pipeline exposing (decode, required, optional)
