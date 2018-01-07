@@ -12,9 +12,8 @@ import Json.Decode.Pipeline exposing (decode, required, optional)
 type alias Dataset =
   { name : String
   , url : String
-  , source : Maybe Source
-  , decoder : Maybe Decoder
-  , tracker : Maybe Tracker
+  , decoder : Decoder
+  , tracker : Tracker
   }
 
 -- SERIALIZATION --
@@ -24,6 +23,5 @@ decoder =
   decode Dataset
     |> required "name" JD.string
     |> required "url" (JD.map (Maybe.withDefault "") (JD.nullable JD.string))
-    |> optional "source" (Source.decoder |> JD.maybe) Nothing
-    |> optional "decoder" (Decoder.decoder |> JD.maybe) Nothing
-    |> optional "tracker" (Tracker.decoder |> JD.maybe) Nothing
+    |> required "decoder" Decoder.decoder
+    |> required "tracker" Tracker.decoder

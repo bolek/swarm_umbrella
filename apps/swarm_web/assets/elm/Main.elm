@@ -184,15 +184,19 @@ view model =
 viewDataset : Dataset -> Html Msg
 viewDataset dataset =
   Html.div [class "dataset"]
-    [text (String.join " " [dataset.name, dataset.url,
-          case dataset.source of
-            Just (Data.Source.LocalFile l) -> "LocalFile, path: " ++ l.path
-            Just (Data.Source.GDriveSource _) -> "Google Drive"
-            Nothing -> ""
-        , case dataset.decoder of
-            Just (Data.Decoder.CSV f) -> "CSV (delimiter: \"" ++ f.delimiter ++ "\", separator: \""++ f.separator ++"\", headers: "++ (if f.headers then "yes" else "no") ++")"
-            Nothing -> ""
-        ])]
+    [ Html.div [class "dataset_name"] [text dataset.name]
+    , Html.div [class "dataset_tracker"]
+      [ text (case dataset.tracker.source of
+          Data.Source.LocalFile f -> "LocalFile (" ++ f.path ++ ")"
+          Data.Source.GDriveSource g -> "GoogleDrive"
+        )
+      ]
+    , Html.div [class "dataset_decoder"]
+      [ text (case dataset.decoder of
+          Data.Decoder.CSV f -> "CSV (delimiter: \"" ++ f.delimiter ++ "\", separator: \""++ f.separator ++"\", headers: "++ (if f.headers then "yes" else "no") ++")"
+        )
+      ]
+    ]
 
 viewDatasetItem : Dataset -> Html Msg
 viewDatasetItem dataset =
