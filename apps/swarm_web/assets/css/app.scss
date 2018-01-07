@@ -138,6 +138,13 @@ button[type='submit'] {
   }
 }
 
+.dataset {
+  label {
+    padding-right: 0.5rem;
+    font-weight: bold;
+  }
+}
+
 .dataset-create {
   .form-group {
     width: 100%;

@@ -177,8 +177,7 @@ view model =
     , datasetCreatorView model.datasetCreatorModel
     , Html.hr [] []
     , Html.h2 [] [text "Tracked"]
-    , Html.ul []
-      (viewDatasetsList model.datasets)
+    , (viewDatasetsList model.datasets)
     ]
 
 viewDataset : Dataset -> Html Msg
@@ -186,13 +185,15 @@ viewDataset dataset =
   Html.div [class "dataset"]
     [ Html.div [class "dataset_name"] [text dataset.name]
     , Html.div [class "dataset_tracker"]
-      [ text (case dataset.tracker.source of
+      [ Html.label [] [text "tracker: "]
+      , text (case dataset.tracker.source of
           Data.Source.LocalFile f -> "LocalFile (" ++ f.path ++ ")"
           Data.Source.GDriveSource g -> "GoogleDrive"
         )
       ]
     , Html.div [class "dataset_decoder"]
-      [ text (case dataset.decoder of
+      [ Html.label [] [text "decoder: "]
+      , text (case dataset.decoder of
           Data.Decoder.CSV f -> "CSV (delimiter: \"" ++ f.delimiter ++ "\", separator: \""++ f.separator ++"\", headers: "++ (if f.headers then "yes" else "no") ++")"
         )
       ]
@@ -202,8 +203,9 @@ viewDatasetItem : Dataset -> Html Msg
 viewDatasetItem dataset =
   Html.li [] [(viewDataset dataset)]
 
-viewDatasetsList : List Dataset -> List (Html Msg)
-viewDatasetsList datasets = List.map viewDatasetItem datasets
+viewDatasetsList : List Dataset -> Html Msg
+viewDatasetsList datasets =
+  Html.ul [] (List.map viewDatasetItem datasets)
 
 type alias SourceOption
   = { id : Int, source : Data.Source.Source, name : String, selected : Bool }
