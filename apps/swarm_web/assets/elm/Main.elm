@@ -53,9 +53,6 @@ initModel flags =
   , datasets = []
   }
 
-initDataset : Dataset
-initDataset = Dataset "" "" Nothing Nothing Nothing
-
 init : Flags -> ( Model, Cmd Msg )
 init flags =
   (initModel flags, Cmd.none)
