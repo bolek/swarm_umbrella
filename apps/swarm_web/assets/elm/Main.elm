@@ -12,6 +12,10 @@ import Html exposing(..)
 import Html.Attributes exposing(class, classList, for, type_, value)
 import Html.Events exposing (onClick, onInput)
 
+-- Navigation
+import Navigation
+import UrlParser exposing (..)
+
 --import Json.Encode as JE
 import Phoenix
 import Phoenix.Socket as Socket exposing (Socket, AbnormalClose)
@@ -23,7 +27,7 @@ import ConnectionStatus exposing(ConnectionStatus)
 
 main : Program Flags Model Msg
 main =
-  Html.programWithFlags
+  Navigation.programWithFlags UrlChange
     { init = init
     , update = update
     , subscriptions = subscriptions
@@ -43,19 +47,49 @@ type alias Model =
   , connectionStatus : ConnectionStatus
   , datasetCreatorModel : DatasetCreatorModel
   , datasets : List Dataset
+  , currentLocation : Navigation.Location
+  , currentRoute : Route
   }
 
-initModel : Flags -> Model
-initModel flags =
+-- Routing ---------------------------------------------------------------------
+
+type Route
+  = DatasetsRoute
+  | NewDatasetRoute
+  | NotFoundRoute
+
+matchers : Parser (Route -> a) a
+matchers =
+    oneOf
+        [ UrlParser.map DatasetsRoute UrlParser.top
+        , UrlParser.map NewDatasetRoute (UrlParser.s "datasets" </> UrlParser.s "new")
+        , UrlParser.map DatasetsRoute (UrlParser.s "datasets")
+        ]
+
+parseLocation : Navigation.Location -> Route
+parseLocation location =
+    case (parseHash matchers location) of
+        Just route ->
+            route
+
+        Nothing ->
+            NotFoundRoute
+
+-- End of routing --------------------------------------------------------------
+
+initModel : Navigation.Location -> Flags -> Model
+initModel location flags =
   { connectionStatus = ConnectionStatus.Disconnected
   , flags = flags
   , datasetCreatorModel = initDatasetCreator
   , datasets = []
+  , currentLocation = location
+  , currentRoute = parseLocation location
   }
 
-init : Flags -> ( Model, Cmd Msg )
-init flags =
-  (initModel flags, Cmd.none)
+init : Flags -> Navigation.Location -> ( Model, Cmd Msg )
+init flags location =
+  (initModel location flags, Cmd.none)
 
 dataset : String -> Result String Dataset
 dataset jsonString =
@@ -103,6 +137,7 @@ type Msg
   | FetchedDatasets JD.Value
   | NewDatasetState DatasetCreatorModel
   | TrackDataset NewDataset
+  | UrlChange Navigation.Location
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update message model =
@@ -121,7 +156,8 @@ update message model =
       { model | datasetCreatorModel = datasetCreatorModel } ! []
     TrackDataset dataset ->
       { model | datasetCreatorModel = initDatasetCreator } ! [(trackDataset model dataset)]
-
+    UrlChange location ->
+      { model | currentLocation = location, currentRoute = parseLocation location } ! []
 
 fetchDatasets : Model -> Cmd Msg
 fetchDatasets model =
@@ -172,13 +208,21 @@ connectionStatusDescription connectionStatus =
 
 view : Model -> Html Msg
 view model =
-  Html.div []
-    [ Html.h1 [] [text "Datasets"]
-    , datasetCreatorView model.datasetCreatorModel
-    , Html.hr [] []
-    , Html.h2 [] [text "Tracked"]
-    , (viewDatasetsList model.datasets)
-    ]
+  case model.currentRoute of
+    DatasetsRoute ->
+      Html.div []
+      [ Html.h1 [] [text "Datasets"]
+      , (viewDatasetsList model.datasets)
+      ]
+    NewDatasetRoute ->
+      Html.div []
+      [ Html.h1 [] [text "New Dataset"]
+      , datasetCreatorView model.datasetCreatorModel
+      ]
+    NotFoundRoute ->
+      Html.div []
+      [ Html.h1 [] [text "Not Found"]
+      ]
 
 viewDataset : Dataset -> Html Msg
 viewDataset dataset =
