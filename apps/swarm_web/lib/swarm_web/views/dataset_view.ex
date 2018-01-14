@@ -14,8 +14,7 @@ defmodule SwarmWeb.DatasetView do
     %{id: dataset.id,
       name: dataset.name,
       decoder: dataset.decoder,
-      tracker: dataset.tracker,
-      url: nil
+      tracker: dataset.tracker
     }
   end
 end

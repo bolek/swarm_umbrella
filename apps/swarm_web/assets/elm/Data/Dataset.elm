@@ -10,7 +10,6 @@ import Json.Decode.Pipeline exposing (decode, required, optional)
 
 type alias Dataset =
   { name : String
-  , url : String
   , decoder : Decoder
   , tracker : Tracker
   }
@@ -21,6 +20,5 @@ decoder : JD.Decoder Dataset
 decoder =
   decode Dataset
     |> required "name" JD.string
-    |> required "url" (JD.map (Maybe.withDefault "") (JD.nullable JD.string))
     |> required "decoder" Decoder.decoder
     |> required "tracker" Tracker.decoder

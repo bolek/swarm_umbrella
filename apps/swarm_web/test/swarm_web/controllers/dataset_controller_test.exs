@@ -38,8 +38,8 @@ defmodule SwarmWeb.DatasetControllerTest do
         "id" => id,
         "name" => "some name",
         "decoder" => %{},
-        "tracker" => %{},
-        "url" => nil}
+        "tracker" => %{}
+      }
     end
 
     test "renders errors when data is invalid", %{conn: conn} do
@@ -60,8 +60,7 @@ defmodule SwarmWeb.DatasetControllerTest do
         "id" => id,
         "name" => "some updated name",
         "decoder" => %{},
-        "tracker" => %{},
-        "url" => nil
+        "tracker" => %{}
       }
     end
 
