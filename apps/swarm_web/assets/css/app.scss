@@ -8,6 +8,8 @@ $primary-medium: #02BEC4;
 $primary-light: #A9E8DC;
 $primary-super-light: #E1F7E7;
 
+$warning: #F39C5C;
+
 $text-color: #212529;
 
 $link-color: #adb5bd;
@@ -64,10 +66,34 @@ input {
     box-sizing: border-box;
 }
 
+.actions {
+  padding-top: 0.5rem;
+  border-top: 1px solid $primary-light;
+
+  a {
+    @include no-select;
+    text-align: center;
+    padding: 0.5rem 1rem;
+
+    border: 1px solid $primary-medium;
+
+    &:hover {
+      background-color: #e9ecef;
+      text-decoration: none;
+    }
+  }
+
+  button, a {
+    margin-right: 0.5rem;
+  }
+}
+
 button {
   @include no-select;
   padding: 0.5rem 1rem;
   text-align: center;
+  font-size: 1rem;
+  line-height: 1.2rem;
 
   &:hover {
     background-color: #e9ecef;

@@ -9,7 +9,7 @@ import Json.Encode as JE
 import Json.Decode.Pipeline exposing (decode, required, optional)
 
 import Html exposing(..)
-import Html.Attributes exposing(class, classList, for, type_, value)
+import Html.Attributes exposing(class, classList, href, for, type_, value)
 import Html.Events exposing (onClick, onInput)
 
 -- Navigation
@@ -74,6 +74,14 @@ parseLocation location =
 
         Nothing ->
             NotFoundRoute
+
+datasetsPath : String
+datasetsPath =
+  "#/datasets"
+
+newDatasetPath : String
+newDatasetPath =
+  "#/datasets/new"
 
 -- End of routing --------------------------------------------------------------
 
@@ -211,7 +219,8 @@ view model =
   case model.currentRoute of
     DatasetsRoute ->
       Html.div []
-      [ Html.h1 [] [text "Datasets"]
+      [ Html.h1 [] [ text "Datasets"]
+      , Html.a [href newDatasetPath] [text "new dataset"]
       , (viewDatasetsList model.datasets)
       ]
     NewDatasetRoute ->
@@ -397,5 +406,8 @@ datasetCreatorView model =
             ]
         Just (Data.Source.GDriveSource _) -> Html.text ""
         Nothing -> Html.text ""
-    , Html.button [type_ "button", class "btn btn-primary", onClick <| createDataset model] [text "Track"]
+    , Html.div [class "actions"]
+      [ Html.button [type_ "submit", onClick <| createDataset model] [text "track"]
+      , Html.a [href datasetsPath] [text "cancel"]
+      ]
     ]
