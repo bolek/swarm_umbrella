@@ -15,15 +15,21 @@ defmodule SwarmEngine.DatasetTest do
     source = LocalFile.create("test/fixtures/dummy.csv")
     columns = MapSet.new(["col_1", "col_2", "col_3"])
 
-    assert  %Dataset{ name: "dummy",
+    assert  {:ok, %Dataset{ name: "dummy",
                   tracker: %Tracker{},
                   columns: ^columns
-                } = Dataset.create("dummy", source)
+                }} = Dataset.create("dummy", source)
+  end
+
+  test "creating a dataset by providing name and inexisting source" do
+    source = LocalFile.create("test/fixtures/fooooooo.csv")
+
+    assert {:error, :not_found} = Dataset.create("dummy", source)
   end
 
   test "stream a dataset" do
     source = LocalFile.create("test/fixtures/goofy.csv")
-    dataset = Dataset.create("goofy", source)
+    {:ok, dataset} = Dataset.create("goofy", source)
 
     assert  [%{"col_4" => "ABC", "col_5" => "def", "col_6" => "123"},
              %{"col_4" => "KLM", "col_5" => "edd", "col_6" => "678"}] =
@@ -32,7 +38,7 @@ defmodule SwarmEngine.DatasetTest do
 
   test "syncing dataset with no changes" do
     source = LocalFile.create("test/fixtures/goofy.csv")
-    dataset = Dataset.create("goofy", source)
+    {:ok, dataset} = Dataset.create("goofy", source)
 
     {:ok, synced_dataset} = Dataset.sync(dataset)
 
@@ -41,9 +47,9 @@ defmodule SwarmEngine.DatasetTest do
 
   test "syncing dataset with updated resource with different columns" do
     source = LocalFile.create("test/fixtures/goofy.csv")
-    dataset = Dataset.create("goofy", source)
+    {:ok, dataset} = Dataset.create("goofy", source)
     new_tracker = LocalFile.create("test/fixtures/dummy.csv")
-      |>Tracker.create(%LocalDir{path: "tmp/"})
+      |> Tracker.create(%LocalDir{path: "tmp/"})
 
     dataset = %{dataset | tracker: new_tracker}
 
@@ -52,14 +58,14 @@ defmodule SwarmEngine.DatasetTest do
 
   test "loading the current version of a csv resource" do
     source = LocalFile.create("test/fixtures/goofy.csv")
-    dataset = Dataset.create("goofy", source)
+    {:ok, dataset} = Dataset.create("goofy", source)
 
     assert Dataset.load(dataset) == :ok
   end
 
   test "transforming a dataset to a simple map" do
     source = LocalFile.create("test/fixtures/goofy.csv")
-    dataset = Dataset.create("goofy", source)
+    {:ok, dataset} = Dataset.create("goofy", source)
 
     assert SwarmEngine.Mapable.to_map(dataset)
       == %{
@@ -73,7 +79,7 @@ defmodule SwarmEngine.DatasetTest do
 
   test "creating a dataset from a simple map" do
     source = LocalFile.create("test/fixtures/goofy.csv")
-    dataset = Dataset.create("goofy", source)
+    {:ok, dataset} = Dataset.create("goofy", source)
 
     assert (
       dataset

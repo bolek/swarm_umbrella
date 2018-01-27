@@ -23,7 +23,7 @@ defmodule SwarmEngine.Decoders.CSV do
   def columns(source, %CSV{delimiter: delimiter} = opts) do
     opts = column_options(opts)
 
-    source
+    {:ok, source
     |> Connector.request()
     |> Stream.take(1)
     |> Enum.map(&(:binary.split(&1, delimiter) |> List.first))
@@ -36,7 +36,7 @@ defmodule SwarmEngine.Decoders.CSV do
       |> String.replace(~r/\s+/, "_")
 
       %{original: c, name: name, type: "character varying"}
-    end)
+    end)}
   end
 
   @spec decode!(Connector.t, CSV.t) :: Enumerable.t

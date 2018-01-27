@@ -38,8 +38,12 @@ defmodule SwarmEngine.Tracker do
   end
 
   def current(%Tracker{resources: resources}) do
-    resources
-    |> Enum.max_by(fn(%{modified_at: modified_at}) -> modified_at end, fn -> nil end)
+    case Enum.max_by(resources, fn(x) -> Map.get(x, :modified_at) end, fn -> nil end) do
+      nil ->
+        {:error, :not_found}
+      r ->
+        {:ok, r}
+    end
   end
 
   def add(tracker, resource) do

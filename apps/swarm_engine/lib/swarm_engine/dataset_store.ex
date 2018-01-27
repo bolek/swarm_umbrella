@@ -9,9 +9,10 @@ defmodule SwarmEngine.DatasetStore do
   @enforce_keys [:name, :columns]
   defstruct [:name, :columns]
 
-  def create(%DatasetStore{} = dataset) do
-    case create_table(dataset) do
-      {:ok, _} -> :ok
+  def create(%{name: name, columns: columns} = dataset) do
+    store = %DatasetStore{name: name, columns: columns}
+    case create_table(store) do
+      {:ok, _} -> {:ok, store}
       {:error, %Postgrex.Error{postgres: %{code: :duplicate_table}}} -> :ok
     end
   end

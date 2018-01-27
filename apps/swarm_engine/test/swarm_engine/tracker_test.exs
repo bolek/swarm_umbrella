@@ -50,13 +50,19 @@ defmodule SwarmEngine.TrackerTest do
       resources: [%{modified_at: datetime_1}, %{modified_at: datetime_2}]
     }
 
-    assert Tracker.current(tracker) == %{modified_at: datetime_2}
+    assert Tracker.current(tracker) == {:ok, %{modified_at: datetime_2}}
 
     tracker = %Tracker {
       resources: [%{modified_at: datetime_2}, %{modified_at: datetime_1}]
     }
 
-    assert Tracker.current(tracker) == %{modified_at: datetime_2}
+    assert Tracker.current(tracker) == {:ok, %{modified_at: datetime_2}}
+  end
+
+  test "current when no resources" do
+    tracker = %Tracker { resources: [] }
+
+    assert Tracker.current(tracker) == {:error, :not_found}
   end
 
   test "find by version" do

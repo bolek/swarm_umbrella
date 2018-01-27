@@ -32,30 +32,28 @@ defmodule SwarmEngine.Dataset do
     |> Tracker.create(%LocalDir{path: "/tmp/swarm_engine_store/"})
     |> Tracker.sync()
 
-    cols = columns(tracker, decoder)
-
-    store = %DatasetStore{
-      name: name |> String.downcase() |> String.replace(~r/\s+/, "_"),
-      columns: cols
-    }
-
-    DatasetStore.create(store)
-
-    %Dataset{
-      id: SwarmEngine.Util.UUID.generate,
-      name: name,
-      tracker: tracker,
-      columns: columns_mapset(store.columns),
-      store: store,
-      decoder: decoder
-    }
+    with {:ok, cols} <- columns(tracker, decoder),
+      store_name <- gen_store_name(name),
+      {:ok, store} <- DatasetStore.create(%{name: store_name, columns: cols})
+    do
+      {:ok, %Dataset{
+        id: SwarmEngine.Util.UUID.generate,
+        name: name,
+        tracker: tracker,
+        columns: columns_mapset(store.columns),
+        store: store,
+        decoder: decoder
+      }}
+    else
+      {:error, e} -> {:error, e}
+      any -> {:error, any}
+    end
   end
 
   def stream(%Dataset{tracker: tracker, decoder: decoder}, version) do
-    with {:ok, resource} <- Tracker.find(tracker, %{version: version}),
-      source <- resource.source
+    with {:ok, resource} <- Tracker.find(tracker, %{version: version})
     do
-      source
+      resource.source
       |> Decoder.decode!(decoder)
     else
       {:error, reason} -> {:error, reason}
@@ -64,15 +62,20 @@ defmodule SwarmEngine.Dataset do
   end
 
   def stream(%Dataset{tracker: tracker, decoder: decoder}) do
-    tracker
-    |> Tracker.current()
-    |> Map.get(:source)
-    |> Decoder.decode!(decoder)
+    with {:ok, resource} <- Tracker.current(tracker),
+      source <- Map.get(resource, :source)
+    do
+      Decoder.decode!(source, decoder)
+    else
+      {:error, reason} -> {:error, reason}
+      any -> {:error, any}
+    end
   end
 
   def sync(%Dataset{tracker: tracker, columns: columns, decoder: decoder} = dataset) do
     tracker = Tracker.sync(tracker)
-    new_columns = columns_mapset(columns(tracker, decoder))
+    {:ok, cols} = columns(tracker, decoder)
+    new_columns = columns_mapset(cols)
 
     case MapSet.disjoint?(columns, new_columns) do
       true -> {:error, "no common columns"}
@@ -81,12 +84,16 @@ defmodule SwarmEngine.Dataset do
   end
 
   def load(%Dataset{tracker: tracker} = csv) do
-    resource = Tracker.current(tracker)
-    _load(csv, resource)
+    with {:ok, resource} <- Tracker.current(tracker)
+    do
+      _load(csv, resource)
+    else
+      {:error, e} -> {:error, e}
+    end
   end
 
   def load(%Dataset{tracker: tracker} = csv, version) do
-    resource = Tracker.find(tracker, %{version: version})
+    {:ok, resource} = Tracker.find(tracker, %{version: version})
 
     _load(csv, resource)
   end
@@ -107,10 +114,13 @@ defmodule SwarmEngine.Dataset do
   end
 
   defp columns(%Tracker{} = tracker, decoder) do
-    tracker
-      |> Tracker.current()
-      |> Map.get(:source)
-      |> Decoder.columns(decoder)
+    with {:ok, resource} <- Tracker.current(tracker),
+      source <- Map.get(resource, :source)
+    do
+      Decoder.columns(source, decoder)
+    else
+      {:error, e} -> {:error, e}
+    end
   end
 
   def from_map(%{"id" => id, "name" => name, "decoder" => decoder, "store" => store, "tracker" => tracker}) do
@@ -128,6 +138,8 @@ defmodule SwarmEngine.Dataset do
       columns: columns_mapset(store.columns)
     }
   end
+
+  defp gen_store_name(name), do: name |> String.downcase() |> String.replace(~r/\s+/, "_")
 end
 
 defimpl SwarmEngine.Mapable, for: SwarmEngine.Dataset do

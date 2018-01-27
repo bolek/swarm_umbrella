@@ -125,4 +125,10 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
       %Resource{name: "test.xlsx", modified_at: %DateTime{}, size: 3847, source: %LocalFile{path: "test/fixtures/test.xlsx"}}
     ]} = Connector.list(location)
   end
+
+  test "list resource under inexisting path" do
+    location = LocalFile.create("foo/bar/*")
+
+    assert {:ok, []} = Connector.list(location)
+  end
 end

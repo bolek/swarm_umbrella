@@ -18,7 +18,7 @@ defmodule SwarmEngine.DatasetStoreTest do
       ]
     }
 
-    assert :ok = DatasetStore.create(dataset)
+    assert {:ok, dataset} = DatasetStore.create(dataset)
 
     assert {:ok, [
       %{order: 1, name: "swarm_id", type: "uuid"},
