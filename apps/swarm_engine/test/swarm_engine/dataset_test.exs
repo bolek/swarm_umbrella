@@ -10,23 +10,6 @@ defmodule SwarmEngine.DatasetTest do
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(DataVault)
   end
 
-
-  test "creating a dataset by providing name and source" do
-    source = LocalFile.create("test/fixtures/dummy.csv")
-    columns = MapSet.new(["col_1", "col_2", "col_3"])
-
-    assert  {:ok, %Dataset{ name: "dummy",
-                  tracker: %Tracker{},
-                  columns: ^columns
-                }} = Dataset.create("dummy", source)
-  end
-
-  test "creating a dataset by providing name and inexisting source" do
-    source = LocalFile.create("test/fixtures/fooooooo.csv")
-
-    assert {:error, :not_found} = Dataset.create("dummy", source)
-  end
-
   test "stream a dataset" do
     source = LocalFile.create("test/fixtures/goofy.csv")
     {:ok, dataset} = Dataset.create("goofy", source)

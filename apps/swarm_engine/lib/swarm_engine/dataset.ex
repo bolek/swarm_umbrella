@@ -1,14 +1,14 @@
 defmodule SwarmEngine.Dataset do
   use GenServer, start: {__MODULE__, :start_link, []}, restart: :transient
 
-  alias SwarmEngine.{DatasetStore, Decoder, Decoders}
+  alias SwarmEngine.{DatasetFactory, DatasetStore, Decoder, Decoders}
 
   def start_link(%{id: id} = params) do
     GenServer.start_link(__MODULE__, params, name: via_tuple(id))
   end
 
   def init(%{name: name, source: source, decoder: decoder}) do
-    dataset = create(name, source, decoder)
+    {:ok, dataset} = DatasetFactory.build(name, source, decoder)
 
     result = dataset
     |> SwarmEngine.Mapable.to_map()
@@ -23,31 +23,11 @@ defmodule SwarmEngine.Dataset do
 
   alias __MODULE__
   alias SwarmEngine.{Tracker}
-  alias SwarmEngine.Connectors.LocalDir
 
   defstruct [:id, :name, :tracker, :columns, :store, decoder: %Decoder{}]
 
   def create(name, source, decoder \\ Decoder.create(Decoders.CSV.create())) do
-    tracker = source
-    |> Tracker.create(%LocalDir{path: "/tmp/swarm_engine_store/"})
-    |> Tracker.sync()
-
-    with {:ok, cols} <- columns(tracker, decoder),
-      store_name <- gen_store_name(name),
-      {:ok, store} <- DatasetStore.create(%{name: store_name, columns: cols})
-    do
-      {:ok, %Dataset{
-        id: SwarmEngine.Util.UUID.generate,
-        name: name,
-        tracker: tracker,
-        columns: columns_mapset(store.columns),
-        store: store,
-        decoder: decoder
-      }}
-    else
-      {:error, e} -> {:error, e}
-      any -> {:error, any}
-    end
+    SwarmEngine.DatasetFactory.build(name, source, decoder)
   end
 
   def stream(%Dataset{tracker: tracker, decoder: decoder}, version) do
@@ -138,8 +118,6 @@ defmodule SwarmEngine.Dataset do
       columns: columns_mapset(store.columns)
     }
   end
-
-  defp gen_store_name(name), do: name |> String.downcase() |> String.replace(~r/\s+/, "_")
 end
 
 defimpl SwarmEngine.Mapable, for: SwarmEngine.Dataset do
