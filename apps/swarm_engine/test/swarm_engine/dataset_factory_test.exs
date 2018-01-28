@@ -3,7 +3,7 @@ defmodule SwarmEngine.DatasetFactoryTest do
 
   alias SwarmEngine.DatasetFactory
   alias SwarmEngine.Connectors.LocalFile
-  alias SwarmEngine.{Dataset, DataVault, Tracker}
+  alias SwarmEngine.{Dataset, DatasetStore, DataVault, Tracker}
 
   setup do
     # Explicitly get a connection before each test
@@ -12,11 +12,25 @@ defmodule SwarmEngine.DatasetFactoryTest do
 
   test "creating a dataset by providing name and source" do
     source = LocalFile.create("test/fixtures/dummy.csv")
-    columns = MapSet.new(["col_1", "col_2", "col_3"])
 
     assert  {:ok, %Dataset{ name: "dummy",
                   tracker: %Tracker{},
-                  columns: ^columns
+                  store: %DatasetStore{
+                    name: "dummy",
+                    columns: [%{
+                      name: "col_1",
+                      type: "character varying",
+                      original: "col_1"
+                    }, %{
+                      name: "col_2",
+                      type: "character varying",
+                      original: "col_2"
+                    }, %{
+                      name: "col_3",
+                      type: "character varying",
+                      original: "col_3"
+                    }]
+                  }
                 }} = DatasetFactory.build("dummy", source)
   end
 

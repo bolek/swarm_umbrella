@@ -12,7 +12,6 @@ defmodule SwarmEngine.DatasetFactory do
         id: SwarmEngine.Util.UUID.generate,
         name: name,
         tracker: tracker,
-        columns: columns_mapset(store.columns),
         store: store,
         decoder: decoder
       }}
@@ -29,28 +28,12 @@ defmodule SwarmEngine.DatasetFactory do
   end
 
   defp initialize_store(name, tracker, decoder) do
-    with {:ok, cols} <- columns(tracker, decoder),
+    with {:ok, cols} <- Tracker.current_resource_columns(tracker, decoder),
       store_name <- gen_store_name(name)
     do
       DatasetStore.create(%{name: store_name, columns: cols})
     else
       {:error, :not_found} -> {:error, :not_found}
-    end
-  end
-
-  defp columns_mapset(columns) do
-    columns
-    |> Enum.map(&(Map.get(&1, :original)))
-    |> MapSet.new
-  end
-
-  defp columns(%Tracker{} = tracker, decoder) do
-    with {:ok, resource} <- Tracker.current(tracker),
-      source <- Map.get(resource, :source)
-    do
-      Decoder.columns(source, decoder)
-    else
-      {:error, e} -> {:error, e}
     end
   end
 

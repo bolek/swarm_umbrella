@@ -24,7 +24,7 @@ defmodule SwarmEngine.Dataset do
   alias __MODULE__
   alias SwarmEngine.{Tracker}
 
-  defstruct [:id, :name, :tracker, :columns, :store, decoder: %Decoder{}]
+  defstruct [:id, :name, :tracker, :store, decoder: %Decoder{}]
 
   def create(name, source, decoder \\ Decoder.create(Decoders.CSV.create())) do
     SwarmEngine.DatasetFactory.build(name, source, decoder)
@@ -52,15 +52,27 @@ defmodule SwarmEngine.Dataset do
     end
   end
 
-  def sync(%Dataset{tracker: tracker, columns: columns, decoder: decoder} = dataset) do
+  def sync(%Dataset{tracker: tracker, store: store, decoder: decoder} = dataset) do
     tracker = Tracker.sync(tracker)
-    {:ok, cols} = columns(tracker, decoder)
-    new_columns = columns_mapset(cols)
+    {:ok, new_columns} = Tracker.current_resource_columns(tracker, decoder)
 
-    case MapSet.disjoint?(columns, new_columns) do
+    case disjoint_columns?(store.columns, new_columns) do
       true -> {:error, "no common columns"}
       false -> {:ok, %{dataset | tracker: tracker}}
     end
+  end
+
+  defp disjoint_columns?(current, new) do
+    MapSet.disjoint?(
+      original_column_mapset(current),
+      original_column_mapset(new)
+    )
+  end
+
+  defp original_column_mapset(columns) do
+    columns
+    |> Enum.map(&(Map.get(&1, :original)))
+    |> MapSet.new
   end
 
   def load(%Dataset{tracker: tracker} = csv) do
@@ -87,22 +99,6 @@ defmodule SwarmEngine.Dataset do
     DatasetStore.insert_stream(store, stream, version)
   end
 
-  defp columns_mapset(columns) do
-    columns
-    |> Enum.map(&(Map.get(&1, :original)))
-    |> MapSet.new
-  end
-
-  defp columns(%Tracker{} = tracker, decoder) do
-    with {:ok, resource} <- Tracker.current(tracker),
-      source <- Map.get(resource, :source)
-    do
-      Decoder.columns(source, decoder)
-    else
-      {:error, e} -> {:error, e}
-    end
-  end
-
   def from_map(%{"id" => id, "name" => name, "decoder" => decoder, "store" => store, "tracker" => tracker}) do
     from_map(%{id: id, name: name, decoder: decoder, store: store, tracker: tracker})
   end
@@ -114,8 +110,7 @@ defmodule SwarmEngine.Dataset do
       name: m.name,
       decoder: Decoder.from_map(m.decoder),
       store: store,
-      tracker: Tracker.from_map(m.tracker),
-      columns: columns_mapset(store.columns)
+      tracker: Tracker.from_map(m.tracker)
     }
   end
 end

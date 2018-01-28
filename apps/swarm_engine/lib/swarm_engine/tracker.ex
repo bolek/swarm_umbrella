@@ -1,5 +1,5 @@
 defmodule SwarmEngine.Tracker do
-  alias SwarmEngine.{Tracker, Connector, Resource}
+  alias SwarmEngine.{Connector, Decoder, Tracker, Resource}
 
   defstruct [:source, :store, :resources]
 
@@ -43,6 +43,14 @@ defmodule SwarmEngine.Tracker do
         {:error, :not_found}
       r ->
         {:ok, r}
+    end
+  end
+
+  def current_resource_columns(%Tracker{} = tracker, decoder) do
+    with {:ok, resource} <- Tracker.current(tracker) do
+      Decoder.columns(resource.source, decoder)
+    else
+      {:error, e} -> {:error, e}
     end
   end
 
