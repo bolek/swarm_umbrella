@@ -62,7 +62,7 @@ defmodule SwarmEngine.DatasetStore do
     end
   end
 
-  def columns(%DatasetStore{} = dataset) do
+  def table_columns(%DatasetStore{} = dataset) do
     with true <- DatasetStore.exists?(dataset),
       {:ok, result} <- query_columns(dataset),
       columns <- parse_columns(result.rows)

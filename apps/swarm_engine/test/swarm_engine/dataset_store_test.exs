@@ -24,7 +24,7 @@ defmodule SwarmEngine.DatasetStoreTest do
       %{order: 1, name: "swarm_id", type: "uuid"},
       %{order: 2, name: "column_1", type: "character varying"},
       %{order: 3, name: "column_2", type: "integer"},
-    ]} = DatasetStore.columns(dataset)
+    ]} = DatasetStore.table_columns(dataset)
 
     assert DatasetStore.exists?(dataset)
   end
@@ -49,7 +49,7 @@ defmodule SwarmEngine.DatasetStoreTest do
   test "columns for a dataset without a table" do
     dataset = %DatasetStore{name: "dummy_table", columns: []}
 
-    assert {:error, :dataset_without_table} = DatasetStore.columns(dataset)
+    assert {:error, :dataset_without_table} = DatasetStore.table_columns(dataset)
   end
 
   test "inserting into a database" do
