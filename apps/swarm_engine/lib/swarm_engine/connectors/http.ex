@@ -10,7 +10,7 @@ defmodule SwarmEngine.Connectors.HTTP do
   end
 end
 
-defimpl SwarmEngine.Connector, for: SwarmEngine.Connectors.HTTP do
+defimpl SwarmEngine.ConnectorProt, for: SwarmEngine.Connectors.HTTP do
   alias SwarmEngine.Connectors.HTTP
   alias SwarmEngine.Resource
 

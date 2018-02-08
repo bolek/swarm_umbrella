@@ -9,7 +9,7 @@ defmodule SwarmEngine.Connectors.GoogleDrive do
   end
 end
 
-defimpl SwarmEngine.Connector, for: SwarmEngine.Connectors.GoogleDrive do
+defimpl SwarmEngine.ConnectorProt, for: SwarmEngine.Connectors.GoogleDrive do
   alias SwarmEngine.{Connector, Resource}
   alias SwarmEngine.Connectors.{GoogleDrive, HTTP}
   alias SwarmEngine.Connectors.GoogleDrive.Utils
