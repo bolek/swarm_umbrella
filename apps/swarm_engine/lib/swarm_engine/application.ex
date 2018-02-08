@@ -8,6 +8,7 @@ defmodule SwarmEngine.Application do
   def start(_type, _args) do
     # List all child processes to be supervised
     children = [
+      SwarmEngine.Repo,
       SwarmEngine.DataVault,
       {Registry, keys: :unique, name: Registry.Dataset},
       SwarmEngine.DatasetSupervisor

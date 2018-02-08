@@ -37,7 +37,7 @@ defmodule SwarmEngine.Mixfile do
       {:ecto, "~> 2.2"},
       {:goth, "~> 0.4.0"},
       {:hackney, "~> 1.9"},
-      {:postgrex, ">= 0.0.0"},
+      {:postgrex, "~> 0.11"},
       {:timex, "~> 3.1"}
 
       # {:dep_from_hexpm, "~> 0.3.0"},

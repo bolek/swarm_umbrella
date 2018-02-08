@@ -2,6 +2,12 @@
 # and its dependencies with the aid of the Mix.Config module.
 use Mix.Config
 
+config :swarm_engine, SwarmEngine.Repo,
+  adapter: Ecto.Adapters.Postgres,
+  database: "swarm_engine_repo",
+  username: "postgres",
+  hostname: "localhost"
+
 config :swarm_engine, SwarmEngine.DataVault,
   adapter: Ecto.Adapters.Postgres,
   database: "data_vault",
@@ -10,7 +16,7 @@ config :swarm_engine, SwarmEngine.DataVault,
   after_connect: {SwarmEngine.DataVault, :set_utc, []}
 
   config :swarm_engine,
-    ecto_repos: [SwarmEngine.DataVault]
+    ecto_repos: [SwarmEngine.DataVault, SwarmEngine.Repo]
 
 # Adapters
 
