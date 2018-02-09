@@ -1,5 +1,5 @@
   defmodule SwarmEngine.Tracker do
-  alias SwarmEngine.{Connector, Dataset, EctoSimpleStruct, DatasetStore, Decoder, Tracker, Resource}
+  alias SwarmEngine.{Connector, Dataset, EctoSimpleStruct, Decoder, Tracker, Resource}
   alias SwarmEngine.Connectors.LocalDir
 
   use SwarmEngine.Schema

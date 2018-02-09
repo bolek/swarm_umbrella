@@ -21,7 +21,7 @@ defmodule SwarmEngine.DatasetStore do
     |> validate_required([:name, :columns])
   end
 
-  def create(%{name: name, columns: columns} = dataset) do
+  def create(%{name: name, columns: columns}) do
     store = %DatasetStore{name: name, columns: columns}
     case create_table(store) do
       {:ok, _} -> {:ok, store}
