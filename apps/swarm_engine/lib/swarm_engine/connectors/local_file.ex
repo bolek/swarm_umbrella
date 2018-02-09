@@ -40,20 +40,6 @@ defmodule SwarmEngine.Connectors.LocalFile do
 
     Connector.metadata(source)
   end
-
-  def from_map(%{"args" => %{"path" => path, "options" => options}}) do
-    %LocalFile{
-      path: path,
-      options: options
-    }
-  end
-
-  def from_map(%{args: %{path: path, options: options}}) do
-    %LocalFile{
-      path: path,
-      options: options
-    }
-  end
 end
 
 defimpl SwarmEngine.Connector, for: SwarmEngine.Connectors.LocalFile do
@@ -89,15 +75,5 @@ defimpl SwarmEngine.Connector, for: SwarmEngine.Connectors.LocalFile do
   @spec request(LocalFile.t) :: Enumerable.t
   def request(%LocalFile{path: path}) do
     File.stream!(path, [], 2048)
-  end
-end
-
-defimpl SwarmEngine.Mapable, for: SwarmEngine.Connectors.LocalFile do
-  alias SwarmEngine.Connectors.LocalFile
-  def to_map(%LocalFile{} = f) do
-    %{
-      type: SwarmEngine.Connectors.LocalFile,
-      args: %{path: f.path, options: f.options}
-    }
   end
 end

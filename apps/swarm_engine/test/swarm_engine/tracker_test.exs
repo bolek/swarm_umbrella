@@ -79,47 +79,6 @@ defmodule SwarmEngine.TrackerTest do
     assert Tracker.find(tracker, %{version: datetime_3}) == {:error, :not_found}
   end
 
-  test "transforming to a simple map" do
-    resource = %SwarmEngine.Resource{
-      name: "Resource",
-      size: 12345,
-      modified_at: DateTime.utc_now(),
-      source: %SwarmEngine.Connectors.LocalFile{path: "some/path", options: []}
-    }
-
-    tracker = %Tracker{ source: %LocalFile{path: "/tmp/fooboo.csv"},
-      store: %LocalDir{path: "/tmp"},
-      resources: MapSet.new() |> MapSet.put(resource)
-    }
-
-    assert SwarmEngine.Mapable.to_map(tracker)
-      == %{
-        source: SwarmEngine.Mapable.to_map(tracker.source),
-        store: SwarmEngine.Mapable.to_map(tracker.store),
-        resources: [SwarmEngine.Mapable.to_map(resource)]
-      }
-  end
-
-  test "creating from a simple map" do
-    resource = %SwarmEngine.Resource{
-      name: "Resource",
-      size: 12345,
-      modified_at: DateTime.utc_now(),
-      source: %SwarmEngine.Connectors.LocalFile{path: "some/path", options: []}
-    }
-
-    tracker = %Tracker{ source: %LocalFile{path: "/tmp/fooboo.csv"},
-      store: %LocalDir{path: "/tmp"},
-      resources: MapSet.new() |> MapSet.put(resource)
-    }
-
-    assert (
-      tracker
-      |> SwarmEngine.Mapable.to_map()
-      |> Tracker.from_map()
-    ) == tracker
-  end
-
   test "valid changeset" do
     changeset = Tracker.changeset(%Tracker{store: %LocalDir{path: "/tmp"}}, %{
       source: %{type: "Elixir.SwarmEngine.Connectors.LocalFile", args: %{path: "some/path", options: []}}

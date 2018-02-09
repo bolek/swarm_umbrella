@@ -46,31 +46,6 @@ defmodule SwarmEngine.DatasetTest do
     assert Dataset.load(dataset) == :ok
   end
 
-  test "transforming a dataset to a simple map" do
-    source = LocalFile.create("test/fixtures/goofy.csv")
-    {:ok, dataset} = Dataset.create("goofy", source)
-
-    assert SwarmEngine.Mapable.to_map(dataset)
-      == %{
-        id: dataset.id,
-        decoder: SwarmEngine.Mapable.to_map(dataset.decoder),
-        name: "goofy",
-        store: SwarmEngine.Mapable.to_map(dataset.store),
-        tracker: SwarmEngine.Mapable.to_map(dataset.tracker)
-      }
-  end
-
-  test "creating a dataset from a simple map" do
-    source = LocalFile.create("test/fixtures/goofy.csv")
-    {:ok, dataset} = Dataset.create("goofy", source)
-
-    assert (
-      dataset
-      |> SwarmEngine.Mapable.to_map()
-      |> Dataset.from_map()
-    ) == dataset
-  end
-
   test "changeset is valid when provided with valid attributes" do
     attrs = %{
       name: "test",

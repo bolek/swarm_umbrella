@@ -30,23 +30,4 @@ defmodule SwarmEngine.Connectors.LocalDir do
     |> Path.join(Date.to_iso8601(Date.utc_today, :basic))
     |> Path.join("#{UUID.generate}#{extension}")
   end
-
-  def from_map(%{"args" => %{"path" => path}}) do
-    %LocalDir{path: path}
-  end
-
-  def from_map(%{args: %{path: path}}) do
-    %LocalDir{path: path}
-  end
-end
-
-defimpl SwarmEngine.Mapable, for: SwarmEngine.Connectors.LocalDir do
-  alias SwarmEngine.Connectors.LocalDir
-
-  def to_map(%LocalDir{} = d) do
-    %{
-      type: SwarmEngine.Connectors.LocalDir,
-      args: %{path: d.path}
-    }
-  end
 end

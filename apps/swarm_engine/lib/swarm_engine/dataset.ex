@@ -7,17 +7,7 @@ defmodule SwarmEngine.Dataset do
     GenServer.start_link(__MODULE__, params, name: via_tuple(id))
   end
 
-  def init(%{name: name, source: source, decoder: decoder}) do
-    {:ok, dataset} = DatasetFactory.build(name, source, decoder)
-
-    result = dataset
-    |> SwarmEngine.Mapable.to_map()
-    |> Swarm.Etl.create_dataset()
-
-    IO.inspect(result)
-
-    {:ok, dataset}
-  end
+  def init(attrs), do: SwarmEngine.create_dataset(attrs)
 
   def via_tuple(id), do: {:via, Registry, {Registry.Dataset, id}}
 
@@ -123,33 +113,5 @@ defmodule SwarmEngine.Dataset do
     end)
 
     DatasetStore.insert_stream(store, stream, version)
-  end
-
-  def from_map(%{"id" => id, "name" => name, "decoder" => decoder, "store" => store, "tracker" => tracker}) do
-    from_map(%{id: id, name: name, decoder: decoder, store: store, tracker: tracker})
-  end
-
-  def from_map(%{} = m) do
-    store = DatasetStore.from_map(m.store)
-    %Dataset{
-      id: m.id,
-      name: m.name,
-      decoder: Decoder.from_map(m.decoder),
-      store: store,
-      tracker: Tracker.from_map(m.tracker)
-    }
-  end
-end
-
-defimpl SwarmEngine.Mapable, for: SwarmEngine.Dataset do
-  alias SwarmEngine.Dataset
-  def to_map(%Dataset{} = d) do
-    %{
-      id: d.id,
-      name: d.name,
-      decoder: SwarmEngine.Mapable.to_map(d.decoder),
-      store: SwarmEngine.Mapable.to_map(d.store),
-      tracker: SwarmEngine.Mapable.to_map(d.tracker)
-    }
   end
 end

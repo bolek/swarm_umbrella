@@ -1,5 +1,5 @@
   defmodule SwarmEngine.Tracker do
-  alias SwarmEngine.{Connector, Dataset, EctoSimpleStruct, ConnectorProt, DatasetStore, Decoder, Tracker, Resource}
+  alias SwarmEngine.{Connector, Dataset, EctoSimpleStruct, DatasetStore, Decoder, Tracker, Resource}
   alias SwarmEngine.Connectors.LocalDir
 
   use SwarmEngine.Schema
@@ -48,7 +48,7 @@
   end
 
   def sync(%Tracker{source: source} = tracker) do
-    {:ok, resources} = ConnectorProt.list(source)
+    {:ok, resources} = Connector.list(source)
 
     resources
     |> Enum.reduce(tracker, fn(x, tracker) ->
@@ -81,37 +81,5 @@
       _ ->
         tracker
     end
-  end
-
-  def from_map(%{"source" => source, "store" => store, "resources" => resources}) do
-    from_map(%{source: source, store: store, resources: resources})
-  end
-
-  def from_map(%{} = m) do
-    %Tracker{
-      source: Connector.from_map(m.source),
-      store: from_map_type(m.store),
-      resources: (Enum.map(m.resources, &(Resource.from_map(&1))) |> Enum.into(MapSet.new))
-    }
-  end
-
-  defp from_map_type(%{type: type} = x), do:
-    type.from_map(x)
-
-  defp from_map_type(%{"type" => type} = x) do
-    Map.put(x, :type, String.to_existing_atom(type))
-    |> from_map_type
-  end
-end
-
-defimpl SwarmEngine.Mapable, for: SwarmEngine.Tracker do
-  alias SwarmEngine.Tracker
-
-  def to_map(%Tracker{} = t) do
-    %{
-      source: SwarmEngine.Mapable.to_map(t.source),
-      store: SwarmEngine.Mapable.to_map(t.store),
-      resources: Enum.map(t.resources, &(SwarmEngine.Mapable.to_map(&1)))
-    }
   end
 end
