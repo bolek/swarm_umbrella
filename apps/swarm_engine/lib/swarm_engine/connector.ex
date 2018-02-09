@@ -1,4 +1,4 @@
-defprotocol SwarmEngine.ConnectorProt do
+defprotocol SwarmEngine.Connector do
 
   def request(source)
   def metadata(source)

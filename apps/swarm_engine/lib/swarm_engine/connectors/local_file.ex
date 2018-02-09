@@ -56,7 +56,7 @@ defmodule SwarmEngine.Connectors.LocalFile do
   end
 end
 
-defimpl SwarmEngine.ConnectorProt, for: SwarmEngine.Connectors.LocalFile do
+defimpl SwarmEngine.Connector, for: SwarmEngine.Connectors.LocalFile do
   alias SwarmEngine.Connectors.LocalFile
   alias SwarmEngine.Resource
 
