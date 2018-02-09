@@ -1,7 +1,7 @@
 defmodule SwarmEngine.Dataset do
   use GenServer, start: {__MODULE__, :start_link, []}, restart: :transient
 
-  alias SwarmEngine.{DatasetFactory, DatasetStore, Decoder, Decoders}
+  alias SwarmEngine.{DatasetFactory, DatasetStore, Decoder, Decoders, EctoSimpleStruct}
 
   def start_link(%{id: id} = params) do
     GenServer.start_link(__MODULE__, params, name: via_tuple(id))
@@ -24,7 +24,33 @@ defmodule SwarmEngine.Dataset do
   alias __MODULE__
   alias SwarmEngine.{Tracker}
 
-  defstruct [:id, :name, :tracker, :store, decoder: %Decoder{}]
+  use SwarmEngine.Schema
+  import Ecto.Changeset
+
+  schema "datasets" do
+    field :name, :string
+    field :decoder, EctoSimpleStruct
+    has_one :tracker, Tracker
+    embeds_one :store, DatasetStore
+
+    timestamps()
+  end
+
+  def changeset(%Dataset{} = dataset, attrs) do
+    default_tracker = %Tracker{
+      store: %SwarmEngine.Connectors.LocalDir{path: "/tmp"},
+      resources: []
+    }
+
+    tracker = default_tracker
+    |> Tracker.changeset(attrs)
+
+    dataset
+    |> cast(attrs, [:name, :decoder])
+    |> put_assoc(:tracker, tracker)
+    |> put_embed(:store, %DatasetStore{name: nil, columns: []})
+    |> validate_required([:name, :decoder, :store, :tracker])
+  end
 
   def create(name, source, decoder \\ Decoder.create(Decoders.CSV.create())) do
     SwarmEngine.DatasetFactory.build(name, source, decoder)

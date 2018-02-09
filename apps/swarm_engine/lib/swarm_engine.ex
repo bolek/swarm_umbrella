@@ -1,4 +1,8 @@
 defmodule SwarmEngine do
+  alias SwarmEngine.{Dataset, Repo}
+
+  import Ecto.Query, only: [from: 2]
+
   @moduledoc """
   Documentation for SwarmEngine.
   """
@@ -15,4 +19,13 @@ defmodule SwarmEngine do
   def hello do
     :world
   end
+
+  def create_dataset(attrs \\ %{}) do
+    %Dataset{store: nil}
+    |> Dataset.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  def get_dataset!(id), do:
+    from(d in Dataset, preload: [:tracker]) |> Repo.get(id)
 end

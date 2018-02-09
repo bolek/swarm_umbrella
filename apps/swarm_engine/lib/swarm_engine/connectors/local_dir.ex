@@ -4,7 +4,19 @@ defmodule SwarmEngine.Connectors.LocalDir do
   alias SwarmEngine.Util.UUID
 
   @type t :: %__MODULE__{ path: String.t }
-  defstruct [:path]
+
+  use Ecto.Schema
+  import Ecto.Changeset
+
+  embedded_schema do
+    field :path, :string
+  end
+
+  def changeset(%LocalDir{} = local_dir, attrs) do
+    local_dir
+    |> cast(attrs, [:path])
+    |> validate_required([:path])
+  end
 
   @spec store(Resource.t, LocalDir.t) :: {:ok, Resource.t}
   def store(%Resource{} = resource, %LocalDir{path: path}) do

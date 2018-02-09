@@ -2,12 +2,24 @@ require IEx
 
 defmodule SwarmEngine.DatasetStore do
   alias Ecto.Adapters.SQL
-  alias SwarmEngine.{DatasetStore, DataVault}
+  alias SwarmEngine.{DatasetStore, DatasetStoreColumn, DataVault}
 
   import Ecto.Query
 
-  @enforce_keys [:name, :columns]
-  defstruct [:name, :columns]
+  use Ecto.Schema
+  import Ecto.Changeset
+
+  embedded_schema do
+    field :name, :string
+    embeds_many :columns, DatasetStoreColumn
+  end
+
+  def changeset(%DatasetStore{} = store, attrs) do
+    store
+    |> cast(attrs, [:name])
+    |> cast_embed(:columns, with: &DatasetStoreColumn.changeset/2)
+    |> validate_required([:name, :columns])
+  end
 
   def create(%{name: name, columns: columns} = dataset) do
     store = %DatasetStore{name: name, columns: columns}

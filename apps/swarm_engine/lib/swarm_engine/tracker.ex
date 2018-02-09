@@ -1,7 +1,26 @@
-defmodule SwarmEngine.Tracker do
-  alias SwarmEngine.{Connector, Decoder, Tracker, Resource}
+  defmodule SwarmEngine.Tracker do
+  alias SwarmEngine.{Connector, Dataset, EctoSimpleStruct, ConnectorProt, DatasetStore, Decoder, Tracker, Resource}
+  alias SwarmEngine.Connectors.LocalDir
 
-  defstruct [:source, :store, :resources]
+  use SwarmEngine.Schema
+  import Ecto.Changeset
+
+  schema "trackers" do
+    field :source, EctoSimpleStruct
+    embeds_one :store, LocalDir
+    embeds_many :resources, Resource
+    belongs_to :dataset, Dataset
+
+    timestamps()
+  end
+
+  def changeset(%Tracker{}=tracker, attrs) do
+    tracker
+    |> cast(attrs, [:source])
+    |> cast_embed(:store, with: &LocalDir.changeset/2)
+    |> cast_embed(:resources, with: &Resource.changeset/2)
+    |> validate_required([:source, :store, :resources])
+  end
 
   def create(source, store) do
     %Tracker{source: source, store: store, resources: MapSet.new()}
@@ -29,7 +48,7 @@ defmodule SwarmEngine.Tracker do
   end
 
   def sync(%Tracker{source: source} = tracker) do
-    {:ok, resources} = Connector.list(source)
+    {:ok, resources} = ConnectorProt.list(source)
 
     resources
     |> Enum.reduce(tracker, fn(x, tracker) ->
@@ -70,7 +89,7 @@ defmodule SwarmEngine.Tracker do
 
   def from_map(%{} = m) do
     %Tracker{
-      source: from_map_type(m.source),
+      source: Connector.from_map(m.source),
       store: from_map_type(m.store),
       resources: (Enum.map(m.resources, &(Resource.from_map(&1))) |> Enum.into(MapSet.new))
     }

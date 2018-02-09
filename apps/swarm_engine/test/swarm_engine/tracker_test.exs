@@ -119,4 +119,12 @@ defmodule SwarmEngine.TrackerTest do
       |> Tracker.from_map()
     ) == tracker
   end
+
+  test "valid changeset" do
+    changeset = Tracker.changeset(%Tracker{store: %LocalDir{path: "/tmp"}}, %{
+      source: %{type: "Elixir.SwarmEngine.Connectors.LocalFile", args: %{path: "some/path", options: []}}
+    })
+
+    assert changeset.valid?
+  end
 end

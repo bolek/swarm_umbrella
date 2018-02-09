@@ -1,21 +1,28 @@
 defmodule SwarmEngine.Resource do
   alias SwarmEngine.{Connector, Resource}
 
-  @type t :: %__MODULE__{
-    name: String.t,
-    size: integer,
-    modified_at: DateTime.t,
-    source: Connector.t
-  }
+  use Ecto.Schema
+  import Ecto.Changeset
 
-  defstruct [:name, :size, :modified_at, :source]
+  embedded_schema do
+    field :name, :string
+    field :size, :integer
+    field :modified_at, :utc_datetime
+    embeds_one :source, Connector
+  end
+
+  def changeset(%Resource{} = resource, attrs) do
+    resource
+    |> cast(attrs, [:name, :size, :modified_at, :source])
+    |> validate_required([:name, :size, :modified_at, :source])
+  end
 
   def from_map(%{"name" => name, "size" => size, "modified_at" => modified_at, "source" => source}) do
     %Resource{
       name: name,
       size: size,
       modified_at: modified_at,
-      source: from_map_type(source)
+      source: Connector.from_map(source)
     }
   end
 
@@ -24,7 +31,7 @@ defmodule SwarmEngine.Resource do
       name: m.name,
       size: m.size,
       modified_at: m.modified_at,
-      source: m.source.type.from_map(m.source)
+      source: Connector.from_map(m.source)
     }
   end
 

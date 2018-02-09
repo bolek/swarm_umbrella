@@ -70,4 +70,43 @@ defmodule SwarmEngine.DatasetTest do
       |> Dataset.from_map()
     ) == dataset
   end
+
+  test "changeset is valid when provided with valid attributes" do
+    attrs = %{
+      name: "test",
+      source: %{type: "Elixir.SwarmEngine.Connectors.LocalFile", args: %{path: "tmp.csv"}},
+      decoder: %{type: "Elixir.SwarmEngine.Decoders.CSV", args: %{headers: true, separator: ",", delimiter: "/n"} }
+    }
+
+    changeset = Dataset.changeset(%Dataset{}, attrs)
+
+    assert changeset.valid?
+  end
+
+  test "changset is invalid if decoder not provided" do
+    attrs = %{}
+
+    changeset = Dataset.changeset(%Dataset{}, attrs)
+
+    assert {:decoder, {"can't be blank", [validation: :required]}} in changeset.errors
+  end
+
+  test "changset is invalid if name not provided" do
+    attrs = %{}
+
+    changeset = Dataset.changeset(%Dataset{}, attrs)
+
+    assert {:name, {"can't be blank", [validation: :required]}} in changeset.errors
+  end
+
+  test "changset is invalid if source not provided" do
+    attrs = %{
+      name: "test",
+      decoder: %{type: "Elixir.SwarmEngine.Decoders.CSV", args: %{headers: true, separator: ",", delimiter: "/n"} }
+    }
+
+    changeset = Dataset.changeset(%Dataset{}, attrs)
+
+    assert {:source, {"can't be blank", [validation: :required]}} in changeset.changes.tracker.errors
+  end
 end
