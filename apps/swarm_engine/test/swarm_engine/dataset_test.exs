@@ -49,8 +49,8 @@ defmodule SwarmEngine.DatasetTest do
   test "changeset is valid when provided with valid attributes" do
     attrs = %{
       name: "test",
-      source: %{type: "Elixir.SwarmEngine.Connectors.LocalFile", args: %{path: "tmp.csv"}},
-      decoder: %{type: "Elixir.SwarmEngine.Decoders.CSV", args: %{headers: true, separator: ",", delimiter: "/n"} }
+      source: %{type: "LocalFile", args: %{path: "tmp.csv"}},
+      decoder: %{type: "CSV", args: %{headers: true, separator: ",", delimiter: "/n"} }
     }
 
     changeset = Dataset.changeset(%Dataset{}, attrs)
@@ -77,7 +77,7 @@ defmodule SwarmEngine.DatasetTest do
   test "changset is invalid if source not provided" do
     attrs = %{
       name: "test",
-      decoder: %{type: "Elixir.SwarmEngine.Decoders.CSV", args: %{headers: true, separator: ",", delimiter: "/n"} }
+      decoder: %{type: "CSV", args: %{headers: true, separator: ",", delimiter: "/n"} }
     }
 
     changeset = Dataset.changeset(%Dataset{}, attrs)

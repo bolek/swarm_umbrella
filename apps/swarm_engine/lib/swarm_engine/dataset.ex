@@ -1,7 +1,7 @@
 defmodule SwarmEngine.Dataset do
   use GenServer, start: {__MODULE__, :start_link, []}, restart: :transient
 
-  alias SwarmEngine.{DatasetStore, Decoder, Decoders, EctoSimpleStruct}
+  alias SwarmEngine.{DatasetStore, Decoder, Decoders, EctoDecoder}
 
   def start_link(%{id: id} = params) do
     GenServer.start_link(__MODULE__, params, name: via_tuple(id))
@@ -19,7 +19,7 @@ defmodule SwarmEngine.Dataset do
 
   schema "datasets" do
     field :name, :string
-    field :decoder, EctoSimpleStruct
+    field :decoder, EctoDecoder
     has_one :tracker, Tracker
     embeds_one :store, DatasetStore
 

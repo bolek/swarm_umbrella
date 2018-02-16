@@ -10,11 +10,11 @@ defmodule SwarmEngineTest do
   @valid_attrs %{
     name: "My Dataset",
     source: %{
-      type: "Elixir.SwarmEngine.Connectors.LocalFile",
+      type: "LocalFile",
       args: %{path: "tmp.txt"}
     },
     decoder: %{
-      type: "Elixir.SwarmEngine.Decoders.CSV",
+      type: "CSV",
       args: %{headers: true, separator: ",", delimiter: "/n"}
     }
   }

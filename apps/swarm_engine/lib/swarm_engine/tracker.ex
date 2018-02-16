@@ -1,12 +1,12 @@
   defmodule SwarmEngine.Tracker do
-  alias SwarmEngine.{Connector, Dataset, EctoSimpleStruct, Decoder, Tracker, Resource}
+  alias SwarmEngine.{Connector, Dataset, EctoConnector, Decoder, Tracker, Resource}
   alias SwarmEngine.Connectors.LocalDir
 
   use SwarmEngine.Schema
   import Ecto.Changeset
 
   schema "trackers" do
-    field :source, EctoSimpleStruct
+    field :source, EctoConnector
     embeds_one :store, LocalDir
     embeds_many :resources, Resource
     belongs_to :dataset, Dataset
