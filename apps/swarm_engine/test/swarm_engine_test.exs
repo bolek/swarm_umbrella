@@ -1,5 +1,6 @@
 defmodule SwarmEngineTest do
-  use ExUnit.Case
+  use SwarmEngine.DataCase
+
   doctest SwarmEngine
 
   test "greets the world" do
