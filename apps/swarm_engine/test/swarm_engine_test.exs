@@ -38,4 +38,14 @@ defmodule SwarmEngineTest do
     dataset = dataset_fixture()
     assert SwarmEngine.get_dataset!(dataset.id) == dataset
   end
+
+  test "list_datasets/0 returns empty array when no datasets" do
+    assert SwarmEngine.list_datasets() == []
+  end
+
+  test "list_datasets/0 returns list of existing datasets" do
+    dataset_1 = dataset_fixture()
+    dataset_2 = dataset_fixture()
+    assert SwarmEngine.list_datasets() == [dataset_1, dataset_2]
+  end
 end

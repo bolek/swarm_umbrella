@@ -26,6 +26,9 @@ defmodule SwarmEngine do
     |> Repo.insert()
   end
 
+  def list_datasets(), do:
+    from(d in Dataset, preload: [:tracker]) |> Repo.all
+
   def get_dataset!(id), do:
     from(d in Dataset, preload: [:tracker]) |> Repo.get(id)
 end
