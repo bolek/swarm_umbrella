@@ -1,4 +1,6 @@
 defmodule SwarmEngine.Decoders.CSV do
+  @behaviour SwarmEngine.Decoder
+
   alias __MODULE__
   alias SwarmEngine.Decoders.CSV
   alias SwarmEngine.{Connector, Util}
@@ -8,7 +10,8 @@ defmodule SwarmEngine.Decoders.CSV do
     separator: String.t,
     delimiter: String.t
   }
-  defstruct [:headers, :separator, :delimiter]
+  @fields [:headers, :separator, :delimiter]
+  defstruct @fields
 
   @spec create(Keyword.t) :: CSV.t
   def create(options \\ []) do
@@ -19,7 +22,7 @@ defmodule SwarmEngine.Decoders.CSV do
     }
   end
 
-  @spec columns(Connector.t, CSV.t) :: Map
+  @spec columns(Connector.t, struct()) :: Map
   def columns(source, %CSV{delimiter: delimiter} = opts) do
     opts = column_options(opts)
 
@@ -51,6 +54,10 @@ defmodule SwarmEngine.Decoders.CSV do
     File.stream!(tmp_file_path)
     |> Util.CSV.decode!(Map.to_list(opts))
   end
+
+  def fields, do: @fields
+  def type(%CSV{}), do: "CSV"
+  def args(%CSV{} = csv), do: Map.from_struct(csv)
 
   defp column_options(opts), do: opts
     |> Map.replace(:headers, false)

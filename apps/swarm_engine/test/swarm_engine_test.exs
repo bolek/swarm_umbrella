@@ -8,14 +8,14 @@ defmodule SwarmEngineTest do
   end
 
   @valid_attrs %{
-    name: "My Dataset",
-    source: %{
-      type: "LocalFile",
-      args: %{path: "tmp.txt"}
+    "name" => "My Dataset",
+    "source" => %{
+      "type" => "LocalFile",
+      "args" => %{"path" => "tmp.txt"}
     },
-    decoder: %{
-      type: "CSV",
-      args: %{headers: true, separator: ",", delimiter: "/n"}
+    "decoder" => %{
+      "type" => "CSV",
+      "args" => %{"headers" => true, "separator" => ",", "delimiter" => "/n"}
     }
   }
 

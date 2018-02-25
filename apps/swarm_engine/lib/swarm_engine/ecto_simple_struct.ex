@@ -19,8 +19,22 @@ defmodule SwarmEngine.EctoSimpleStruct do
         {:ok, struct!(get_module(type), data)}
       end
 
+      def cast(%{"type" => type, "args" => args}) do
+        parsed_args = get_module(type).fields
+        |> Enum.reduce(%{}, fn f, acc ->
+            case Map.fetch(args, Atom.to_string(f)) do
+              {:ok, value} -> Map.put(acc, f, value)
+              :error -> acc
+            end
+          end)
+
+        cast(%{type: type, args: parsed_args})
+      end
+
       # Everything else is a failure though
-      def cast(_), do: :error
+      def cast(a) do
+        :error
+      end
 
       def load(%{"type" => type, "args" => args}) do
         data =

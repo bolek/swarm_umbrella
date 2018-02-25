@@ -9,7 +9,7 @@ defmodule SwarmWeb.DatasetsChannel do
     Logger.info "Handling datasets..."
 
     payload = SwarmWeb.DatasetView.render("index.json", %{
-      datasets: Swarm.Etl.list_datasets()
+      datasets: SwarmEngine.list_datasets()
     })
 
     IO.inspect(payload)

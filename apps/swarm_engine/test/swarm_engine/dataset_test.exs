@@ -84,4 +84,15 @@ defmodule SwarmEngine.DatasetTest do
 
     assert {:source, {"can't be blank", [validation: :required]}} in changeset.changes.tracker.errors
   end
+
+  test "changeset is invalid if invalid decoder provided" do
+    attrs = %{
+      source: %{type: "LocalFile", args: %{path: "tmp.csv"}},
+      decoder: %{args: %{headers: true, separator: ",", delimiter: "/n"} }
+    }
+
+    changeset = Dataset.changeset(%Dataset{}, attrs)
+
+    assert {:decoder, {"is invalid", [validation: :cast]}} in changeset.errors
+  end
 end

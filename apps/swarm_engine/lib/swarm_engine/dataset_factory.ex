@@ -1,9 +1,9 @@
 defmodule SwarmEngine.DatasetFactory do
-  alias SwarmEngine.{Connectors.LocalDir, Dataset, DatasetStore, Decoder, Decoders, Tracker}
+  alias SwarmEngine.{Connectors.LocalDir, Dataset, DatasetStore, Decoders, Tracker}
 
   @tracker_store %LocalDir{path: "/tmp/swarm_engine_store/"}
 
-  def build(name, source, decoder \\ Decoder.create(Decoders.CSV.create())) do
+  def build(name, source, decoder \\ Decoders.CSV.create()) do
     with tracker <- initialize_tracker(source),
       {:ok, store} <- initialize_store(name, tracker, decoder)
     do

@@ -14,7 +14,7 @@ defmodule SwarmEngine.Connectors.LocalDir do
 
   def changeset(%LocalDir{} = local_dir, attrs) do
     local_dir
-    |> cast(attrs, [:path])
+    |> cast(attrs, ~w(path))
     |> validate_required([:path])
   end
 

@@ -36,13 +36,13 @@ defmodule SwarmEngine.Dataset do
     |> Tracker.changeset(attrs)
 
     dataset
-    |> cast(attrs, [:name, :decoder])
+    |> cast(attrs, ["name", "decoder"])
     |> put_assoc(:tracker, tracker)
     |> put_embed(:store, %DatasetStore{name: nil, columns: []})
     |> validate_required([:name, :decoder, :store, :tracker])
   end
 
-  def create(name, source, decoder \\ Decoder.create(Decoders.CSV.create())) do
+  def create(name, source, decoder \\ Decoders.CSV.create()) do
     SwarmEngine.DatasetFactory.build(name, source, decoder)
   end
 

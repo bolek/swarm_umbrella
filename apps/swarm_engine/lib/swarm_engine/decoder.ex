@@ -1,18 +1,19 @@
 defmodule SwarmEngine.Decoder do
   alias __MODULE__
 
-  @type t :: %Decoder{
-    type: module,
-    decoder: struct
-  }
-  defstruct [:type, :decoder]
-
-  def create(%{__struct__: type} = decoder), do:
-    %Decoder{type: type, decoder: decoder}
-
-  def columns(source, %Decoder{type: type, decoder: decoder}), do:
-    type.columns(source, decoder)
-
-  def decode!(resource, %Decoder{type: type, decoder: decoder}), do:
+  @callback decode!(Connector.t, struct()) :: Enumerable.t
+  def decode!(resource, %{__struct__: type} = decoder), do:
     type.decode!(resource, decoder)
+
+  @callback columns(Connector.t, struct()) :: map
+  def columns(resource, %{__struct__: type} = decoder), do:
+    type.columns(resource, decoder)
+
+  @callback type(struct()) :: String.t
+  def type(%{__struct__: type} = decoder), do:
+    type.type(decoder)
+
+  @callback args(struct()) :: String.t
+  def args(%{__struct__: type} = decoder), do:
+    type.args(decoder)
 end

@@ -11,10 +11,19 @@ defmodule SwarmWeb.DatasetView do
   end
 
   def render("dataset.json", %{dataset: dataset}) do
-    %{id: dataset.id,
+    %{
+      id: dataset.id,
       name: dataset.name,
-      decoder: dataset.decoder,
-      tracker: dataset.tracker
+      decoder: %{
+        type: SwarmEngine.Decoder.type(dataset.decoder),
+        args: SwarmEngine.Decoder.args(dataset.decoder)
+      },
+      tracker: %{
+        source: dataset.tracker.source,
+        store: dataset.tracker.store,
+        resources: dataset.tracker.resources
+      },
+      store: dataset.store
     }
   end
 end

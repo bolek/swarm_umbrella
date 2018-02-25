@@ -13,7 +13,7 @@ defmodule SwarmEngine.Resource do
 
   def changeset(%Resource{} = resource, attrs) do
     resource
-    |> cast(attrs, [:name, :size, :modified_at, :source])
+    |> cast(attrs, ~w(name size modified_at source))
     |> validate_required([:name, :size, :modified_at, :source])
   end
 end

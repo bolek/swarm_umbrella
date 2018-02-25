@@ -16,7 +16,7 @@
 
   def changeset(%Tracker{}=tracker, attrs) do
     tracker
-    |> cast(attrs, [:source])
+    |> cast(attrs, ~w(source))
     |> cast_embed(:store, with: &LocalDir.changeset/2)
     |> cast_embed(:resources, with: &Resource.changeset/2)
     |> validate_required([:source, :store, :resources])
