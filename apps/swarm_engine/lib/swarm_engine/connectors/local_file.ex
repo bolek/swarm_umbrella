@@ -2,15 +2,16 @@ defmodule SwarmEngine.Connectors.LocalFile do
   alias __MODULE__
   alias SwarmEngine.{Connector, Resource}
 
+  @fields [:path]
   @type t :: %__MODULE__{
-    path: String.t,
-    options: keyword
+    path: String.t
   }
-  defstruct [:path, :options]
 
-  @spec create(String.t, keyword) :: LocalFile.t
-  def create(path, options \\ []) do
-    %LocalFile{path: path, options: options}
+  defstruct @fields
+
+  @spec create(String.t) :: LocalFile.t
+  def create(path) do
+    %LocalFile{path: path}
   end
 
   @spec metadata!(Connector.t) :: Resource.t
@@ -40,6 +41,8 @@ defmodule SwarmEngine.Connectors.LocalFile do
 
     Connector.metadata(source)
   end
+
+  def fields(), do: @fields
 end
 
 defimpl SwarmEngine.Connector, for: SwarmEngine.Connectors.LocalFile do

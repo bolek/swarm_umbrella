@@ -14,7 +14,7 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
 
   test "creating a LocalFile source" do
     assert LocalFile.create("some/path") ==
-      %LocalFile{path: "some/path", options: []}
+      %LocalFile{path: "some/path"}
   end
 
   test "streaming a local file" do
@@ -106,7 +106,7 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
     assert {:ok, %Resource{
         name: "stream2.csv",
         size: 28,
-        source: %LocalFile{path: "/tmp/stream2.csv", options: []},
+        source: %LocalFile{path: "/tmp/stream2.csv"},
         modified_at: %DateTime{},
       }
     } = result

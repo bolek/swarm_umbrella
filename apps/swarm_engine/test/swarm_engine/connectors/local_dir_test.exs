@@ -20,7 +20,7 @@ defmodule SwarmEngine.Connectors.LocalDirTest do
           time_zone: "Etc/UTC", zone_abbr: "UTC",
           utc_offset: 0, std_offset: 0
         },
-        source: %LocalFile{path: path, options: []}
+        source: %LocalFile{path: path}
       }
     } = LocalDir.store(resource, store)
 
