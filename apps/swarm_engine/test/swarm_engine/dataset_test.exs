@@ -58,7 +58,7 @@ defmodule SwarmEngine.DatasetTest do
     assert changeset.valid?
   end
 
-  test "changset is invalid if decoder not provided" do
+  test "changeset is invalid if decoder not provided" do
     attrs = %{}
 
     changeset = Dataset.changeset(%Dataset{}, attrs)
@@ -66,7 +66,7 @@ defmodule SwarmEngine.DatasetTest do
     assert {:decoder, {"can't be blank", [validation: :required]}} in changeset.errors
   end
 
-  test "changset is invalid if name not provided" do
+  test "changeset is invalid if name not provided" do
     attrs = %{}
 
     changeset = Dataset.changeset(%Dataset{}, attrs)
@@ -74,7 +74,7 @@ defmodule SwarmEngine.DatasetTest do
     assert {:name, {"can't be blank", [validation: :required]}} in changeset.errors
   end
 
-  test "changset is invalid if source not provided" do
+  test "changeset is invalid if source not provided" do
     attrs = %{
       name: "test",
       decoder: %{type: "CSV", args: %{headers: true, separator: ",", delimiter: "/n"} }
