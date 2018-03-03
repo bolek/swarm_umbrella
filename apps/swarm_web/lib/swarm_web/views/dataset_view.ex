@@ -14,13 +14,9 @@ defmodule SwarmWeb.DatasetView do
     %{
       id: dataset.id,
       name: dataset.name,
-      decoder: %{
-        type: SwarmEngine.Decoder.type(dataset.decoder),
-        args: SwarmEngine.Decoder.args(dataset.decoder)
-      },
+      decoder: dataset.decoder,
       tracker: %{
         source: dataset.tracker.source,
-        store: dataset.tracker.store,
         resources: dataset.tracker.resources
       },
       store: dataset.store

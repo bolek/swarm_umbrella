@@ -9,6 +9,7 @@ defmodule SwarmEngine.DatasetStore do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @primary_key false
   embedded_schema do
     field :name, :string
     embeds_many :columns, DatasetStoreColumn

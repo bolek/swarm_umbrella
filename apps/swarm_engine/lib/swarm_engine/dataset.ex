@@ -1,7 +1,7 @@
 defmodule SwarmEngine.Dataset do
   use GenServer, start: {__MODULE__, :start_link, []}, restart: :transient
 
-  alias SwarmEngine.{DatasetStore, Decoder, Decoders, EctoDecoder}
+  alias SwarmEngine.{DatasetStore, Decoder, Decoders}
 
   def start_link(%{id: id} = params) do
     GenServer.start_link(__MODULE__, params, name: via_tuple(id))
@@ -16,17 +16,24 @@ defmodule SwarmEngine.Dataset do
 
   use SwarmEngine.Schema
   import Ecto.Changeset
+  import SwarmEngine.Repo.Changeset.DynamicEmbeds
 
   schema "datasets" do
     field :name, :string
-    field :decoder, EctoDecoder
-    has_one :tracker, Tracker
-    embeds_one :store, DatasetStore
+    field :decoder, SwarmEngine.Repo.Types.Decoder
+    has_one :tracker, Tracker, on_replace: :delete
+    embeds_one :store, DatasetStore, on_replace: :delete
 
     timestamps()
   end
 
-  def changeset(%Dataset{} = dataset, attrs) do
+
+  def update_changeset(%Dataset{} = dataset, attrs) do
+    changeset(dataset, attrs)
+    |> validate_required([:name, :decoder, :store, :tracker])
+  end
+
+  def new_changeset(%Dataset{} = dataset, attrs) do
     default_tracker = %Tracker{
       store: %SwarmEngine.Connectors.LocalDir{path: "/tmp"},
       resources: []
@@ -35,11 +42,16 @@ defmodule SwarmEngine.Dataset do
     tracker = default_tracker
     |> Tracker.changeset(attrs)
 
-    dataset
-    |> cast(attrs, ["name", "decoder"])
+    changeset(dataset, attrs)
     |> put_assoc(:tracker, tracker)
-    |> put_embed(:store, %DatasetStore{name: nil, columns: []})
     |> validate_required([:name, :decoder, :store, :tracker])
+  end
+
+  def changeset(%Dataset{} = dataset, attrs) do
+    dataset
+    |> cast(attrs, ["name"])
+    |> cast_dynamic_embed(:decoder)
+    |> put_embed(:store, %DatasetStore{name: nil, columns: []})
   end
 
   def create(name, source, decoder \\ Decoders.CSV.create()) do

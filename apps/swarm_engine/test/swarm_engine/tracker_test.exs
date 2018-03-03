@@ -5,7 +5,6 @@ defmodule SwarmEngine.TrackerTest do
   alias SwarmEngine.Tracker
 
   test "create" do
-
     assert %Tracker{ source: "source",
               store: "store",
               resources: MapSet.new()
@@ -81,9 +80,17 @@ defmodule SwarmEngine.TrackerTest do
 
   test "valid changeset" do
     changeset = Tracker.changeset(%Tracker{store: %LocalDir{path: "/tmp"}}, %{
-      source: %{type: "LocalFile", args: %{path: "some/path"}}
+      "source" => %{"type" => "LocalFile", "path" => "some/path"}
     })
 
     assert changeset.valid?
+  end
+
+  test "changeset is invalid if invalid source provided" do
+    changeset = Tracker.changeset(%Tracker{store: %LocalDir{path: "/tmp"}}, %{
+      "source" => %{"type" => "LocalFile"}
+    })
+
+    refute changeset.valid?
   end
 end

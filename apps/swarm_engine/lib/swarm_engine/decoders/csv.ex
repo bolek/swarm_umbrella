@@ -5,13 +5,29 @@ defmodule SwarmEngine.Decoders.CSV do
   alias SwarmEngine.Decoders.CSV
   alias SwarmEngine.{Connector, Util}
 
+  use Ecto.Schema
+  import Ecto.Changeset
+
   @type t :: %CSV{
+    type: String.t,
     headers: Boolean.t,
     separator: String.t,
     delimiter: String.t
   }
-  @fields [:headers, :separator, :delimiter]
-  defstruct @fields
+
+  @primary_key false
+  embedded_schema do
+    field :type, :string, default: "CSV"
+    field :headers, :boolean, default: true
+    field :separator, :string, default: ","
+    field :delimiter, :string, default: "\n"
+  end
+
+  def changeset(%CSV{} = csv, attrs) do
+    csv
+    |> cast(attrs, ~w(headers separator delimiter))
+  end
+
 
   @spec create(Keyword.t) :: CSV.t
   def create(options \\ []) do
@@ -54,10 +70,6 @@ defmodule SwarmEngine.Decoders.CSV do
     File.stream!(tmp_file_path)
     |> Util.CSV.decode!(Map.to_list(opts))
   end
-
-  def fields, do: @fields
-  def type(%CSV{}), do: "CSV"
-  def args(%CSV{} = csv), do: Map.from_struct(csv)
 
   defp column_options(opts), do: opts
     |> Map.replace(:headers, false)

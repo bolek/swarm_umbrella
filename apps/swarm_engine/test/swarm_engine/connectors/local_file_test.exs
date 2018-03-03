@@ -17,6 +17,22 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
       %LocalFile{path: "some/path"}
   end
 
+  test "changeset is valid when provided with valid attributes" do
+    attrs = %{path: "some_path"}
+
+    changeset = LocalFile.changeset(%LocalFile{}, attrs)
+
+    assert changeset.valid?
+  end
+
+  test "changeset is invalid if path not provided" do
+    attrs = %{}
+
+    changeset = LocalFile.changeset(%LocalFile{}, attrs)
+
+    assert {:path, {"can't be blank", [validation: :required]}} in changeset.errors
+  end
+
   test "streaming a local file" do
     source = LocalFile.create("test/fixtures/dummy.csv")
 

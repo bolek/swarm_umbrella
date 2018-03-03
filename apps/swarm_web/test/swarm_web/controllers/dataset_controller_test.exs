@@ -8,11 +8,13 @@ defmodule SwarmWeb.DatasetControllerTest do
     "name" => "My Dataset",
     "source" => %{
       "type" => "LocalFile",
-      "args" => %{"path" => "tmp.txt"}
+      "path" => "tmp.txt"
     },
     "decoder" => %{
       "type" => "CSV",
-      "args" => %{"headers" => true, "separator" => ",", "delimiter" => "/n"}
+      "headers" => true,
+      "separator" => ",",
+      "delimiter" => "/n"
     }
   }
 
@@ -46,21 +48,20 @@ defmodule SwarmWeb.DatasetControllerTest do
 
       conn = get conn, dataset_path(conn, :show, id)
 
-      new_dataset = SwarmEngine.get_dataset!(id)
-
       assert json_response(conn, 200)["data"] == %{
         "id" => id,
         "name" => "My Dataset",
         "decoder" => %{
-          "args" => %{"delimiter" => "/n", "headers" => true, "separator" => ","},
-          "type" => "CSV"
+          "type" => "CSV",
+          "delimiter" => "/n",
+          "headers" => true,
+          "separator" => ","
         },
         "tracker" => %{
           "resources" => [],
-          "source" => %{"path" => "tmp.txt"},
-          "store" => %{"id" => new_dataset.tracker.store.id, "path" => "/tmp"}
+          "source" => %{"type" => "LocalFile", "path" => "tmp.txt"}
         },
-        "store" => %{"columns" => [], "id" => new_dataset.store.id, "name" => nil}
+        "store" => %{"columns" => [], "name" => nil}
       }
     end
 
@@ -70,39 +71,48 @@ defmodule SwarmWeb.DatasetControllerTest do
     end
   end
 
-  # describe "update dataset" do
-  #   setup [:sign_in, :create_dataset]
+  describe "update dataset" do
+    setup [:sign_in, :create_dataset]
 
-  #   test "renders dataset when data is valid", %{conn: conn, dataset: %Dataset{id: id} = dataset} do
-  #     conn = put conn, dataset_path(conn, :update, dataset), dataset: @update_attrs
-  #     assert %{} == json_response(conn, 200)["data"]
+    test "renders dataset when data is valid", %{conn: conn, dataset: %Dataset{id: id} = dataset} do
+      conn = put conn, dataset_path(conn, :update, dataset), dataset: @update_attrs
+      assert %{} = json_response(conn, 200)["data"]
 
-  #     conn = get conn, dataset_path(conn, :show, id)
-  #     assert json_response(conn, 200)["data"] == %{
-  #       "id" => id,
-  #       "name" => "some updated name",
-  #       "decoder" => %{},
-  #       "tracker" => %{}
-  #     }
-  #   end
+      conn = get conn, dataset_path(conn, :show, id)
+      assert json_response(conn, 200)["data"] == %{
+        "id" => id,
+        "name" => "some updated name",
+        "decoder" => %{
+          "type" => "CSV",
+          "delimiter" => "/n",
+          "headers" => true,
+          "separator" => ","
+        },
+        "tracker" => %{
+          "resources" => [],
+          "source" => %{"type" => "LocalFile", "path" => "tmp.txt"}
+        },
+        "store" => %{"columns" => [], "name" => nil}
+      }
+    end
 
-  #   test "renders errors when data is invalid", %{conn: conn, dataset: dataset} do
-  #     conn = put conn, dataset_path(conn, :update, dataset), dataset: @invalid_attrs
-  #     assert json_response(conn, 422)["errors"] != %{}
-  #   end
-  # end
+    test "renders errors when data is invalid", %{conn: conn, dataset: dataset} do
+      conn = put conn, dataset_path(conn, :update, dataset), dataset: @invalid_attrs
+      assert json_response(conn, 422)["errors"] != %{}
+    end
+  end
 
-  # describe "delete dataset" do
-  #   setup [:sign_in, :create_dataset]
+  describe "delete dataset" do
+    setup [:sign_in, :create_dataset]
 
-  #   test "deletes chosen dataset", %{conn: conn, dataset: dataset} do
-  #     conn = delete conn, dataset_path(conn, :delete, dataset)
-  #     assert response(conn, 204)
-  #     assert_error_sent 404, fn ->
-  #       get conn, dataset_path(conn, :show, dataset)
-  #     end
-  #   end
-  # end
+    test "deletes chosen dataset", %{conn: conn, dataset: dataset} do
+      conn = delete conn, dataset_path(conn, :delete, dataset)
+      assert response(conn, 204)
+      assert_error_sent 404, fn ->
+        get conn, dataset_path(conn, :show, dataset)
+      end
+    end
+  end
 
   defp create_dataset(_) do
     dataset = fixture(:dataset)

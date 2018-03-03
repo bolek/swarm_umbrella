@@ -1,12 +1,13 @@
   defmodule SwarmEngine.Tracker do
-  alias SwarmEngine.{Connector, Dataset, EctoConnector, Decoder, Tracker, Resource}
+  alias SwarmEngine.{Connector, Dataset, Decoder, Tracker, Resource}
   alias SwarmEngine.Connectors.LocalDir
 
   use SwarmEngine.Schema
   import Ecto.Changeset
+  import SwarmEngine.Repo.Changeset.DynamicEmbeds
 
   schema "trackers" do
-    field :source, EctoConnector
+    field :source, SwarmEngine.Repo.Types.Connector
     embeds_one :store, LocalDir
     embeds_many :resources, Resource
     belongs_to :dataset, Dataset
@@ -16,9 +17,10 @@
 
   def changeset(%Tracker{}=tracker, attrs) do
     tracker
-    |> cast(attrs, ~w(source))
+    |> cast(attrs, [])
     |> cast_embed(:store, with: &LocalDir.changeset/2)
     |> cast_embed(:resources, with: &Resource.changeset/2)
+    |> cast_dynamic_embed(:source)
     |> validate_required([:source, :store, :resources])
   end
 

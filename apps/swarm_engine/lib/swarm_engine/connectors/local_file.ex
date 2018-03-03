@@ -2,12 +2,24 @@ defmodule SwarmEngine.Connectors.LocalFile do
   alias __MODULE__
   alias SwarmEngine.{Connector, Resource}
 
-  @fields [:path]
+  use Ecto.Schema
+  import Ecto.Changeset
+
   @type t :: %__MODULE__{
     path: String.t
   }
 
-  defstruct @fields
+  @primary_key false
+  embedded_schema do
+    field :type, :string, default: "LocalFile"
+    field :path, :string
+  end
+
+  def changeset(%LocalFile{} = local_file, attrs) do
+    local_file
+    |> cast(attrs, ~w(path))
+    |> validate_required([:path])
+  end
 
   @spec create(String.t) :: LocalFile.t
   def create(path) do
@@ -42,7 +54,7 @@ defmodule SwarmEngine.Connectors.LocalFile do
     Connector.metadata(source)
   end
 
-  def fields(), do: @fields
+  def fields(), do: __MODULE__.__schema__(:fields)
 end
 
 defimpl SwarmEngine.Connector, for: SwarmEngine.Connectors.LocalFile do

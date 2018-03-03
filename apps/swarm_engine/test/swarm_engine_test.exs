@@ -11,11 +11,13 @@ defmodule SwarmEngineTest do
     "name" => "My Dataset",
     "source" => %{
       "type" => "LocalFile",
-      "args" => %{"path" => "tmp.txt"}
+      "path" => "tmp.txt"
     },
     "decoder" => %{
       "type" => "CSV",
-      "args" => %{"headers" => true, "separator" => ",", "delimiter" => "/n"}
+      "headers" => true,
+      "separator" => ",",
+      "delimiter" => "/n"
     }
   }
 
