@@ -2,7 +2,7 @@ defmodule SwarmWeb.Api.DatasetControllerTest do
   use SwarmWeb.ApiCase
   use SwarmEngine.DataCase
 
-  alias SwarmEngine.Dataset
+  alias SwarmEngine.Repo.Schema.Dataset
 
   @create_attrs %{
     "name" => "My Dataset",

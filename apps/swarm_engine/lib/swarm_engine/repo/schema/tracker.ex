@@ -10,7 +10,7 @@ defmodule SwarmEngine.Repo.Schema.Tracker do
     field :source, SwarmEngine.Repo.Types.Connector
     embeds_one :store, SwarmEngine.Connectors.LocalDir
     embeds_many :resources, SwarmEngine.Resource
-    belongs_to :dataset, SwarmEngine.Dataset
+    belongs_to :dataset, SwarmEngine.Repo.Schema.Dataset
 
     timestamps()
   end

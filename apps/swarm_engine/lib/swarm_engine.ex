@@ -1,5 +1,6 @@
 defmodule SwarmEngine do
-  alias SwarmEngine.{Dataset, Repo}
+  alias SwarmEngine.Repo
+  alias SwarmEngine.Repo.Schema.Dataset
 
   import Ecto.Query, only: [from: 2]
 

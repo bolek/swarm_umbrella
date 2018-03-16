@@ -2,7 +2,7 @@ defmodule SwarmWeb.Api.DatasetController do
   use SwarmWeb, :controller
 
   alias SwarmEngine
-  alias SwarmEngine.Dataset
+  alias SwarmEngine.Repo.Schema.Dataset
 
   action_fallback SwarmWeb.FallbackController
 

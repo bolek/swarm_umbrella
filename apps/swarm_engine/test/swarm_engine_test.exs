@@ -21,7 +21,7 @@ defmodule SwarmEngineTest do
     }
   }
 
-  alias SwarmEngine.Dataset
+  alias SwarmEngine.Repo.Schema.Dataset
 
   def dataset_fixture(attrs \\ %{}) do
     {:ok, dataset} =
