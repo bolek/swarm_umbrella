@@ -26,7 +26,7 @@ decoder =
 decoderHelp : String -> JD.Decoder Decoder
 decoderHelp type_ =
   case type_ of
-    "Elixir.SwarmEngine.Decoders.CSV" ->
+    "CSV" ->
       csvDecoder
     _ ->
       JD.fail <|
@@ -35,7 +35,7 @@ decoderHelp type_ =
 
 csvDecoder : JD.Decoder Decoder
 csvDecoder
-  = JD.field "args" (JD.map CSV csvParamsDecoder)
+  = JD.map CSV csvParamsDecoder
 
 csvParamsDecoder : JD.Decoder CSVParams
 csvParamsDecoder

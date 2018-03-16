@@ -12,7 +12,7 @@ defmodule SwarmWeb.DatasetsChannel do
       datasets: SwarmEngine.list_datasets()
     })
 
-    broadcast(socket, "datasets", payload)
+    broadcast(socket, "datasets", IO.inspect(payload))
     {:reply, :ok, socket}
   end
 
@@ -21,11 +21,13 @@ defmodule SwarmWeb.DatasetsChannel do
 
     id = SwarmEngine.Util.UUID.generate
 
+    IO.inspect(params)
+
     {:ok, _} = SwarmEngine.DatasetSupervisor.activate_dataset(%{
       id: id,
       name: params["msg"]["name"],
-      source: %SwarmEngine.Connectors.LocalFile{path: params["msg"]["source"]["path"]},
-      decoder: SwarmEngine.Decoders.CSV.changeset(%SwarmEngine.Decoders.CSV{}, params["msg"]["decoder"])
+      source: params["msg"]["source"],
+      decoder: params["msg"]["decoder"]
     })
 
     payload = SwarmWeb.Api.DatasetView.render("index.json", %{
