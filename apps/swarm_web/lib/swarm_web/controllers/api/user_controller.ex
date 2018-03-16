@@ -1,4 +1,4 @@
-defmodule SwarmWeb.UserController do
+defmodule SwarmWeb.Api.UserController do
   use SwarmWeb, :controller
 
   alias Swarm.Accounts

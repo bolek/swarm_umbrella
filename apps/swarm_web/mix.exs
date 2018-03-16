@@ -48,6 +48,7 @@ defmodule SwarmWeb.Mixfile do
 
       {:bcrypt_elixir, "~> 1.0"},
       {:cowboy, "~> 1.0"},
+      {:guardian, "~> 1.0"},
       {:ueberauth, "~> 0.4"},
       {:ueberauth_identity, "~> 0.2"}
     ]

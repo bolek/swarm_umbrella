@@ -8,7 +8,7 @@ defmodule SwarmWeb.DatasetsChannel do
   def handle_in("fetch", _params, socket) do
     Logger.info "Handling datasets..."
 
-    payload = SwarmWeb.DatasetView.render("index.json", %{
+    payload = SwarmWeb.Api.DatasetView.render("index.json", %{
       datasets: SwarmEngine.list_datasets()
     })
 
@@ -21,8 +21,6 @@ defmodule SwarmWeb.DatasetsChannel do
 
     id = SwarmEngine.Util.UUID.generate
 
-    IO.inspect(id)
-
     {:ok, _} = SwarmEngine.DatasetSupervisor.activate_dataset(%{
       id: id,
       name: params["msg"]["name"],
@@ -30,7 +28,7 @@ defmodule SwarmWeb.DatasetsChannel do
       decoder: SwarmEngine.Decoders.CSV.changeset(%SwarmEngine.Decoders.CSV{}, params["msg"]["decoder"])
     })
 
-    payload = SwarmWeb.DatasetView.render("index.json", %{
+    payload = SwarmWeb.Api.DatasetView.render("index.json", %{
       datasets: Swarm.Etl.list_datasets()
     })
 

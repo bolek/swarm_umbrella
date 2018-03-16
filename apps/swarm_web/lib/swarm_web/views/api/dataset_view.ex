@@ -1,6 +1,6 @@
-defmodule SwarmWeb.DatasetView do
+defmodule SwarmWeb.Api.DatasetView do
   use SwarmWeb, :view
-  alias SwarmWeb.DatasetView
+  alias SwarmWeb.Api.DatasetView
 
   def render("index.json", %{datasets: datasets}) do
     %{data: render_many(datasets, DatasetView, "dataset.json")}

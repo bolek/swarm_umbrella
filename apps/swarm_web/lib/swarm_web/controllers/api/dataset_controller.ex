@@ -1,4 +1,4 @@
-defmodule SwarmWeb.DatasetController do
+defmodule SwarmWeb.Api.DatasetController do
   use SwarmWeb, :controller
 
   alias SwarmEngine

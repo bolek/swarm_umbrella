@@ -26,13 +26,21 @@ config :logger, :console,
 config :swarm_web, :generators,
   context_app: :swarm
 
-# Import environment specific config. This must remain at the bottom
-# of this file so it overrides the configuration defined above.
-import_config "#{Mix.env}.exs"
-
 config :ueberauth, Ueberauth,
   providers: [
     identity: { Ueberauth.Strategy.Identity, [
-      callback_methods: ["POST"]
+      callback_methods: ["POST"],
+      callback_path: "/api/auth/identity/callback",
+      nickname_field: :email,
+      param_nesting: "user",
+      uid_field: :id
     ]}
   ]
+
+config :swarm_web, SwarmWeb.Auth.Guardian,
+  issuer: "swarm_web",
+  secret_key: "use mix phx.gen.secret in production yo"
+
+# Import environment specific config. This must remain at the bottom
+# of this file so it overrides the configuration defined above.
+import_config "#{Mix.env}.exs"

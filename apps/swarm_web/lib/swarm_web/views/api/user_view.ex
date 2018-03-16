@@ -1,6 +1,6 @@
-defmodule SwarmWeb.UserView do
+defmodule SwarmWeb.Api.UserView do
   use SwarmWeb, :view
-  alias SwarmWeb.UserView
+  alias SwarmWeb.Api.UserView
 
   def render("index.json", %{users: users}) do
     %{data: render_many(users, UserView, "user.json")}

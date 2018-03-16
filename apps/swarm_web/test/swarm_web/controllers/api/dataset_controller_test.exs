@@ -1,5 +1,5 @@
-defmodule SwarmWeb.DatasetControllerTest do
-  use SwarmWeb.ConnCase
+defmodule SwarmWeb.Api.DatasetControllerTest do
+  use SwarmWeb.ApiCase
   use SwarmEngine.DataCase
 
   alias SwarmEngine.Dataset
@@ -30,12 +30,17 @@ defmodule SwarmWeb.DatasetControllerTest do
     {:ok, conn: put_req_header(conn, "accept", "application/json")}
   end
 
-  describe "index" do
-    setup [:sign_in]
+  describe "GET /index" do
+    test "lists all datasets", context do
+      %{conn: conn} = sign_in(context)
 
-    test "lists all datasets", %{conn: conn} do
       conn = get conn, dataset_path(conn, :index)
       assert json_response(conn, 200)["data"] == []
+    end
+
+    test "unauthenticated access", %{conn: conn} do
+      conn = get conn, dataset_path(conn, :index)
+      assert json_response(conn, 401)["message"] == "unauthenticated"
     end
   end
 
@@ -43,12 +48,12 @@ defmodule SwarmWeb.DatasetControllerTest do
     setup [:sign_in]
 
     test "renders dataset when data is valid", %{conn: conn} do
-      conn = post conn, dataset_path(conn, :create), dataset: @create_attrs
-      assert %{"id" => id} = json_response(conn, 201)["data"]
+      res = post conn, dataset_path(conn, :create), dataset: @create_attrs
+      assert %{"id" => id} = json_response(res, 201)["data"]
 
-      conn = get conn, dataset_path(conn, :show, id)
+      res = get conn, dataset_path(conn, :show, id)
 
-      assert json_response(conn, 200)["data"] == %{
+      assert json_response(res, 200)["data"] == %{
         "id" => id,
         "name" => "My Dataset",
         "decoder" => %{
@@ -75,11 +80,11 @@ defmodule SwarmWeb.DatasetControllerTest do
     setup [:sign_in, :create_dataset]
 
     test "renders dataset when data is valid", %{conn: conn, dataset: %Dataset{id: id} = dataset} do
-      conn = put conn, dataset_path(conn, :update, dataset), dataset: @update_attrs
-      assert %{} = json_response(conn, 200)["data"]
+      res = put conn, dataset_path(conn, :update, dataset), dataset: @update_attrs
+      assert %{} = json_response(res, 200)["data"]
 
-      conn = get conn, dataset_path(conn, :show, id)
-      assert json_response(conn, 200)["data"] == %{
+      res = get conn, dataset_path(conn, :show, id)
+      assert json_response(res, 200)["data"] == %{
         "id" => id,
         "name" => "some updated name",
         "decoder" => %{
@@ -106,8 +111,8 @@ defmodule SwarmWeb.DatasetControllerTest do
     setup [:sign_in, :create_dataset]
 
     test "deletes chosen dataset", %{conn: conn, dataset: dataset} do
-      conn = delete conn, dataset_path(conn, :delete, dataset)
-      assert response(conn, 204)
+      res = delete conn, dataset_path(conn, :delete, dataset)
+      assert response(res, 204)
       assert_error_sent 404, fn ->
         get conn, dataset_path(conn, :show, dataset)
       end

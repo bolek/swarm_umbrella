@@ -1,9 +1,8 @@
 defmodule SwarmWeb.Router do
   use SwarmWeb, :router
 
+  alias SwarmWeb.Api
   alias SwarmWeb.Router.Helpers
-  alias SwarmWeb.DatasetController
-  alias SwarmWeb.UserController
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -15,7 +14,6 @@ defmodule SwarmWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
-    plug :fetch_session
   end
 
   pipeline :authenticate_user do
@@ -31,10 +29,21 @@ defmodule SwarmWeb.Router do
     delete "/logout", AuthController, :delete
   end
 
+  pipeline :authenticated do
+    plug SwarmWeb.Auth.AccessPipeline
+  end
+
   scope "/api" do
-    pipe_through [:api, :authenticate_user]
-    resources "/datasets", DatasetController, except: [:new, :edit]
-    resources "/users", UserController, except: [:new, :edit]
+    pipe_through [:api]
+
+    scope "/auth" do
+      post "/identity/callback", Api.AuthenticationController, :identity_callback
+    end
+
+    pipe_through [:authenticated]
+
+    resources "/datasets", Api.DatasetController, except: [:new, :edit]
+    resources "/users", Api.UserController, except: [:new, :edit]
   end
 
   scope "/", SwarmWeb do

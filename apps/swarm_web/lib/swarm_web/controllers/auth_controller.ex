@@ -32,11 +32,7 @@ defmodule SwarmWeb.AuthController do
     |> redirect(to: "/auth/identity")
   end
 
-  def callback(%{assigns: %{ueberauth_auth: %{
-                              info: %{email: email},
-                              credentials: %{other: %{password: password}}
-    }}} = conn, _params) do
-
+  def callback(conn, %{"email" => email, "password" => password, "provider" => "identity"}) do
     case Accounts.authenticate_by_email_password(email, password) do
       {:ok, user} ->
         conn
