@@ -21,12 +21,11 @@ defmodule SwarmEngine.Dataset do
   schema "datasets" do
     field :name, :string
     field :decoder, SwarmEngine.Repo.Types.Decoder
-    has_one :tracker, Tracker, on_replace: :delete
+    has_one :tracker, SwarmEngine.Repo.Schema.Tracker, on_replace: :delete
     embeds_one :store, DatasetStore, on_replace: :delete
 
     timestamps()
   end
-
 
   def update_changeset(%Dataset{} = dataset, attrs) do
     changeset(dataset, attrs)
@@ -34,13 +33,13 @@ defmodule SwarmEngine.Dataset do
   end
 
   def new_changeset(%Dataset{} = dataset, attrs) do
-    default_tracker = %Tracker{
+    default_tracker = %SwarmEngine.Repo.Schema.Tracker{
       store: %SwarmEngine.Connectors.LocalDir{path: "/tmp"},
       resources: []
     }
 
     tracker = default_tracker
-    |> Tracker.changeset(attrs)
+    |> SwarmEngine.Repo.Schema.Tracker.changeset(attrs)
 
     changeset(dataset, attrs)
     |> put_assoc(:tracker, tracker)
