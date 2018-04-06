@@ -10,6 +10,15 @@ defmodule SwarmEngine.DatasetTest do
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(DataVault)
   end
 
+  test "creating a new dataset returns a valid DatasetNew struct" do
+    source = LocalFile.create("test/fixtures/goofy.csv")
+    decoder = SwarmEngine.Decoders.CSV.create()
+    {:ok, dataset} = Dataset.create2("goofy", source)
+
+    assert %SwarmEngine.DatasetNew{id: dataset.id, name: "goofy", source: source, decoder: decoder}
+      == dataset
+  end
+
   test "stream a dataset" do
     source = LocalFile.create("test/fixtures/goofy.csv")
     {:ok, dataset} = Dataset.create("goofy", source)
