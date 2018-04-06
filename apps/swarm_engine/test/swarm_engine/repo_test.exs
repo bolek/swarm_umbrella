@@ -25,4 +25,14 @@ defmodule SwarmEngine.RepoTest do
     assert {:error, %{errors: [source: {"has already been taken", []}]}}
       = Repo.put_dataset(struct(@newDataset, id: "a12ed994-ca7f-40eb-8ded-f917ce40df59"))
   end
+
+  test "getting a new dataset" do
+    Repo.put_dataset(@newDataset)
+
+    assert @newDataset == Repo.get_dataset(@newDataset.id)
+  end
+
+  test "retrieving an inexistent dataset" do
+    assert nil == Repo.get_dataset("868d2ee4-8578-4fc4-9321-ce5e6864030e")
+  end
 end
