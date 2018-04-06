@@ -17,7 +17,14 @@ defmodule SwarmEngine.Dataset do
   alias SwarmEngine.Tracker
 
   def create2(name, source, decoder \\ Decoders.CSV.create()) do
-    SwarmEngine.DatasetNew.create(name, source, decoder)
+    {:ok, dataset} = SwarmEngine.DatasetNew.create(name, source, decoder)
+
+    case SwarmEngine.Repo.put_dataset(dataset) do
+      {:ok, _} ->
+        {:ok, dataset}
+      {:error, %{errors: [source: {"has already been taken", []}]}} ->
+        {:error, :already_exists}
+    end
   end
 
   def create(name, source, decoder \\ Decoders.CSV.create()) do

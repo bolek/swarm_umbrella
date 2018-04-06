@@ -2,12 +2,13 @@ defmodule SwarmEngine.DatasetTest do
   use ExUnit.Case, async: true
 
   alias SwarmEngine.Connectors.{LocalDir, LocalFile}
-  alias SwarmEngine.{Dataset, DataVault, Tracker}
+  alias SwarmEngine.{Dataset, Tracker}
 
 
   setup do
     # Explicitly get a connection before each test
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(DataVault)
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(SwarmEngine.DataVault)
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(SwarmEngine.Repo)
   end
 
   test "creating a new dataset returns a valid DatasetNew struct" do
@@ -17,6 +18,13 @@ defmodule SwarmEngine.DatasetTest do
 
     assert %SwarmEngine.DatasetNew{id: dataset.id, name: "goofy", source: source, decoder: decoder}
       == dataset
+  end
+
+  test "creating a new dataset with an existing source returns an error" do
+    source = LocalFile.create("test/fixtures/goofy.csv")
+    {:ok, _} = Dataset.create2("goofy", source)
+
+    assert {:error, _} = Dataset.create2("goofy", source)
   end
 
   test "stream a dataset" do
