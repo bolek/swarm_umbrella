@@ -5,9 +5,9 @@ defmodule SwarmEngine.Repo.Schema.BaseDataset do
   import Ecto.Changeset
 
   schema "base_datasets" do
-    field :name, :string
-    field :decoder, SwarmEngine.Repo.Types.Decoder
-    field :source, SwarmEngine.Repo.Types.Connector
+    field(:name, :string)
+    field(:decoder, SwarmEngine.Repo.Types.Decoder)
+    field(:source, SwarmEngine.Repo.Types.Connector)
 
     timestamps()
   end
@@ -21,5 +21,6 @@ defmodule SwarmEngine.Repo.Schema.BaseDataset do
       source: dataset.source
     })
     |> unique_constraint(:source)
+    |> unique_constraint(:id, name: :base_datasets_pkey)
   end
 end

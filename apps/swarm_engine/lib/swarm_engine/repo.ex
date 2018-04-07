@@ -4,18 +4,20 @@ defmodule SwarmEngine.Repo do
 
   use Ecto.Repo, otp_app: :swarm_engine
 
-  def set_utc(conn)  do
+  def set_utc(conn) do
     Postgrex.query!(conn, "SET TIME ZONE UTC;", [])
   end
 
   def put_dataset(%SwarmEngine.DatasetNew{} = dataset) do
-    changeset = dataset
-    |> BaseDataset.changeset()
+    changeset =
+      dataset
+      |> BaseDataset.changeset()
 
     case Repo.insert(changeset) do
       {:ok, _} ->
         {:ok, dataset}
-      {:error, errors} ->
+
+      {:error, %{errors: errors}} ->
         {:error, errors}
     end
   end
@@ -24,6 +26,7 @@ defmodule SwarmEngine.Repo do
     case Repo.get(BaseDataset, id) do
       nil ->
         nil
+
       dataset ->
         %SwarmEngine.DatasetNew{
           id: dataset.id,

@@ -1,24 +1,39 @@
 defmodule SwarmEngine.Dataset do
   use GenServer, start: {__MODULE__, :start_link, []}, restart: :transient
 
-  alias SwarmEngine.{DatasetStore, Decoder}
+  alias __MODULE__
+  alias SwarmEngine.{DatasetFactory, DatasetStore, Decoder, Tracker}
 
   defstruct [:id, :name, :decoder, :tracker, :store]
 
-  def start_link(%{id: id} = params) do
-    GenServer.start_link(__MODULE__, params, name: via_tuple(id))
+  # Client Setup
+
+  def start_link(id) do
+    GenServer.start_link(__MODULE__, id, name: via_tuple(id))
   end
 
-  def init(attrs), do: SwarmEngine.create_dataset(attrs)
+  def init(id) when is_binary(id) and byte_size(id) == 36 do
+    case SwarmEngine.Repo.get_dataset(id) do
+      nil ->
+        {:error, :not_found}
+
+      dataset ->
+        {:ok, dataset}
+    end
+  end
+
+  def init(_), do: {:error, :not_found}
 
   def via_tuple(id), do: {:via, Registry, {Registry.Dataset, id}}
 
-  alias __MODULE__
-  alias SwarmEngine.Tracker
+  # Client API
+
+  # Server (callbacks)
+
+  # Logic
 
   def stream(%Dataset{tracker: tracker, decoder: decoder}, version) do
-    with {:ok, resource} <- Tracker.find(tracker, %{version: version})
-    do
+    with {:ok, resource} <- Tracker.find(tracker, %{version: version}) do
       resource.source
       |> Decoder.decode!(decoder)
     else

@@ -22,8 +22,8 @@ defmodule SwarmEngine.RepoTest do
   test "putting the same dataset twice" do
     Repo.put_dataset(@newDataset)
 
-    assert {:error, %{errors: [source: {"has already been taken", []}]}}
-      = Repo.put_dataset(struct(@newDataset, id: "a12ed994-ca7f-40eb-8ded-f917ce40df59"))
+    assert {:error, [source: {"has already been taken", []}]} =
+             Repo.put_dataset(struct(@newDataset, id: "a12ed994-ca7f-40eb-8ded-f917ce40df59"))
   end
 
   test "getting a new dataset" do
