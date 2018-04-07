@@ -1,5 +1,5 @@
 defmodule SwarmEngine.DatasetFactory do
-  alias SwarmEngine.{Connectors.LocalDir, Dataset, DatasetStore, Decoders, Tracker}
+  alias SwarmEngine.{Connectors.LocalDir, Dataset, DatasetStore, Tracker}
 
   @tracker_store %LocalDir{path: "/tmp/swarm_engine_store/"}
 
