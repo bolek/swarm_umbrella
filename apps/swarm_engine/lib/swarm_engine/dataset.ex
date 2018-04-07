@@ -1,7 +1,7 @@
 defmodule SwarmEngine.Dataset do
   use GenServer, start: {__MODULE__, :start_link, []}, restart: :transient
 
-  alias SwarmEngine.{DatasetStore, Decoder, Decoders}
+  alias SwarmEngine.{DatasetStore, Decoder}
 
   defstruct [:id, :name, :decoder, :tracker, :store]
 
