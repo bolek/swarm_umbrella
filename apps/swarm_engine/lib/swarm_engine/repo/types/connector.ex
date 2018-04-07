@@ -10,6 +10,7 @@ defmodule SwarmEngine.Repo.Types.Connector do
   """
   def resolve(%{type: "LocalFile"}), do: {:ok, Connectors.LocalFile}
   def resolve(%{type: "GoogleDrive"}), do: {:ok, Connectors.GoogleDrive}
+  def resolve(%{type: "StringIO"}), do: {:ok, Connectors.StringIO}
   def resolve(_),
     do: {:error, :unkown_type}
 
@@ -18,6 +19,7 @@ defmodule SwarmEngine.Repo.Types.Connector do
   """
   def types, do: [
     "LocalFile",
-    "GoogleDrive"
+    "GoogleDrive",
+    "StringIO"
   ]
 end
