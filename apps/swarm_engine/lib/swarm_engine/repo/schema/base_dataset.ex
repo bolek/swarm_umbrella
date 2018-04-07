@@ -8,6 +8,7 @@ defmodule SwarmEngine.Repo.Schema.BaseDataset do
     field(:name, :string)
     field(:decoder, SwarmEngine.Repo.Types.Decoder)
     field(:source, SwarmEngine.Repo.Types.Connector)
+    field(:status, SwarmEngine.Repo.Schema.DatasetStatus)
 
     timestamps()
   end
@@ -18,7 +19,8 @@ defmodule SwarmEngine.Repo.Schema.BaseDataset do
       id: dataset.id,
       name: dataset.name,
       decoder: dataset.decoder,
-      source: dataset.source
+      source: dataset.source,
+      status: :new
     })
     |> unique_constraint(:source)
     |> unique_constraint(:id, name: :base_datasets_pkey)

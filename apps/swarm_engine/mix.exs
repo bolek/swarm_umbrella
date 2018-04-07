@@ -10,8 +10,8 @@ defmodule SwarmEngine.Mixfile do
       lockfile: "../../mix.lock",
       version: "0.1.0",
       elixir: "~> 1.5",
-      elixirc_paths: elixirc_paths(Mix.env),
-      start_permanent: Mix.env == :prod,
+      elixirc_paths: elixirc_paths(Mix.env()),
+      start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps()
     ]
@@ -33,7 +33,7 @@ defmodule SwarmEngine.Mixfile do
 
   # Specifies which paths to compile per environment.
   defp elixirc_paths(:test), do: ["lib", "test/support"]
-  defp elixirc_paths(_),     do: ["lib"]
+  defp elixirc_paths(_), do: ["lib"]
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
@@ -41,6 +41,7 @@ defmodule SwarmEngine.Mixfile do
       {:calendar, "~> 0.17.2"},
       {:csv, "~> 2.0.0"},
       {:ecto, "~> 2.2"},
+      {:ecto_enum, "~> 1.0"},
       {:goth, "~> 0.4.0"},
       {:hackney, "~> 1.9"},
       {:postgrex, "~> 0.11"},
@@ -61,7 +62,7 @@ defmodule SwarmEngine.Mixfile do
     [
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
-      "test": ["ecto.create --quiet", "ecto.migrate", "test"]
+      test: ["ecto.create --quiet", "ecto.migrate", "test"]
     ]
   end
 end
