@@ -1,10 +1,8 @@
 defmodule SwarmEngine.Repo.Schema.BaseDataset do
   alias __MODULE__
-  alias SwarmEngine.Repo.Schema
 
   use SwarmEngine.Schema
   import Ecto.Changeset
-  import SwarmEngine.Repo.Changeset.DynamicEmbeds
 
   schema "base_datasets" do
     field :name, :string

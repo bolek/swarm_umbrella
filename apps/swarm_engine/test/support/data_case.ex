@@ -26,10 +26,14 @@ defmodule SwarmEngine.DataCase do
   end
 
   setup tags do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(SwarmEngine.Repo)
-
     unless tags[:async] do
       Ecto.Adapters.SQL.Sandbox.mode(SwarmEngine.Repo, {:shared, self()})
+      Ecto.Adapters.SQL.Sandbox.mode(SwarmEngine.DataVault, {:shared, self()})
+    end
+
+    on_exit fn ->
+      SwarmEngine.Repo.delete_all(SwarmEngine.Repo.Schema.BaseDataset)
+      SwarmEngine.Repo.delete_all(SwarmEngine.Repo.Schema.Dataset)
     end
 
     :ok

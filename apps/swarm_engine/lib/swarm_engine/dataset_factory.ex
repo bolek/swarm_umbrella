@@ -4,15 +4,40 @@ defmodule SwarmEngine.DatasetFactory do
   @tracker_store %LocalDir{path: "/tmp/swarm_engine_store/"}
 
   def build(name, source, decoder \\ Decoders.CSV.create()) do
-    with tracker <- initialize_tracker(source),
-      {:ok, store} <- initialize_store(name, tracker, decoder)
+    {:ok, dataset} = SwarmEngine.DatasetNew.create(name, source, decoder)
+
+    case SwarmEngine.Repo.put_dataset(dataset) do
+      {:ok, _} ->
+        initialize(dataset)
+      {:error, any} ->
+        {:error, any}
+    end
+  end
+
+  def build_async(name, source, decoder \\ Decoders.CSV.create()) do
+    {:ok, dataset} = SwarmEngine.DatasetNew.create(name, source, decoder)
+
+    case SwarmEngine.Repo.put_dataset(dataset) do
+      {:ok, _} ->
+        task = Task.async(fn ->
+          SwarmEngine.DatasetFactory.initialize(dataset)
+        end)
+        {:ok, dataset, task}
+      {:error, any} ->
+        {:error, any}
+    end
+  end
+
+  def initialize(%SwarmEngine.DatasetNew{} = new_dataset) do
+    with tracker <- initialize_tracker(new_dataset.source),
+      {:ok, store} <- initialize_store(new_dataset.id, tracker, new_dataset.decoder)
     do
       {:ok, %Dataset{
-        id: SwarmEngine.Util.UUID.generate,
-        name: name,
+        id: new_dataset.id,
+        name: new_dataset.name,
         tracker: tracker,
         store: store,
-        decoder: decoder
+        decoder: new_dataset.decoder
       }}
     else
       {:error, e} -> {:error, e}
@@ -36,6 +61,8 @@ defmodule SwarmEngine.DatasetFactory do
     end
   end
 
-  defp gen_store_name(name), do:
-    name |> String.downcase() |> String.replace(~r/\s+/, "_")
+  defp gen_store_name(name) do
+    "_" <> name
+    |> String.replace(~r/-/, "")
+  end
 end
