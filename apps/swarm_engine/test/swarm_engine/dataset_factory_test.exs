@@ -22,7 +22,7 @@ defmodule SwarmEngine.DatasetFactoryTest do
     assert {:error, _} = DatasetFactory.build_async("goofy", source)
   end
 
-  test "build_async initialized a dataset asynchronously" do
+  test "build_async initializes a dataset asynchronously" do
     source = StringIO.create("list", "col_4,col_5,col_6\nABC,def,123\nKLM,edd,980")
 
     {:ok, _, task} = DatasetFactory.build_async("goofy", source)
