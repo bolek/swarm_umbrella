@@ -3,7 +3,7 @@ use Mix.Config
 config :swarm_engine, SwarmEngine.DataVault,
   adapter: Ecto.Adapters.Postgres,
   pool: Ecto.Adapters.SQL.Sandbox,
-  database: "data_vault_test",
+  database: "swarm_engine_data_vault_test",
   after_connect: {SwarmEngine.DataVault, :set_utc, []}
 
 config :swarm_engine, SwarmEngine.Repo,

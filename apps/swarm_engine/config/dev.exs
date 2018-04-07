@@ -5,11 +5,11 @@ config :swarm_engine, SwarmEngine.Repo,
   database: "swarm_engine_repo_dev",
   username: "postgres",
   hostname: "localhost",
-  after_connect: {SwarmEngine.DataVault, :set_utc, []}
+  after_connect: {SwarmEngine.Repo, :set_utc, []}
 
 config :swarm_engine, SwarmEngine.DataVault,
   adapter: Ecto.Adapters.Postgres,
-  database: "data_vault_dev",
+  database: "swarm_engine_data_vault_dev",
   username: "postgres",
   hostname: "localhost",
   after_connect: {SwarmEngine.DataVault, :set_utc, []}
