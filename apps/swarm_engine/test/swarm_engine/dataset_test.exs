@@ -22,18 +22,6 @@ defmodule SwarmEngine.DatasetTest do
     assert {:error, :not_found} == Dataset.init("abcd")
   end
 
-  test "initialize a new dataset" do
-    {:ok, dataset} =
-      SwarmEngine.DatasetFactory.create(%{
-        name: "goofy",
-        source: StringIO.create("bunny", "col_4,col_5,col_6\n")
-      })
-
-    {:ok, pid} = Dataset.start_link(dataset.id)
-
-    assert :ok = Dataset.initialize(pid)
-  end
-
   test "stream a dataset" do
     source = LocalFile.create("test/fixtures/goofy.csv")
     {:ok, dataset} = DatasetFactory.build(%{name: "goofy", source: source})
