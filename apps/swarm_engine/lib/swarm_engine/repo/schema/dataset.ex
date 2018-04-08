@@ -2,7 +2,7 @@ defmodule SwarmEngine.Repo.Schema.Dataset do
   use SwarmEngine.Schema
   import Ecto.Changeset
 
-  alias __MODULE__
+  alias __MODULE__, as: DatasetSchema
   alias SwarmEngine.Repo.Schema
 
   schema "datasets" do
@@ -17,7 +17,7 @@ defmodule SwarmEngine.Repo.Schema.Dataset do
   end
 
   def changeset(%SwarmEngine.DatasetNew{} = dataset) do
-    %Dataset{}
+    %DatasetSchema{}
     |> change(%{
       id: dataset.id,
       name: dataset.name,
@@ -27,5 +27,13 @@ defmodule SwarmEngine.Repo.Schema.Dataset do
     })
     |> unique_constraint(:source)
     |> unique_constraint(:id, name: :datasets_pkey)
+  end
+
+  def changeset(%SwarmEngine.Dataset{id: id, store: store, tracker: tracker}) do
+    %DatasetSchema{id: id}
+    |> change()
+    |> put_assoc(:tracker, Schema.Tracker.changeset(%Schema.Tracker{}, tracker))
+    |> put_change(:status, :active)
+    |> put_embed(:store, store)
   end
 end

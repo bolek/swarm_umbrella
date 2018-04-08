@@ -4,10 +4,19 @@ defmodule SwarmEngine.DatasetStoreColumn do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @primary_key false
   embedded_schema do
-    field :name, :string
-    field :type, :string
-    field :original, :string
+    field(:name, :string)
+    field(:type, :string)
+    field(:original, :string)
+  end
+
+  def create(%{name: name, type: type, original: original} = attrs) do
+    %DatasetStoreColumn{
+      name: name,
+      type: type,
+      original: original
+    }
   end
 
   def changeset(%DatasetStoreColumn{} = column, attrs) do

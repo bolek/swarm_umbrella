@@ -23,10 +23,11 @@ defmodule SwarmEngine.DatasetStore do
   end
 
   def create(%{name: name, columns: columns}) do
-    store = %DatasetStore{name: name, columns: columns}
+    store = %DatasetStore{name: name, columns: build_columns(columns)}
+
     case create_table(store) do
       {:ok, _} -> {:ok, store}
-      {:error, %Postgrex.Error{postgres: %{code: :duplicate_table}}} -> :ok
+      {:error, %Postgrex.Error{postgres: %{code: :duplicate_table}}} -> {:ok, store}
     end
   end
 
@@ -99,6 +100,11 @@ defmodule SwarmEngine.DatasetStore do
       )
 
     DataVault.all(query)
+  end
+
+  defp build_columns(columns) do
+    columns
+    |> Enum.map(fn col -> struct(DatasetStoreColumn, col) end)
   end
 
   defp generate_hash(list) do

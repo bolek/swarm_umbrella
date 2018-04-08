@@ -42,7 +42,7 @@ defmodule SwarmEngine.DatasetStoreTest do
     }
 
     DatasetStore.create(dataset)
-    assert :ok = DatasetStore.create(dataset)
+    assert {:ok, _} = DatasetStore.create(dataset)
   end
 
   test "exists? returns false when table does not exist" do

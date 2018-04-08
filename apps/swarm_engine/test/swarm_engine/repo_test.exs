@@ -32,6 +32,15 @@ defmodule SwarmEngine.RepoTest do
     assert @newDataset == Repo.get_dataset(@newDataset.id)
   end
 
+  test "putting an initialized dataset" do
+    Repo.put_dataset(@newDataset)
+
+    {:ok, dataset} = SwarmEngine.DatasetFactory.initialize(@newDataset)
+
+    Repo.put_dataset(dataset)
+    assert dataset == Repo.get_dataset(dataset.id)
+  end
+
   test "retrieving an inexistent dataset" do
     assert nil == Repo.get_dataset("868d2ee4-8578-4fc4-9321-ce5e6864030e")
   end

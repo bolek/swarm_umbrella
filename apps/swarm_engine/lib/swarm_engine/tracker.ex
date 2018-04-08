@@ -53,7 +53,11 @@ defmodule SwarmEngine.Tracker do
   end
 
   def add(tracker, %{modified_at: nil} = resource) do
-    add(tracker, %{resource | modified_at: DateTime.utc_now})
+    add(tracker, %{resource | modified_at: DateTime.utc_now()})
+  end
+
+  def add(tracker, %{id: nil} = resource) do
+    add(tracker, %{resource | id: SwarmEngine.Util.UUID.generate()})
   end
 
   def add(tracker, resource) do

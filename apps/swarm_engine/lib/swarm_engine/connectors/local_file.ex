@@ -72,16 +72,18 @@ defimpl SwarmEngine.Connector, for: SwarmEngine.Connectors.LocalFile do
 
   @spec metadata(LocalFile.t()) :: {:ok, Resource.t()} | {:error, any}
   def metadata(%LocalFile{path: path} = source) do
-    with  {:ok, info} <-
-            File.stat(path, [])
-    do
-      {:ok, %Resource{
-          name: Path.basename(path),
-          size: info.size,
-          modified_at: info.mtime |> Calendar.NaiveDateTime.to_date_time_utc,
-          source: source
-        }
-      }
+    with {:ok, info} <- File.stat(path, []) do
+      {:ok,
+       %Resource{
+         name: Path.basename(path),
+         size: info.size,
+         modified_at:
+           info.mtime
+           |> NaiveDateTime.from_erl!()
+           |> DateTime.from_naive!("Etc/UTC")
+           |> Map.put(:microsecond, {0, 6}),
+         source: source
+       }}
     else
       {:error, reason} -> {:error, reason}
     end
