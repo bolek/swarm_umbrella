@@ -39,14 +39,13 @@ defmodule SwarmEngine.DatasetFactory do
   def initialize(%SwarmEngine.DatasetNew{} = new_dataset) do
     with tracker <- initialize_tracker(new_dataset.source),
          {:ok, store} <- initialize_store(new_dataset.id, tracker, new_dataset.decoder) do
-      {:ok,
-       %Dataset{
-         id: new_dataset.id,
-         name: new_dataset.name,
-         tracker: tracker,
-         store: store,
-         decoder: new_dataset.decoder
-       }}
+      SwarmEngine.Repo.put_dataset(%Dataset{
+        id: new_dataset.id,
+        name: new_dataset.name,
+        tracker: tracker,
+        store: store,
+        decoder: new_dataset.decoder
+      })
     else
       {:error, e} -> {:error, e}
       any -> {:error, any}
