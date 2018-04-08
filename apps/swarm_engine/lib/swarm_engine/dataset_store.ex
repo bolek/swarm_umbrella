@@ -11,8 +11,8 @@ defmodule SwarmEngine.DatasetStore do
 
   @primary_key false
   embedded_schema do
-    field :name, :string
-    embeds_many :columns, DatasetStoreColumn
+    field(:name, :string)
+    embeds_many(:columns, DatasetStoreColumn)
   end
 
   def changeset(%DatasetStore{} = store, attrs) do
@@ -30,30 +30,34 @@ defmodule SwarmEngine.DatasetStore do
     end
   end
 
-  def insert(%DatasetStore{} = dataset, data, version \\ DateTime.utc_now) do
+  def insert(%DatasetStore{} = dataset, data, version \\ DateTime.utc_now()) do
     insert_stream(dataset, data, version)
   end
 
-  def insert_stream(%DatasetStore{name: name, columns: columns}, stream, version \\ DateTime.utc_now) do
-    with column_names <- [:swarm_id | Enum.map(columns, &(&1.name))],
-      insert_opts <- [{:on_conflict, :nothing}, {:conflict_target, [:swarm_id]}],
-      {:ok, :ok} <- DataVault.transaction(fn ->
-        from("#{name}_v", where: [version: ^version])
-        |> DataVault.delete_all()
+  def insert_stream(
+        %DatasetStore{name: name, columns: columns},
+        stream,
+        version \\ DateTime.utc_now()
+      ) do
+    with column_names <- [:swarm_id | Enum.map(columns, & &1.name)],
+         insert_opts <- [{:on_conflict, :nothing}, {:conflict_target, [:swarm_id]}],
+         {:ok, :ok} <-
+           DataVault.transaction(fn ->
+             from("#{name}_v", where: [version: ^version])
+             |> DataVault.delete_all()
 
-        stream
-        |> Stream.map(&([generate_hash(&1) | &1]))
-        |> Stream.map(&(Enum.zip(column_names, &1)))
-        |> Stream.chunk_every(500)
-        |> Stream.map(fn rows ->
-            DataVault.insert_all(name, rows, insert_opts)
-            rows
-          end)
-        |> Stream.map(fn rows -> Enum.map(rows, &([List.first(&1), version: version])) end)
-        |> Stream.map(fn rows -> DataVault.insert_all(name <> "_v", rows) end)
-        |> Stream.run
-      end)
-    do
+             stream
+             |> Stream.map(&[generate_hash(&1) | &1])
+             |> Stream.map(&Enum.zip(column_names, &1))
+             |> Stream.chunk_every(500)
+             |> Stream.map(fn rows ->
+               DataVault.insert_all(name, rows, insert_opts)
+               rows
+             end)
+             |> Stream.map(fn rows -> Enum.map(rows, &[List.first(&1), version: version]) end)
+             |> Stream.map(fn rows -> DataVault.insert_all(name <> "_v", rows) end)
+             |> Stream.run()
+           end) do
       :ok
     else
       any -> {:error, any}
@@ -62,14 +66,14 @@ defmodule SwarmEngine.DatasetStore do
 
   def exists?(%DatasetStore{name: name}) do
     case SQL.query(DataVault, """
-      SELECT EXISTS (
-        SELECT 1
-        FROM   pg_catalog.pg_class c
-        JOIN   pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-        WHERE  n.nspname = 'public'
-        AND    c.relname = '#{name}'
-      );
-      """) do
+         SELECT EXISTS (
+           SELECT 1
+           FROM   pg_catalog.pg_class c
+           JOIN   pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+           WHERE  n.nspname = 'public'
+           AND    c.relname = '#{name}'
+         );
+         """) do
       {:ok, %Postgrex.Result{rows: [[true]]}} -> true
       {:ok, %Postgrex.Result{rows: [[false]]}} -> false
     end
@@ -77,9 +81,8 @@ defmodule SwarmEngine.DatasetStore do
 
   def table_columns(%DatasetStore{} = dataset) do
     with true <- DatasetStore.exists?(dataset),
-      {:ok, result} <- query_columns(dataset),
-      columns <- parse_columns(result.rows)
-    do
+         {:ok, result} <- query_columns(dataset),
+         columns <- parse_columns(result.rows) do
       {:ok, columns}
     else
       false -> {:error, :dataset_without_table}
@@ -87,16 +90,19 @@ defmodule SwarmEngine.DatasetStore do
   end
 
   def versions(%DatasetStore{name: name}) do
-    query = from(v in "#{name}_v",
-      distinct: [desc: v.version],
-      select: type(v.version, :utc_datetime),
-      order_by: [desc: v.version])
+    query =
+      from(
+        v in "#{name}_v",
+        distinct: [desc: v.version],
+        select: type(v.version, :utc_datetime),
+        order_by: [desc: v.version]
+      )
 
     DataVault.all(query)
   end
 
   defp generate_hash(list) do
-    :crypto.hash(:md5 , Enum.join(list, ""))
+    :crypto.hash(:md5, Enum.join(list, ""))
   end
 
   defp create_table(%DatasetStore{name: name, columns: columns}) do
@@ -141,7 +147,7 @@ defmodule SwarmEngine.DatasetStore do
 
   defp to_sql_columns(columns) do
     columns
-      |> Enum.map(&("#{&1.name} #{&1.type}"))
-      |> Enum.join(",")
+    |> Enum.map(&"#{&1.name} #{&1.type}")
+    |> Enum.join(",")
   end
 end

@@ -6,13 +6,13 @@ defmodule SwarmEngine.Connectors.LocalFile do
   import Ecto.Changeset
 
   @type t :: %__MODULE__{
-    path: String.t
-  }
+          path: String.t()
+        }
 
   @primary_key false
   embedded_schema do
-    field :type, :string, default: "LocalFile"
-    field :path, :string
+    field(:type, :string, default: "LocalFile")
+    field(:path, :string)
   end
 
   def changeset(%LocalFile{} = local_file, attrs) do
@@ -21,12 +21,12 @@ defmodule SwarmEngine.Connectors.LocalFile do
     |> validate_required([:path])
   end
 
-  @spec create(String.t) :: LocalFile.t
+  @spec create(String.t()) :: LocalFile.t()
   def create(path) do
     %LocalFile{path: path}
   end
 
-  @spec metadata!(Connector.t) :: Resource.t
+  @spec metadata!(Connector.t()) :: Resource.t()
   def metadata!(source) do
     case Connector.metadata(source) do
       {:ok, m} -> m
@@ -34,22 +34,22 @@ defmodule SwarmEngine.Connectors.LocalFile do
     end
   end
 
-  @spec store(Resource.t, LocalFile.t) :: {:ok, Resource.t}
+  @spec store(Resource.t(), LocalFile.t()) :: {:ok, Resource.t()}
   def store(%Resource{source: source} = resource, %LocalFile{path: path} = new_location) do
     File.mkdir_p(Path.dirname(path))
 
     Connector.request(source)
     |> Stream.into(File.stream!(path))
-    |> Stream.run
+    |> Stream.run()
 
     {:ok, %{resource | source: new_location}}
   end
 
-  @spec store_stream(Enumerable.t, LocalFile.t) :: {:ok, Resource.t} | {:error, any}
+  @spec store_stream(Enumerable.t(), LocalFile.t()) :: {:ok, Resource.t()} | {:error, any}
   def store_stream(stream, %LocalFile{path: path} = source) do
     stream
     |> Stream.into(File.stream!(path))
-    |> Stream.run
+    |> Stream.run()
 
     Connector.metadata(source)
   end
@@ -61,16 +61,16 @@ defimpl SwarmEngine.Connector, for: SwarmEngine.Connectors.LocalFile do
   alias SwarmEngine.Connectors.LocalFile
   alias SwarmEngine.Resource
 
-  @spec list(LocalFile.t) :: {:ok, list(Resource.t)}
+  @spec list(LocalFile.t()) :: {:ok, list(Resource.t())}
   def list(%LocalFile{path: path} = location) do
-    {:ok ,  Path.wildcard(path)
-            |> Stream.map(&(%{location | path: &1}))
-            |> Stream.map(&LocalFile.metadata!(&1))
-            |> Enum.to_list
-    }
+    {:ok,
+     Path.wildcard(path)
+     |> Stream.map(&%{location | path: &1})
+     |> Stream.map(&LocalFile.metadata!(&1))
+     |> Enum.to_list()}
   end
 
-  @spec metadata(LocalFile.t) :: {:ok, Resource.t} | {:error, any}
+  @spec metadata(LocalFile.t()) :: {:ok, Resource.t()} | {:error, any}
   def metadata(%LocalFile{path: path} = source) do
     with  {:ok, info} <-
             File.stat(path, [])
@@ -87,7 +87,7 @@ defimpl SwarmEngine.Connector, for: SwarmEngine.Connectors.LocalFile do
     end
   end
 
-  @spec request(LocalFile.t) :: Enumerable.t
+  @spec request(LocalFile.t()) :: Enumerable.t()
   def request(%LocalFile{path: path}) do
     File.stream!(path, [], 2048)
   end

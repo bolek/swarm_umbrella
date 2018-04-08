@@ -13,12 +13,9 @@ defmodule SwarmEngine.Tracker do
 
   def find(tracker, %{name: name, size: size, modified_at: modified_at}) do
     tracker.resources
-    |> Enum.find(fn(x) ->
-                    x.name == name
-                    && x.size == size
-                    && x.modified_at == modified_at
-                 end
-                )
+    |> Enum.find(fn x ->
+      x.name == name && x.size == size && x.modified_at == modified_at
+    end)
   end
 
   def find(tracker, %{version: version}) do
@@ -32,15 +29,16 @@ defmodule SwarmEngine.Tracker do
     {:ok, resources} = Connector.list(source)
 
     resources
-    |> Enum.reduce(tracker, fn(x, tracker) ->
-                              Tracker.add(tracker, x)
-                            end)
+    |> Enum.reduce(tracker, fn x, tracker ->
+      Tracker.add(tracker, x)
+    end)
   end
 
   def current(%Tracker{resources: resources}) do
-    case Enum.max_by(resources, fn(x) -> Map.get(x, :modified_at) end, fn -> nil end) do
+    case Enum.max_by(resources, fn x -> Map.get(x, :modified_at) end, fn -> nil end) do
       nil ->
         {:error, :not_found}
+
       r ->
         {:ok, r}
     end
@@ -63,6 +61,7 @@ defmodule SwarmEngine.Tracker do
       nil ->
         {:ok, new} = tracker.store.__struct__.store(resource, tracker.store)
         put_in(tracker.resources, MapSet.put(tracker.resources, new))
+
       _ ->
         tracker
     end
