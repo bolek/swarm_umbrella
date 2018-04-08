@@ -65,10 +65,42 @@ defmodule SwarmEngine.Repo do
     end
   end
 
+  def list_datasets() do
+    get_raw_dataset_list()
+    |> Enum.map(&cast_raw_dataset/1)
+  end
+
+  defp cast_raw_dataset(%DatasetSchema{status: :new} = dataset) do
+    %SwarmEngine.DatasetNew{
+      id: dataset.id,
+      name: dataset.name,
+      source: dataset.source,
+      decoder: dataset.decoder
+    }
+  end
+
+  defp cast_raw_dataset(%DatasetSchema{status: :active} = dataset) do
+    %SwarmEngine.Dataset{
+      id: dataset.id,
+      name: dataset.name,
+      tracker: %SwarmEngine.Tracker{
+        source: dataset.tracker.source,
+        store: dataset.tracker.store,
+        resources: build_resources(dataset.tracker.resources)
+      },
+      decoder: dataset.decoder,
+      store: dataset.store
+    }
+  end
+
   defp get_raw_dataset(nil), do: nil
 
   defp get_raw_dataset(id) do
     from(d in DatasetSchema, preload: [tracker: :resources]) |> Repo.get(id)
+  end
+
+  defp get_raw_dataset_list() do
+    from(d in DatasetSchema, preload: [tracker: :resources]) |> Repo.all()
   end
 
   defp build_resources(tracker_resources) do

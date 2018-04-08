@@ -115,4 +115,26 @@ defmodule SwarmEngine.RepoTest do
   test "retrieving an inexistent dataset" do
     assert nil == Repo.get_dataset("868d2ee4-8578-4fc4-9321-ce5e6864030e")
   end
+
+  test "retrieving a list of datasets when non exist" do
+    assert [] == Repo.list_datasets()
+  end
+
+  test "retrieving a list of datasets" do
+    Repo.put_dataset(@newDataset)
+    Repo.put_dataset(@dataset)
+
+    {:ok, new_dataset} =
+      Repo.put_dataset(%SwarmEngine.DatasetNew{
+        source:
+          SwarmEngine.Connectors.StringIO.create(
+            "goofy",
+            "col_4,col_5,col_6\nABC,def,123\nKLM,edd,999"
+          ),
+        decoder: SwarmEngine.Decoders.CSV.create(),
+        name: "dummy"
+      })
+
+    assert [@dataset, new_dataset] == Repo.list_datasets()
+  end
 end
