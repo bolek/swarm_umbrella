@@ -32,7 +32,7 @@ defmodule SwarmEngine.DataCase do
     end
 
     on_exit(fn ->
-      SwarmEngine.Repo.delete_all(SwarmEngine.Repo.Schema.BaseDataset)
+      SwarmEngine.Repo.delete_all(SwarmEngine.Repo.Schema.Dataset)
     end)
 
     :ok

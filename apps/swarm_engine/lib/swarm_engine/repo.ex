@@ -1,6 +1,6 @@
 defmodule SwarmEngine.Repo do
   alias __MODULE__
-  alias SwarmEngine.Repo.Schema.BaseDataset
+  alias SwarmEngine.Repo.Schema.Dataset, as: DatasetSchema
 
   use Ecto.Repo, otp_app: :swarm_engine
 
@@ -11,7 +11,7 @@ defmodule SwarmEngine.Repo do
   def put_dataset(%SwarmEngine.DatasetNew{} = dataset) do
     changeset =
       dataset
-      |> BaseDataset.changeset()
+      |> DatasetSchema.changeset()
 
     case Repo.insert(changeset) do
       {:ok, _} ->
@@ -23,7 +23,7 @@ defmodule SwarmEngine.Repo do
   end
 
   def get_dataset(id) do
-    case Repo.get(BaseDataset, id) do
+    case Repo.get(DatasetSchema, id) do
       nil ->
         nil
 
