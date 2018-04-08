@@ -31,10 +31,9 @@ defmodule SwarmEngine.DataCase do
       Ecto.Adapters.SQL.Sandbox.mode(SwarmEngine.DataVault, {:shared, self()})
     end
 
-    on_exit fn ->
+    on_exit(fn ->
       SwarmEngine.Repo.delete_all(SwarmEngine.Repo.Schema.BaseDataset)
-      SwarmEngine.Repo.delete_all(SwarmEngine.Repo.Schema.Dataset)
-    end
+    end)
 
     :ok
   end

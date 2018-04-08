@@ -7,15 +7,15 @@ defmodule SwarmEngine.Repo.Schema.Tracker do
   import SwarmEngine.Repo.Changeset.DynamicEmbeds
 
   schema "trackers" do
-    field :source, SwarmEngine.Repo.Types.Connector
-    embeds_one :store, SwarmEngine.Connectors.LocalDir
-    embeds_many :resources, SwarmEngine.Resource
-    belongs_to :dataset, SwarmEngine.Repo.Schema.Dataset
+    field(:source, SwarmEngine.Repo.Types.Connector)
+    embeds_one(:store, SwarmEngine.Connectors.LocalDir)
+    embeds_many(:resources, SwarmEngine.Resource)
+    # belongs_to :dataset, SwarmEngine.Repo.Schema.Dataset
 
     timestamps()
   end
 
-  def changeset(%Tracker{}=tracker, attrs) do
+  def changeset(%Tracker{} = tracker, attrs) do
     tracker
     |> cast(attrs, [])
     |> cast_embed(:store, with: &SwarmEngine.Connectors.LocalDir.changeset/2)
