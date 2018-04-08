@@ -59,6 +59,7 @@ defmodule SwarmEngine.Decoders.CSV do
          c
          |> String.downcase()
          |> String.replace(~r/\s+/, "_")
+         |> String.replace(~r/-+/, "_")
 
        %{original: c, name: name, type: "character varying"}
      end)}
