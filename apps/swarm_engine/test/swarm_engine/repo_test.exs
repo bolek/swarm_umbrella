@@ -6,6 +6,7 @@ defmodule SwarmEngine.RepoTest do
   setup do
     # Explicitly get a connection before each test
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(SwarmEngine.Repo)
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(SwarmEngine.DataVault)
   end
 
   @newDataset %SwarmEngine.DatasetNew{

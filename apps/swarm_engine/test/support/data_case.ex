@@ -33,6 +33,21 @@ defmodule SwarmEngine.DataCase do
 
     on_exit(fn ->
       SwarmEngine.Repo.delete_all(SwarmEngine.Repo.Schema.Dataset)
+
+      {:ok, %{rows: rows}} =
+        Ecto.Adapters.SQL.query(SwarmEngine.DataVault, """
+             SELECT tablename
+             FROM pg_tables
+             WHERE schemaname = 'public'
+             AND tablename <> 'schema_migrations'
+        """)
+
+      rows
+      |> Enum.each(fn table ->
+        Ecto.Adapters.SQL.query(SwarmEngine.DataVault, """
+          DROP TABLE #{table};
+        """)
+      end)
     end)
 
     :ok
