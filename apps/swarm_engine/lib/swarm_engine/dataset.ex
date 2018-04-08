@@ -34,7 +34,7 @@ defmodule SwarmEngine.Dataset do
 
   # Server (callbacks)
 
-  def handle_cast(:initialize, _from, %DatasetNew{} = dataset) do
+  def handle_cast(:initialize, %DatasetNew{} = dataset) do
     case DatasetFactory.initialize(dataset) do
       {:ok, initialized_dataset} ->
         {:noreply, initialized_dataset}
