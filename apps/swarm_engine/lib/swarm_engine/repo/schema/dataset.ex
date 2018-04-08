@@ -30,7 +30,6 @@ defmodule SwarmEngine.Repo.Schema.Dataset do
   end
 
   def changeset(%DatasetSchema{} = record, %SwarmEngine.Dataset{
-        id: id,
         store: store,
         tracker: tracker
       }) do
