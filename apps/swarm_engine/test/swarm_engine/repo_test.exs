@@ -15,6 +15,46 @@ defmodule SwarmEngine.RepoTest do
     source: SwarmEngine.Connectors.LocalFile.create("test/fixtures/goofy.csv")
   }
 
+  @dataset %SwarmEngine.Dataset{
+    decoder: %SwarmEngine.Decoders.CSV{
+      delimiter: "\n",
+      headers: true,
+      separator: ",",
+      type: "CSV"
+    },
+    id: "c5474362-d018-49a5-a488-eb70e356dd26",
+    name: "goofy",
+    store: %SwarmEngine.DatasetStore{
+      columns: [
+        %SwarmEngine.DatasetStoreColumn{
+          name: "col_4",
+          original: "col_4",
+          type: "character varying"
+        }
+      ],
+      name: "_c5474362d01849a5a488eb70e356dd26"
+    },
+    tracker: %SwarmEngine.Tracker{
+      resources:
+        MapSet.new([
+          %SwarmEngine.Resource{
+            modified_at: ~N[2000-01-01 23:00:07.000000],
+            name: "goofy.csv",
+            size: 42,
+            source: %SwarmEngine.Connectors.LocalFile{
+              path: "/tmp/swarm_engine_store/20180408/52833cad-e127-44c8-b66d-281ffa47eb4b.csv",
+              type: "LocalFile"
+            }
+          }
+        ]),
+      source: %SwarmEngine.Connectors.LocalFile{
+        path: "test/fixtures/goofy.csv",
+        type: "LocalFile"
+      },
+      store: %SwarmEngine.Connectors.LocalDir{path: "/tmp/swarm_engine_store/"}
+    }
+  }
+
   test "putting a new dataset" do
     assert {:ok, @newDataset} == Repo.put_dataset(@newDataset)
   end
@@ -34,10 +74,40 @@ defmodule SwarmEngine.RepoTest do
 
   test "putting an initialized dataset" do
     Repo.put_dataset(@newDataset)
+    Repo.put_dataset(@dataset)
 
-    {:ok, dataset} = SwarmEngine.DatasetFactory.initialize(@newDataset)
+    assert @dataset == Repo.get_dataset(@dataset.id)
+  end
 
+  test "updating a dataset" do
+    Repo.put_dataset(@newDataset)
+    Repo.put_dataset(@dataset)
+
+    resources =
+      MapSet.new([
+        %SwarmEngine.Resource{
+          modified_at: ~N[2000-01-01 23:00:07.000000],
+          name: "goofy.csv",
+          size: 42,
+          source: %SwarmEngine.Connectors.LocalFile{
+            path: "/tmp/swarm_engine_store/20180408/52833cad-e127-44c8-b66d-281ffa47eb4b.csv",
+            type: "LocalFile"
+          }
+        },
+        %SwarmEngine.Resource{
+          modified_at: ~N[2005-04-02 23:00:07.000000],
+          name: "donald.csv",
+          size: 42,
+          source: %SwarmEngine.Connectors.LocalFile{
+            path: "other.csv",
+            type: "LocalFile"
+          }
+        }
+      ])
+
+    dataset = put_in(@dataset, [:tracker, :resources] |> Enum.map(&Access.key/1), resources)
     Repo.put_dataset(dataset)
+
     assert dataset == Repo.get_dataset(dataset.id)
   end
 

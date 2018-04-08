@@ -11,8 +11,8 @@ defmodule SwarmEngine.Repo do
 
   def put_dataset(%SwarmEngine.DatasetNew{} = dataset) do
     changeset =
-      dataset
-      |> DatasetSchema.changeset()
+      (get_raw_dataset(dataset.id) || %DatasetSchema{})
+      |> DatasetSchema.changeset(dataset)
 
     case Repo.insert(changeset) do
       {:ok, _} ->
@@ -25,8 +25,8 @@ defmodule SwarmEngine.Repo do
 
   def put_dataset(%SwarmEngine.Dataset{} = dataset) do
     changeset =
-      dataset
-      |> DatasetSchema.changeset()
+      get_raw_dataset(dataset.id)
+      |> DatasetSchema.changeset(dataset)
 
     case Repo.update(changeset) do
       {:ok, _} ->

@@ -16,8 +16,8 @@ defmodule SwarmEngine.Repo.Schema.Dataset do
     timestamps()
   end
 
-  def changeset(%SwarmEngine.DatasetNew{} = dataset) do
-    %DatasetSchema{}
+  def changeset(%DatasetSchema{} = record, %SwarmEngine.DatasetNew{} = dataset) do
+    record
     |> change(%{
       id: dataset.id,
       name: dataset.name,
@@ -29,8 +29,12 @@ defmodule SwarmEngine.Repo.Schema.Dataset do
     |> unique_constraint(:id, name: :datasets_pkey)
   end
 
-  def changeset(%SwarmEngine.Dataset{id: id, store: store, tracker: tracker}) do
-    %DatasetSchema{id: id}
+  def changeset(%DatasetSchema{} = record, %SwarmEngine.Dataset{
+        id: id,
+        store: store,
+        tracker: tracker
+      }) do
+    record
     |> change()
     |> put_assoc(:tracker, Schema.Tracker.changeset(%Schema.Tracker{}, tracker))
     |> put_change(:status, :active)
