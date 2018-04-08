@@ -73,4 +73,21 @@ defmodule SwarmEngine.DatasetSupervisorTest do
     DS.deactivate_all()
     assert %{active: 0, workers: 0} = Supervisor.count_children(DS)
   end
+
+  test "get_or_activate activates when child process does not exist" do
+    SwarmEngine.Repo.put_dataset(@dataset_new)
+
+    {:ok, pid} = DS.get_or_activate(@dataset_new.id)
+    assert is_pid(pid)
+  end
+
+  test "get_or_activate returns active pid if child exists" do
+    {:ok, pid} = DS.activate_dataset(@dataset_new)
+
+    assert {:ok, ^pid} = DS.get_or_activate(@dataset_new.id)
+  end
+
+  test "get_or_activate returns error if dataset doesn't exist" do
+    assert {:error, :not_found} = DS.get_or_activate(@dataset_new.id)
+  end
 end

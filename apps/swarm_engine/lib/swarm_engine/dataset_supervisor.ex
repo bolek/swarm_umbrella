@@ -32,6 +32,16 @@ defmodule SwarmEngine.DatasetSupervisor do
     end)
   end
 
+  def get_or_activate(id) do
+    case pid_from_id(id) do
+      nil ->
+        activate_dataset(id)
+
+      pid ->
+        {:ok, pid}
+    end
+  end
+
   # Server API
 
   def init(:ok), do: Supervisor.init([Dataset], strategy: :simple_one_for_one)

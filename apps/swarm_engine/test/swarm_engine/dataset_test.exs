@@ -15,11 +15,11 @@ defmodule SwarmEngine.DatasetTest do
   end
 
   test "init when passing an inexistent dataset id" do
-    assert {:error, :not_found} == Dataset.init("ef1ef08e-b02c-4468-9672-f7a546c549f9")
+    assert {:stop, :not_found} == Dataset.init("ef1ef08e-b02c-4468-9672-f7a546c549f9")
   end
 
   test "init when passing an invalid dataset id" do
-    assert {:error, :not_found} == Dataset.init("abcd")
+    assert {:stop, :not_found} == Dataset.init("abcd")
   end
 
   test "stream a dataset" do

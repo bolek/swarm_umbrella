@@ -2,7 +2,7 @@ defmodule SwarmEngine.Dataset do
   use GenServer, start: {__MODULE__, :start_link, []}, restart: :transient
 
   alias __MODULE__
-  alias SwarmEngine.{DatasetFactory, DatasetStore, Decoder, Tracker}
+  alias SwarmEngine.{DatasetNew, DatasetFactory, DatasetStore, Decoder, Tracker}
 
   defstruct [:id, :name, :decoder, :tracker, :store]
 
@@ -15,20 +15,34 @@ defmodule SwarmEngine.Dataset do
   def init(id) when is_binary(id) and byte_size(id) == 36 do
     case SwarmEngine.Repo.get_dataset(id) do
       nil ->
-        {:error, :not_found}
+        {:stop, :not_found}
 
       dataset ->
         {:ok, dataset}
     end
   end
 
-  def init(_), do: {:error, :not_found}
+  def init(_), do: {:stop, :not_found}
 
   def via_tuple(id), do: {:via, Registry, {Registry.Dataset, id}}
 
   # Client API
 
+  def initialize(pid) do
+    GenServer.cast(pid, :initialize)
+  end
+
   # Server (callbacks)
+
+  def handle_cast(:initialize, _from, %DatasetNew{} = dataset) do
+    case DatasetFactory.initialize(dataset) do
+      {:ok, initialized_dataset} ->
+        {:noreply, initialized_dataset}
+
+      _ ->
+        {:noreply, dataset}
+    end
+  end
 
   # Logic
 
@@ -44,8 +58,7 @@ defmodule SwarmEngine.Dataset do
 
   def stream(%Dataset{tracker: tracker, decoder: decoder}) do
     with {:ok, resource} <- Tracker.current(tracker),
-      source <- Map.get(resource, :source)
-    do
+         source <- Map.get(resource, :source) do
       Decoder.decode!(source, decoder)
     else
       {:error, reason} -> {:error, reason}
@@ -72,13 +85,12 @@ defmodule SwarmEngine.Dataset do
 
   defp original_column_mapset(columns) do
     columns
-    |> Enum.map(&(Map.get(&1, :original)))
-    |> MapSet.new
+    |> Enum.map(&Map.get(&1, :original))
+    |> MapSet.new()
   end
 
   def load(%Dataset{tracker: tracker} = csv) do
-    with {:ok, resource} <- Tracker.current(tracker)
-    do
+    with {:ok, resource} <- Tracker.current(tracker) do
       _load(csv, resource)
     else
       {:error, e} -> {:error, e}
@@ -93,9 +105,12 @@ defmodule SwarmEngine.Dataset do
 
   defp _load(%Dataset{store: store, decoder: decoder}, resource) do
     version = resource.modified_at
-    stream = Decoder.decode!(resource.source, decoder) |> Stream.map(fn(row) ->
-      Enum.map(store.columns, &(row[&1.original]))
-    end)
+
+    stream =
+      Decoder.decode!(resource.source, decoder)
+      |> Stream.map(fn row ->
+        Enum.map(store.columns, &row[&1.original])
+      end)
 
     DatasetStore.insert_stream(store, stream, version)
   end
