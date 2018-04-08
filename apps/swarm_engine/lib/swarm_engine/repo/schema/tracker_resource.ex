@@ -8,7 +8,7 @@ defmodule SwarmEngine.Repo.Schema.TrackerResource do
   schema "tracker_resources" do
     field(:name, :string)
     field(:size, :integer)
-    field(:modified_at, :utc_datetime)
+    field(:modified_at, :naive_datetime)
     field(:source, SwarmEngine.Repo.Types.Connector)
     belongs_to(:tracker, SwarmEngine.Repo.Schema.Tracker)
 

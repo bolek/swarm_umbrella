@@ -4,6 +4,7 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
   alias __MODULE__
   alias SwarmEngine.Connectors.LocalFile
   alias SwarmEngine.{Connector, Resource}
+  alias SwarmEngine.Test
 
   def request(source) do
     source
@@ -41,7 +42,6 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
   test "metadata happy path" do
     fixture_path = "test/fixtures/test.xlsx"
     source = LocalFile.create(fixture_path)
-    {{y, m, d}, {h, min, s}} = File.stat!(fixture_path).mtime
 
     expected =
       {:ok,
@@ -49,19 +49,7 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
          name: "test.xlsx",
          size: 3847,
          source: source,
-         modified_at: %DateTime{
-           year: y,
-           month: m,
-           day: d,
-           hour: h,
-           minute: min,
-           second: s,
-           time_zone: "Etc/UTC",
-           zone_abbr: "UTC",
-           utc_offset: 0,
-           std_offset: 0,
-           microsecond: {0, 6}
-         }
+         modified_at: Test.FileHelper.modified_at(fixture_path)
        }}
 
     assert expected == Connector.metadata(source)
@@ -76,29 +64,16 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
   test "metadata! - happy path" do
     fixture_path = "test/fixtures/test.xlsx"
     source = LocalFile.create(fixture_path)
-    {{y, m, d}, {h, min, s}} = File.stat!(fixture_path).mtime
 
     assert %Resource{
              name: "test.xlsx",
              size: 3847,
              source: source,
-             modified_at: %DateTime{
-               year: y,
-               month: m,
-               day: d,
-               hour: h,
-               minute: min,
-               second: s,
-               time_zone: "Etc/UTC",
-               zone_abbr: "UTC",
-               utc_offset: 0,
-               std_offset: 0,
-               microsecond: {0, 6}
-             }
+             modified_at: Test.FileHelper.modified_at(fixture_path)
            } == LocalFile.metadata!(source)
   end
 
-  test "metadata! for inexsting file" do
+  test "metadata! for inexistent file" do
     source = LocalFile.create("some_weird_file")
 
     assert_raise RuntimeError, fn -> LocalFile.metadata!(source) end
@@ -107,7 +82,6 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
   test "storing a resource in a new location" do
     fixture_path = "test/fixtures/dummy.csv"
     source = LocalFile.create(fixture_path)
-    {{y, m, d}, {h, min, s}} = File.stat!(fixture_path).mtime
 
     {:ok, resource} = Connector.metadata(source)
 
@@ -119,19 +93,7 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
          name: "dummy.csv",
          size: 30,
          source: target,
-         modified_at: %DateTime{
-           year: y,
-           month: m,
-           day: d,
-           hour: h,
-           minute: min,
-           second: s,
-           time_zone: "Etc/UTC",
-           zone_abbr: "UTC",
-           utc_offset: 0,
-           std_offset: 0,
-           microsecond: {0, 6}
-         }
+         modified_at: Test.FileHelper.modified_at(fixture_path)
        }}
 
     assert expected == LocalFile.store(resource, target)
@@ -155,8 +117,8 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
               name: "stream2.csv",
               size: 28,
               source: %LocalFile{path: "/tmp/stream2.csv"},
-              modified_at: %DateTime{}
-            }} = result
+              modified_at: Test.FileHelper.modified_at("/tmp/stream2.csv")
+            }} == result
 
     # cleanup
     File.rm("/tmp/stream2.csv")
@@ -169,29 +131,29 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
             [
               %Resource{
                 name: "archive.zip",
-                modified_at: %DateTime{},
+                modified_at: Test.FileHelper.modified_at("test/fixtures/archive.zip"),
                 size: 354,
                 source: %LocalFile{path: "test/fixtures/archive.zip"}
               },
               %Resource{
                 name: "dummy.csv",
-                modified_at: %DateTime{},
+                modified_at: ~N[2017-11-17 23:11:33],
                 size: 30,
                 source: %LocalFile{path: "test/fixtures/dummy.csv"}
               },
               %Resource{
                 name: "goofy.csv",
-                modified_at: %DateTime{},
+                modified_at: ~N[2017-11-17 23:11:33],
                 size: 42,
                 source: %LocalFile{path: "test/fixtures/goofy.csv"}
               },
               %Resource{
                 name: "test.xlsx",
-                modified_at: %DateTime{},
+                modified_at: ~N[2017-11-17 23:11:33],
                 size: 3847,
                 source: %LocalFile{path: "test/fixtures/test.xlsx"}
               }
-            ]} = Connector.list(location)
+            ]} == Connector.list(location)
   end
 
   test "list resource under inexisting path" do

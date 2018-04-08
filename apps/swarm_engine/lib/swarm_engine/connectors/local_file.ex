@@ -79,9 +79,7 @@ defimpl SwarmEngine.Connector, for: SwarmEngine.Connectors.LocalFile do
          size: info.size,
          modified_at:
            info.mtime
-           |> NaiveDateTime.from_erl!()
-           |> DateTime.from_naive!("Etc/UTC")
-           |> Map.put(:microsecond, {0, 6}),
+           |> NaiveDateTime.from_erl!(),
          source: source
        }}
     else
