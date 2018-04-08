@@ -15,8 +15,8 @@ defmodule SwarmEngine.Repo do
       |> DatasetSchema.changeset(dataset)
 
     case Repo.insert(changeset) do
-      {:ok, _} ->
-        {:ok, dataset}
+      {:ok, new_dataset} ->
+        {:ok, Map.put(dataset, :id, new_dataset.id)}
 
       {:error, %{errors: errors}} ->
         {:error, errors}
@@ -64,6 +64,8 @@ defmodule SwarmEngine.Repo do
         }
     end
   end
+
+  defp get_raw_dataset(nil), do: nil
 
   defp get_raw_dataset(id) do
     from(d in DatasetSchema, preload: [tracker: :resources]) |> Repo.get(id)

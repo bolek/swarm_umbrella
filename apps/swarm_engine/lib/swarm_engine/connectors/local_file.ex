@@ -15,6 +15,11 @@ defmodule SwarmEngine.Connectors.LocalFile do
     field(:path, :string)
   end
 
+  def changeset(%LocalFile{} = local_file, %LocalFile{} = new) do
+    local_file
+    |> change(Map.from_struct(new))
+  end
+
   def changeset(%LocalFile{} = local_file, attrs) do
     local_file
     |> cast(attrs, ~w(path))

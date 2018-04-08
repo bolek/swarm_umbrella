@@ -4,8 +4,15 @@ defmodule SwarmEngine.DatasetFactory do
   @tracker_store %LocalDir{path: "/tmp/swarm_engine_store/"}
 
   def create(attrs) do
-    {:ok, dataset} = SwarmEngine.DatasetNew.create(attrs)
-    SwarmEngine.Repo.put_dataset(dataset)
+    case SwarmEngine.DatasetNew.create_changeset(attrs) do
+      %{valid?: true} = changeset ->
+        changeset
+        |> Ecto.Changeset.apply_changes()
+        |> SwarmEngine.Repo.put_dataset()
+
+      %{valid?: false} = changeset ->
+        {:error, changeset}
+    end
   end
 
   def build(attrs) do

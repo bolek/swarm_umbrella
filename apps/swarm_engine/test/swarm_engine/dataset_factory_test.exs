@@ -6,67 +6,71 @@ defmodule SwarmEngine.DatasetFactoryTest do
   alias SwarmEngine.Connectors.StringIO
   alias SwarmEngine.{DatasetStore, Tracker}
 
+  @valid_attrs %{
+    source: StringIO.create("goofy", "col_4,col_5,col_6\nABC,def,123\nKLM,edd,999"),
+    decoder: SwarmEngine.Decoders.CSV.create(),
+    name: "goofy"
+  }
+
   test "build_async returns a valid DatasetNew struct" do
-    source = StringIO.create("goofy", "col_4,col_5,col_6\nABC,def,123\nKLM,edd,999")
-    decoder = SwarmEngine.Decoders.CSV.create()
-    {:ok, dataset, _} = DatasetFactory.build_async(%{name: "goofy", source: source})
+    {:ok, dataset, _} = DatasetFactory.build_async(@valid_attrs)
 
     assert %SwarmEngine.DatasetNew{
              id: dataset.id,
-             name: "goofy",
-             source: source,
-             decoder: decoder
+             name: @valid_attrs.name,
+             source: @valid_attrs.source,
+             decoder: @valid_attrs.decoder
            } == dataset
   end
 
   test "build_async returns error when creating an existing dataset with source" do
-    source = LocalFile.create("test/fixtures/dummy.csv")
-    {:ok, _, _} = DatasetFactory.build_async(%{name: "goofy", source: source})
+    {:ok, _, _} = DatasetFactory.build_async(@valid_attrs)
 
-    assert {:error, _} = DatasetFactory.build_async(%{name: "goofy", source: source})
+    assert {:error, _} = DatasetFactory.build_async(@valid_attrs)
   end
 
   test "build_async initializes a dataset asynchronously" do
-    source = StringIO.create("list", "col_4,col_5,col_6\nABC,def,123\nKLM,edd,980")
-
-    {:ok, _, task} = DatasetFactory.build_async(%{name: "goofy", source: source})
+    {:ok, _, task} = DatasetFactory.build_async(@valid_attrs)
 
     assert {:ok, %SwarmEngine.Dataset{}} = Task.await(task)
   end
 
   test "creating a dataset by providing name and source" do
-    source = LocalFile.create("test/fixtures/dummy.csv")
-
     assert {:ok,
             %SwarmEngine.Dataset{
-              name: "dummy",
+              name: "goofy",
               tracker: %Tracker{},
               store: %DatasetStore{
                 name: _,
                 columns: [
                   %{
-                    name: "col_1",
+                    name: "col_4",
                     type: "character varying",
-                    original: "col_1"
+                    original: "col_4"
                   },
                   %{
-                    name: "col_2",
+                    name: "col_5",
                     type: "character varying",
-                    original: "col_2"
+                    original: "col_5"
                   },
                   %{
-                    name: "col_3",
+                    name: "col_6",
                     type: "character varying",
-                    original: "col_3"
+                    original: "col_6"
                   }
                 ]
               }
-            }} = DatasetFactory.build(%{name: "dummy", source: source})
+            }} = DatasetFactory.build(@valid_attrs)
   end
 
   test "creating a dataset by providing name and an inexistent source" do
     source = LocalFile.create("test/fixtures/fooooooo.csv")
 
-    assert {:error, :not_found} = DatasetFactory.build(%{name: "dummy", source: source})
+    assert {:error, :not_found} =
+             DatasetFactory.build(%{
+               name: "dummy",
+               source: source,
+               decoder: SwarmEngine.Decoders.CSV.create()
+             })
   end
 end
