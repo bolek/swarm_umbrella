@@ -19,4 +19,6 @@ defmodule SwarmEngine do
   def list_datasets(), do: SwarmEngine.Repo.list_datasets()
 
   def get_dataset(id), do: SwarmEngine.Repo.get_dataset(id)
+
+  def create_dataset(attrs), do: SwarmEngine.DatasetFactory.build_async(attrs)
 end

@@ -10,7 +10,16 @@ defmodule SwarmWeb.Api.DatasetView do
     %{data: render_one(dataset, DatasetView, "dataset.json")}
   end
 
-  def render("dataset.json", %{dataset: dataset}) do
+  def render("dataset.json", %{dataset: %SwarmEngine.DatasetNew{} = dataset}) do
+    %{
+      id: dataset.id,
+      name: dataset.name,
+      source: dataset.source,
+      decoder: dataset.decoder
+    }
+  end
+
+  def render("dataset.json", %{dataset: %SwarmEngine.Dataset{} = dataset}) do
     %{
       id: dataset.id,
       name: dataset.name,
