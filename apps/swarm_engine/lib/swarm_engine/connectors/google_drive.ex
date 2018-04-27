@@ -2,7 +2,26 @@ defmodule SwarmEngine.Connectors.GoogleDrive do
   alias __MODULE__
 
   @type t :: %__MODULE__{file_id: integer}
-  defstruct [:file_id]
+
+  use Ecto.Schema
+  import Ecto.Changeset
+
+  @primary_key false
+  embedded_schema do
+    field(:type, :string, default: "GoogleDrive")
+    field(:file_id, :integer)
+  end
+
+  def changeset(%GoogleDrive{} = file, %GoogleDrive{} = new) do
+    file
+    |> change(Map.from_struct(new))
+  end
+
+  def changeset(%GoogleDrive{} = file, attrs) do
+    file
+    |> cast(attrs, ~w(file_id))
+    |> validate_required([:file_id])
+  end
 
   def create(file_id) do
     %GoogleDrive{file_id: file_id}
