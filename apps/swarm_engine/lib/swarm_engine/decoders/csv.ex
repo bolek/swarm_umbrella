@@ -50,7 +50,7 @@ defmodule SwarmEngine.Decoders.CSV do
      source
      |> Connector.request()
      |> Stream.take(1)
-     |> Enum.map(&(:binary.split(&1, delimiter) |> List.first()))
+     |> Enum.map(&(:binary.split(Map.get(&1, :body), delimiter) |> List.first()))
      |> Util.CSV.decode!(Map.to_list(opts))
      |> Enum.to_list()
      |> List.first()
@@ -71,15 +71,19 @@ defmodule SwarmEngine.Decoders.CSV do
 
     source
     |> Connector.request()
+    |> Stream.map(&Map.get(&1, :body))
     |> Stream.into(File.stream!(tmp_file_path))
     |> Stream.run()
 
     File.stream!(tmp_file_path)
     |> Util.CSV.decode!(Map.to_list(opts))
+    |> Stream.map(&SwarmEngine.Message.create(&1, %{}))
   end
 
-  defp column_options(opts),
-    do:
-      opts
-      |> Map.replace(:headers, false)
+  defp column_options(opts) do
+    case(Map.fetch(opts, :headers)) do
+      {:ok, _} -> Map.put(opts, :headers, false)
+      _ -> opts
+    end
+  end
 end

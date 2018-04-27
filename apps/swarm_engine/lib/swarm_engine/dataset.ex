@@ -108,7 +108,7 @@ defmodule SwarmEngine.Dataset do
 
     stream =
       Decoder.decode!(resource.source, decoder)
-      |> Stream.map(fn row ->
+      |> Stream.map(fn %SwarmEngine.Message{body: row} ->
         Enum.map(store.columns, &row[&1.original])
       end)
 

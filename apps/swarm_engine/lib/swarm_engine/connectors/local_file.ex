@@ -44,6 +44,7 @@ defmodule SwarmEngine.Connectors.LocalFile do
     File.mkdir_p(Path.dirname(path))
 
     Connector.request(source)
+    |> Stream.map(fn %SwarmEngine.Message{body: body} -> body end)
     |> Stream.into(File.stream!(path))
     |> Stream.run()
 
@@ -93,7 +94,10 @@ defimpl SwarmEngine.Connector, for: SwarmEngine.Connectors.LocalFile do
   end
 
   @spec request(LocalFile.t()) :: Enumerable.t()
-  def request(%LocalFile{path: path}) do
+  def request(%LocalFile{path: path} = endpoint) do
     File.stream!(path, [], 2048)
+    |> Stream.map(fn i ->
+      SwarmEngine.Message.create(i, %{size: byte_size(i), endpoint: endpoint})
+    end)
   end
 end

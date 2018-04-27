@@ -28,8 +28,8 @@ defmodule SwarmEngine.DatasetTest do
     {:ok, dataset} = DatasetFactory.build(@dataset_attrs)
 
     assert [
-             %{"col_4" => "ABC", "col_5" => "def", "col_6" => "123"},
-             %{"col_4" => "KLM", "col_5" => "edd", "col_6" => "678"}
+             %SwarmEngine.Message{body: %{"col_4" => "ABC", "col_5" => "def", "col_6" => "123"}},
+             %SwarmEngine.Message{body: %{"col_4" => "KLM", "col_5" => "edd", "col_6" => "678"}}
            ] = Dataset.stream(dataset) |> Enum.to_list()
   end
 

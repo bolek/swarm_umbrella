@@ -56,5 +56,8 @@ defimpl SwarmEngine.Connector, for: SwarmEngine.Connectors.HTTP do
       &HTTP.Utils.continue_download/1,
       &HTTP.Utils.finish_download/1
     )
+    |> Stream.map(fn i ->
+      SwarmEngine.Message.create(i, %{size: byte_size(i), endpoint: endpoint})
+    end)
   end
 end

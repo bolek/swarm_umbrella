@@ -65,5 +65,6 @@ defimpl SwarmEngine.Connector, for: SwarmEngine.Connectors.StringIO do
   end
 
   @spec request(StringIO.t()) :: Enumerable.t()
-  def request(%StringIO{content: content}), do: Stream.map([content], & &1)
+  def request(%StringIO{content: content} = endpoint),
+    do: Stream.map([SwarmEngine.Message.create(content, %{endpoint: endpoint})], & &1)
 end

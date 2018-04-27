@@ -66,7 +66,12 @@ defmodule SwarmEngine.DatasetStoreTest do
       ]
     }
 
-    data = [["foo", 123], ["bar", 234], ["car", 345], ["tar", 456]]
+    data = [
+      SwarmEngine.Message.create(["foo", 123], %{}),
+      SwarmEngine.Message.create(["bar", 234], %{}),
+      SwarmEngine.Message.create(["car", 345], %{}),
+      SwarmEngine.Message.create(["tar", 456], %{})
+    ]
 
     DatasetStore.create(dataset)
     DatasetStore.insert(dataset, data)
@@ -135,7 +140,12 @@ defmodule SwarmEngine.DatasetStoreTest do
       ]
     }
 
-    data = [["foo", 123], ["bar", 234], ["car", 345], ["tar", 456]]
+    data = [
+      SwarmEngine.Message.create(["foo", 123], %{}),
+      SwarmEngine.Message.create(["bar", 234], %{}),
+      SwarmEngine.Message.create(["car", 345], %{}),
+      SwarmEngine.Message.create(["tar", 456], %{})
+    ]
 
     version = DateTime.utc_now()
 
@@ -181,7 +191,12 @@ defmodule SwarmEngine.DatasetStoreTest do
       ]
     }
 
-    data = [["foo", 123], ["bar", 234], ["car", 345], ["tar", 456]]
+    data = [
+      SwarmEngine.Message.create(["foo", 123], %{}),
+      SwarmEngine.Message.create(["bar", 234], %{}),
+      SwarmEngine.Message.create(["car", 345], %{}),
+      SwarmEngine.Message.create(["tar", 456], %{})
+    ]
 
     version_1 = DateTime.utc_now()
     version_2 = DateTime.from_naive!(~N[2016-05-24 13:26:08.000000], "Etc/UTC")
@@ -203,7 +218,12 @@ defmodule SwarmEngine.DatasetStoreTest do
       ]
     }
 
-    data = [["foo", 123], ["bar", 234], ["car", 345], ["tar", 456]]
+    data = [
+      SwarmEngine.Message.create(["foo", 123], %{}),
+      SwarmEngine.Message.create(["bar", 234], %{}),
+      SwarmEngine.Message.create(["car", 345], %{}),
+      SwarmEngine.Message.create(["tar", 456], %{})
+    ]
 
     version = DateTime.utc_now()
 
@@ -279,7 +299,10 @@ defmodule SwarmEngine.DatasetStoreTest do
       ]
     }
 
-    data = [["foo", 123], ["foo", 123]]
+    data = [
+      SwarmEngine.Message.create(["foo", 123], %{}),
+      SwarmEngine.Message.create(["foo", 123], %{})
+    ]
 
     DatasetStore.create(dataset)
     DatasetStore.insert(dataset, data)

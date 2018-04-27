@@ -32,7 +32,7 @@ defmodule SwarmEngine.DatasetStore do
   end
 
   def insert(%DatasetStore{} = dataset, data, version \\ DateTime.utc_now()) do
-    insert_stream(dataset, data, version)
+    insert_stream(dataset, Enum.map(data, &Map.get(&1, :body)), version)
   end
 
   def insert_stream(

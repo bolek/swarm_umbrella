@@ -1,7 +1,6 @@
 defmodule SwarmEngine.Connectors.LocalFileTest do
   use ExUnit.Case, async: true
 
-  alias __MODULE__
   alias SwarmEngine.Connectors.LocalFile
   alias SwarmEngine.{Connector, Resource}
   alias SwarmEngine.Test
@@ -35,8 +34,14 @@ defmodule SwarmEngine.Connectors.LocalFileTest do
 
   test "streaming a local file" do
     source = LocalFile.create("test/fixtures/dummy.csv")
+    all_elements = Enum.to_list(SwarmEngine.Connector.request(source))
 
-    assert "col_1,col_2,col_3\nABC,def,123\n" == LocalFileTest.request(source)
+    assert [
+             %SwarmEngine.Message{
+               body: "col_1,col_2,col_3\nABC,def,123\n",
+               headers: %{size: 30, endpoint: ^source}
+             }
+           ] = all_elements
   end
 
   test "metadata happy path" do
