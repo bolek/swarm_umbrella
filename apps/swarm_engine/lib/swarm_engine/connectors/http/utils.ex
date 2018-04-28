@@ -17,6 +17,7 @@ defmodule SwarmEngine.Connectors.HTTP.Utils do
     case @http.request(term, url, req_headers, body, opts) do
       {:ok, 200, _headers, client} ->
         {client, url}
+
       sink ->
         raise Error, {url, sink}
     end
@@ -26,9 +27,11 @@ defmodule SwarmEngine.Connectors.HTTP.Utils do
     case @http.stream(client) do
       {:ok, data} ->
         {[data], {client, url}}
+
       :done ->
         # IO.puts "No more data"
         {:halt, {client, url}}
+
       _ ->
         raise Error, url
     end
@@ -49,22 +52,22 @@ defmodule SwarmEngine.Connectors.HTTP.Utils do
   defp get_filename(_, false, nil), do: "#{UUID.generate()}"
 
   # When we have content type
-  defp get_filename(_, false, type),do: "#{UUID.generate()}.#{type}"
+  defp get_filename(_, false, type), do: "#{UUID.generate()}.#{type}"
 
   def get_file_size(headers) do
     ["Content-Length", "Content-Range"]
-    |> Enum.map(&({&1, extract_header(headers, &1)}))
+    |> Enum.map(&{&1, extract_header(headers, &1)})
     |> Enum.filter(fn {_, v} -> v != "" end)
-    |> List.first
+    |> List.first()
     |> parse_content_length()
   end
 
   def get_modified_at(headers) do
     case headers
-    |> extract_value("Last-Modified", "")
-    |> Calendar.DateTime.Parse.httpdate do
+         |> extract_value("Last-Modified", "")
+         |> Calendar.DateTime.Parse.httpdate() do
       {:ok, datetime} -> datetime
-      {:bad_format, _}     -> nil
+      {:bad_format, _} -> nil
     end
   end
 
@@ -85,20 +88,20 @@ defmodule SwarmEngine.Connectors.HTTP.Utils do
     |> extract_header("Content-Type")
     |> String.downcase()
     |> String.split(";")
-    |> List.first
+    |> List.first()
     |> map_content_type
   end
 
   defp url_basename(url) do
     url
-    |> URI.parse
+    |> URI.parse()
     |> Map.get(:path, "")
-    |> Path.basename
+    |> Path.basename()
   end
 
   def has_extension?(basename) do
     basename
-    |> Path.extname
+    |> Path.extname()
     |> valid_extension?
   end
 
@@ -107,6 +110,7 @@ defmodule SwarmEngine.Connectors.HTTP.Utils do
 
   defp parse_content_length(nil), do: nil
   defp parse_content_length({"Content-Length", v}), do: Integer.parse(v) |> elem(0)
+
   defp parse_content_length({"Content-Range", v}) do
     ~r/bytes (?<range_start>\d+)-(?<range_end>\d+)\/(?<size>\d+)/
     |> Regex.named_captures(v)

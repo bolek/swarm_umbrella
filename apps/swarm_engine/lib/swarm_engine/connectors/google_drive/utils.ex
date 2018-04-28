@@ -12,16 +12,15 @@ defmodule SwarmEngine.Connectors.GoogleDrive.Utils do
 
   def get_size(%{"size" => size}) do
     size
-    |> Integer.parse
+    |> Integer.parse()
     |> elem(0)
   end
 
   def get_modified_at(%{"modifiedTime" => modified_at}) do
-    case  modified_at
-          |> Calendar.DateTime.Parse.rfc3339_utc
-    do
+    case modified_at
+         |> Calendar.DateTime.Parse.rfc3339_utc() do
       {:ok, parsed} -> parsed
-      _             -> nil
+      _ -> nil
     end
   end
 
@@ -34,6 +33,6 @@ defmodule SwarmEngine.Connectors.GoogleDrive.Utils do
     |> Connector.request()
     |> Enum.to_list()
     |> Enum.join()
-    |> Poison.Parser.parse!
+    |> Poison.Parser.parse!()
   end
 end

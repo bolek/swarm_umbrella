@@ -6,20 +6,18 @@ defmodule SwarmEngine.Decoders.CSVTest do
   @csvDecoder %CSV{headers: true, separator: ",", delimiter: "\n"}
 
   test "encoding a CSV decoder to json" do
-    assert Poison.decode!(Poison.encode!(@csvDecoder))
-      == %{
-          "type" => "CSV",
-          "delimiter" => "\n",
-          "headers" => true,
-          "separator" => ","
-        }
+    assert Poison.decode!(Poison.encode!(@csvDecoder)) ==
+             %{
+               "type" => "CSV",
+               "delimiter" => "\n",
+               "headers" => true,
+               "separator" => ","
+             }
   end
 
   test "decoding a CSV decoder from json" do
-    assert (
-      @csvDecoder
-      |> Poison.encode!()
-      |> Poison.decode!(as: %CSV{})
-    ) == @csvDecoder
+    assert @csvDecoder
+           |> Poison.encode!()
+           |> Poison.decode!(as: %CSV{}) == @csvDecoder
   end
 end

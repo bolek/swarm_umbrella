@@ -5,10 +5,8 @@ defmodule SwarmEngine.TrackerTest do
   alias SwarmEngine.Tracker
 
   test "create" do
-    assert %Tracker{ source: "source",
-              store: "store",
-              resources: MapSet.new()
-            } == Tracker.create("source", "store")
+    assert %Tracker{source: "source", store: "store", resources: MapSet.new()} ==
+             Tracker.create("source", "store")
   end
 
   test "sync files from source" do
@@ -29,7 +27,11 @@ defmodule SwarmEngine.TrackerTest do
     assert MapSet.size(tracker.resources) == 1
 
     # change modified date
-    File.write_stat("/tmp/fooboo.csv", %{File.stat!("/tmp/fooboo.csv") | mtime: {{2017,1,1},{0,0,0}}})
+    File.write_stat("/tmp/fooboo.csv", %{
+      File.stat!("/tmp/fooboo.csv")
+      | mtime: {{2017, 1, 1}, {0, 0, 0}}
+    })
+
     tracker = Tracker.sync(tracker)
 
     assert MapSet.size(tracker.resources) == 2
@@ -42,16 +44,16 @@ defmodule SwarmEngine.TrackerTest do
   end
 
   test "current - return current resource based on modified_at" do
-    datetime_1 = Timex.now
+    datetime_1 = Timex.now()
     datetime_2 = Timex.shift(datetime_1, minutes: 3)
 
-    tracker = %Tracker {
+    tracker = %Tracker{
       resources: [%{modified_at: datetime_1}, %{modified_at: datetime_2}]
     }
 
     assert Tracker.current(tracker) == {:ok, %{modified_at: datetime_2}}
 
-    tracker = %Tracker {
+    tracker = %Tracker{
       resources: [%{modified_at: datetime_2}, %{modified_at: datetime_1}]
     }
 
@@ -59,17 +61,17 @@ defmodule SwarmEngine.TrackerTest do
   end
 
   test "current when no resources" do
-    tracker = %Tracker { resources: [] }
+    tracker = %Tracker{resources: []}
 
     assert Tracker.current(tracker) == {:error, :not_found}
   end
 
   test "find by version" do
-    datetime_1 = Timex.now
+    datetime_1 = Timex.now()
     datetime_2 = Timex.shift(datetime_1, minutes: 3)
     datetime_3 = Timex.shift(datetime_1, minutes: 5)
 
-    tracker = %Tracker {
+    tracker = %Tracker{
       resources: [%{modified_at: datetime_1}, %{modified_at: datetime_2}]
     }
 

@@ -7,16 +7,14 @@ defmodule SwarmEngine.Connectors.HTTP.UtilsTest do
     url = "http://google.drive.com/filename.zip"
     headers = []
 
-    assert "filename.zip" =
-      Utils.get_filename(url, headers)
+    assert "filename.zip" = Utils.get_filename(url, headers)
   end
 
   test "get_filename when passed url without extension" do
     url = "http://google.drive.com/filename"
     headers = []
 
-    refute "filename" ==
-      Utils.get_filename(url, headers)
+    refute "filename" == Utils.get_filename(url, headers)
   end
 
   test "get_filename when passed url without extension but have content-type header" do
