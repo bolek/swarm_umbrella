@@ -1,8 +1,8 @@
-defmodule SwarmEngine.Connectors.GoogleDriveTest do
+defmodule SwarmEngine.Endpoints.GoogleDriveTest do
   use ExUnit.Case, async: true
 
   alias SwarmEngine.Connector
-  alias SwarmEngine.Connectors.GoogleDrive
+  alias SwarmEngine.Endpoints.GoogleDrive
 
   def request(file_id) do
     file_id

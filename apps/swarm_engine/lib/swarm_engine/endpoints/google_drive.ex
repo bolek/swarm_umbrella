@@ -1,4 +1,4 @@
-defmodule SwarmEngine.Connectors.GoogleDrive do
+defmodule SwarmEngine.Endpoints.GoogleDrive do
   alias __MODULE__
 
   @type t :: %__MODULE__{file_id: integer}
@@ -28,10 +28,10 @@ defmodule SwarmEngine.Connectors.GoogleDrive do
   end
 end
 
-defimpl SwarmEngine.Connector, for: SwarmEngine.Connectors.GoogleDrive do
+defimpl SwarmEngine.Connector, for: SwarmEngine.Endpoints.GoogleDrive do
   alias SwarmEngine.{Connector, Resource}
-  alias SwarmEngine.Connectors.{GoogleDrive, HTTP}
-  alias SwarmEngine.Connectors.GoogleDrive.Utils
+  alias SwarmEngine.Endpoints.{GoogleDrive, HTTP}
+  alias SwarmEngine.Endpoints.GoogleDrive.Utils
 
   @spec list(GoogleDrive.t()) :: {:ok, list(Resource.t())} | {:error, any}
   def list(source) do

@@ -1,7 +1,7 @@
-defmodule SwarmEngine.Connectors.HTTP.UtilsTest do
+defmodule SwarmEngine.Endpoints.HTTP.UtilsTest do
   use ExUnit.Case, async: true
 
-  alias SwarmEngine.Connectors.HTTP.Utils
+  alias SwarmEngine.Endpoints.HTTP.Utils
 
   test "get_filename when passed url with filename" do
     url = "http://google.drive.com/filename.zip"

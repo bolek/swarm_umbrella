@@ -1,9 +1,9 @@
-defmodule SwarmEngine.Connectors.HTTPTest do
+defmodule SwarmEngine.Endpoints.HTTPTest do
   use ExUnit.Case, async: true
 
   alias __MODULE__
   alias SwarmEngine.Connector
-  alias SwarmEngine.Connectors.HTTP
+  alias SwarmEngine.Endpoints.HTTP
 
   doctest SwarmEngine.Dataset
 

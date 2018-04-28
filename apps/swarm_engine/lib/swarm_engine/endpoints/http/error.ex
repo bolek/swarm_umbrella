@@ -1,4 +1,4 @@
-defmodule SwarmEngine.Connectors.HTTP.Error do
+defmodule SwarmEngine.Endpoints.HTTP.Error do
   alias __MODULE__
 
   defexception [:message]

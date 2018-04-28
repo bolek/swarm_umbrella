@@ -1,7 +1,7 @@
-defmodule SwarmEngine.Connectors.LocalDirTest do
+defmodule SwarmEngine.Endpoints.LocalDirTest do
   use ExUnit.Case, async: true
 
-  alias SwarmEngine.Connectors.{LocalDir, LocalFile}
+  alias SwarmEngine.Endpoints.{LocalDir, LocalFile}
   alias SwarmEngine.Resource
   alias SwarmEngine.Test
 

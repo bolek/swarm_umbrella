@@ -2,8 +2,8 @@ defmodule SwarmEngine.DatasetFactoryTest do
   use SwarmEngine.DataCase
 
   alias SwarmEngine.DatasetFactory
-  alias SwarmEngine.Connectors.LocalFile
-  alias SwarmEngine.Connectors.StringIO
+  alias SwarmEngine.Endpoints.LocalFile
+  alias SwarmEngine.Endpoints.StringIO
   alias SwarmEngine.{DatasetStore, Tracker}
 
   @valid_attrs %{

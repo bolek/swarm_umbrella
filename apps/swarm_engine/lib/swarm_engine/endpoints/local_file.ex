@@ -1,4 +1,4 @@
-defmodule SwarmEngine.Connectors.LocalFile do
+defmodule SwarmEngine.Endpoints.LocalFile do
   alias __MODULE__
   alias SwarmEngine.{Connector, Resource}
 
@@ -63,8 +63,8 @@ defmodule SwarmEngine.Connectors.LocalFile do
   def fields(), do: __MODULE__.__schema__(:fields)
 end
 
-defimpl SwarmEngine.Connector, for: SwarmEngine.Connectors.LocalFile do
-  alias SwarmEngine.Connectors.LocalFile
+defimpl SwarmEngine.Connector, for: SwarmEngine.Endpoints.LocalFile do
+  alias SwarmEngine.Endpoints.LocalFile
   alias SwarmEngine.Resource
 
   @spec list(LocalFile.t()) :: {:ok, list(Resource.t())}

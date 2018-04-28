@@ -1,6 +1,6 @@
-defmodule SwarmEngine.Connectors.HTTP.Utils do
+defmodule SwarmEngine.Endpoints.HTTP.Utils do
   alias SwarmEngine.Util.UUID
-  alias SwarmEngine.Connectors.HTTP.Error
+  alias SwarmEngine.Endpoints.HTTP.Error
 
   @http Application.get_env(:swarm_engine, :http_client)
 

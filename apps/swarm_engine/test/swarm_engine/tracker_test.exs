@@ -1,7 +1,7 @@
 defmodule SwarmEngine.TrackerTest do
   use ExUnit.Case, async: true
 
-  alias SwarmEngine.Connectors.{LocalFile, LocalDir}
+  alias SwarmEngine.Endpoints.{LocalFile, LocalDir}
   alias SwarmEngine.Tracker
 
   test "create" do

@@ -13,7 +13,7 @@ defmodule SwarmEngine.RepoTest do
     id: "c5474362-d018-49a5-a488-eb70e356dd26",
     name: "goofy",
     decoder: SwarmEngine.Decoders.CSV.create(),
-    source: SwarmEngine.Connectors.LocalFile.create("test/fixtures/goofy.csv")
+    source: SwarmEngine.Endpoints.LocalFile.create("test/fixtures/goofy.csv")
   }
 
   @dataset %SwarmEngine.Dataset{
@@ -42,17 +42,17 @@ defmodule SwarmEngine.RepoTest do
             modified_at: ~N[2000-01-01 23:00:07.000000],
             name: "goofy.csv",
             size: 42,
-            source: %SwarmEngine.Connectors.LocalFile{
+            source: %SwarmEngine.Endpoints.LocalFile{
               path: "/tmp/swarm_engine_store/20180408/52833cad-e127-44c8-b66d-281ffa47eb4b.csv",
               type: "LocalFile"
             }
           }
         ]),
-      source: %SwarmEngine.Connectors.LocalFile{
+      source: %SwarmEngine.Endpoints.LocalFile{
         path: "test/fixtures/goofy.csv",
         type: "LocalFile"
       },
-      store: %SwarmEngine.Connectors.LocalDir{path: "/tmp/swarm_engine_store/"}
+      store: %SwarmEngine.Endpoints.LocalDir{path: "/tmp/swarm_engine_store/"}
     }
   }
 
@@ -90,7 +90,7 @@ defmodule SwarmEngine.RepoTest do
           modified_at: ~N[2000-01-01 23:00:07.000000],
           name: "goofy.csv",
           size: 42,
-          source: %SwarmEngine.Connectors.LocalFile{
+          source: %SwarmEngine.Endpoints.LocalFile{
             path: "/tmp/swarm_engine_store/20180408/52833cad-e127-44c8-b66d-281ffa47eb4b.csv",
             type: "LocalFile"
           }
@@ -99,7 +99,7 @@ defmodule SwarmEngine.RepoTest do
           modified_at: ~N[2005-04-02 23:00:07.000000],
           name: "donald.csv",
           size: 42,
-          source: %SwarmEngine.Connectors.LocalFile{
+          source: %SwarmEngine.Endpoints.LocalFile{
             path: "other.csv",
             type: "LocalFile"
           }
@@ -127,7 +127,7 @@ defmodule SwarmEngine.RepoTest do
     {:ok, new_dataset} =
       Repo.put_dataset(%SwarmEngine.DatasetNew{
         source:
-          SwarmEngine.Connectors.StringIO.create(
+          SwarmEngine.Endpoints.StringIO.create(
             "goofy",
             "col_4,col_5,col_6\nABC,def,123\nKLM,edd,999"
           ),

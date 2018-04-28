@@ -1,4 +1,4 @@
-defmodule SwarmEngine.Connectors.StringIO do
+defmodule SwarmEngine.Endpoints.StringIO do
   alias __MODULE__
   alias SwarmEngine.{Connector, Resource}
 
@@ -38,8 +38,8 @@ defmodule SwarmEngine.Connectors.StringIO do
   def fields(), do: __MODULE__.__schema__(:fields)
 end
 
-defimpl SwarmEngine.Connector, for: SwarmEngine.Connectors.StringIO do
-  alias SwarmEngine.Connectors.StringIO
+defimpl SwarmEngine.Connector, for: SwarmEngine.Endpoints.StringIO do
+  alias SwarmEngine.Endpoints.StringIO
   alias SwarmEngine.Resource
 
   @spec list(Connector.t()) :: {:ok, list(Resource.t())} | {:error, any}

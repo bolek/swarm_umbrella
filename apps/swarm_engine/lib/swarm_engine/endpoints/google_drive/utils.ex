@@ -1,6 +1,6 @@
-defmodule SwarmEngine.Connectors.GoogleDrive.Utils do
+defmodule SwarmEngine.Endpoints.GoogleDrive.Utils do
   alias SwarmEngine.Connector
-  alias SwarmEngine.Connectors.HTTP
+  alias SwarmEngine.Endpoints.HTTP
 
   @google_auth Application.get_env(:swarm_engine, :google_auth_client)
   @scope "https://www.googleapis.com/auth/drive.readonly"

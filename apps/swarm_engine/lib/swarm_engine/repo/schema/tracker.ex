@@ -9,7 +9,7 @@ defmodule SwarmEngine.Repo.Schema.Tracker do
 
   schema "trackers" do
     field(:source, SwarmEngine.Repo.Types.Connector)
-    embeds_one(:store, SwarmEngine.Connectors.LocalDir)
+    embeds_one(:store, SwarmEngine.Endpoints.LocalDir)
 
     has_many(:resources, SwarmEngine.Repo.Schema.TrackerResource)
     belongs_to(:dataset, SwarmEngine.Repo.Schema.Dataset)
@@ -29,7 +29,7 @@ defmodule SwarmEngine.Repo.Schema.Tracker do
   def changeset(%TrackerSchema{} = tracker, attrs) do
     tracker
     |> cast(attrs, [])
-    |> cast_embed(:store, with: &SwarmEngine.Connectors.LocalDir.changeset/2)
+    |> cast_embed(:store, with: &SwarmEngine.Endpoints.LocalDir.changeset/2)
     |> cast_assoc(:resources)
     |> cast_dynamic_embed(:source)
     |> validate_required([:source, :store, :resources])

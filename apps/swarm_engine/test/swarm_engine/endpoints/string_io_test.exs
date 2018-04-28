@@ -1,7 +1,7 @@
-defmodule SwarmEngine.Connectors.StringIOTest do
+defmodule SwarmEngine.Endpoints.StringIOTest do
   use ExUnit.Case, async: true
 
-  alias SwarmEngine.Connectors.StringIO
+  alias SwarmEngine.Endpoints.StringIO
   alias SwarmEngine.{Connector, Resource}
 
   def request(source) do

@@ -1,5 +1,5 @@
-defmodule SwarmEngine.Connectors.LocalDir do
-  alias SwarmEngine.Connectors.{LocalDir, LocalFile}
+defmodule SwarmEngine.Endpoints.LocalDir do
+  alias SwarmEngine.Endpoints.{LocalDir, LocalFile}
   alias SwarmEngine.Resource
   alias SwarmEngine.Util.UUID
 

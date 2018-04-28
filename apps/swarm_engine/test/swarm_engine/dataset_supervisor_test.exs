@@ -15,7 +15,7 @@ defmodule SwarmEngine.DatasetSupervisorTest do
     id: "247a3e2d-70c0-4713-a0cc-7124e20e5a88",
     name: "goofy",
     source:
-      SwarmEngine.Connectors.StringIO.create(
+      SwarmEngine.Endpoints.StringIO.create(
         "list",
         "col_4,col_5\nABC,def\nKLM,edd\n"
       ),
@@ -34,7 +34,7 @@ defmodule SwarmEngine.DatasetSupervisorTest do
                id: "247a3e2d-70c0-4713-a0cc-7124e20e5a88",
                name: "goofy",
                source:
-                 SwarmEngine.Connectors.StringIO.create(
+                 SwarmEngine.Endpoints.StringIO.create(
                    "list",
                    "col_4,col_5\nABC,def\nKLM,edd\n"
                  ),

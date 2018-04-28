@@ -1,4 +1,4 @@
-defmodule SwarmEngine.Connectors.HTTP do
+defmodule SwarmEngine.Endpoints.HTTP do
   alias __MODULE__
 
   @type t :: %__MODULE__{url: String.t(), options: keyword}
@@ -10,8 +10,8 @@ defmodule SwarmEngine.Connectors.HTTP do
   end
 end
 
-defimpl SwarmEngine.Connector, for: SwarmEngine.Connectors.HTTP do
-  alias SwarmEngine.Connectors.HTTP
+defimpl SwarmEngine.Connector, for: SwarmEngine.Endpoints.HTTP do
+  alias SwarmEngine.Endpoints.HTTP
   alias SwarmEngine.Resource
 
   @spec list(Connector.t()) :: {:ok, list(Resource.t())} | {:error, any}

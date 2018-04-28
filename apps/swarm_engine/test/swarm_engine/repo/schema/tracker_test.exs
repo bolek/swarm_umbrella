@@ -2,7 +2,7 @@ defmodule SwarmEngine.Repo.Schema.TrackerTest do
   use ExUnit.Case, async: true
 
   alias SwarmEngine.Repo.Schema.Tracker
-  alias SwarmEngine.Connectors.LocalDir
+  alias SwarmEngine.Endpoints.LocalDir
 
   test "valid changeset" do
     changeset =
