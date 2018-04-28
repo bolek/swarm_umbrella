@@ -1,4 +1,4 @@
-defmodule SwarmEngine.Repo.Types.Connector do
+defmodule SwarmEngine.Repo.Types.Endpoint do
   alias SwarmEngine.Endpoints
 
   @moduledoc """

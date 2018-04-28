@@ -9,7 +9,7 @@ defmodule SwarmEngine.Repo.Schema.TrackerResource do
     field(:name, :string)
     field(:size, :integer)
     field(:modified_at, :naive_datetime)
-    field(:source, SwarmEngine.Repo.Types.Connector)
+    field(:source, SwarmEngine.Repo.Types.Endpoint)
     belongs_to(:tracker, SwarmEngine.Repo.Schema.Tracker)
 
     timestamps()

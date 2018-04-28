@@ -8,7 +8,7 @@ defmodule SwarmEngine.Repo.Schema.Dataset do
   schema "datasets" do
     field(:name, :string)
     field(:decoder, SwarmEngine.Repo.Types.Decoder)
-    field(:source, SwarmEngine.Repo.Types.Connector)
+    field(:source, SwarmEngine.Repo.Types.Endpoint)
     has_one(:tracker, Schema.Tracker, on_replace: :delete)
     embeds_one(:store, SwarmEngine.DatasetStore, on_replace: :delete)
     field(:status, SwarmEngine.Repo.Schema.DatasetStatus)

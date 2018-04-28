@@ -1,7 +1,7 @@
 defmodule SwarmEngine.Decoder do
-  @callback decode!(Connector.t(), struct()) :: Enumerable.t()
-  def decode!(resource, %{__struct__: type} = decoder), do: type.decode!(resource, decoder)
+  @callback decode!(Endpoint.t(), struct()) :: Enumerable.t()
+  def decode!(endpoint, %{__struct__: type} = decoder), do: type.decode!(endpoint, decoder)
 
-  @callback columns(Connector.t(), struct()) :: map
-  def columns(resource, %{__struct__: type} = decoder), do: type.columns(resource, decoder)
+  @callback columns(Endpoint.t(), struct()) :: map
+  def columns(endpoint, %{__struct__: type} = decoder), do: type.columns(endpoint, decoder)
 end

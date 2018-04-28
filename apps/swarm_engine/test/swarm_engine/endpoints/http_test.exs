@@ -2,7 +2,7 @@ defmodule SwarmEngine.Endpoints.HTTPTest do
   use ExUnit.Case, async: true
 
   alias __MODULE__
-  alias SwarmEngine.Connector
+  alias SwarmEngine.Consumer
   alias SwarmEngine.Endpoints.HTTP
 
   doctest SwarmEngine.Dataset
@@ -10,13 +10,13 @@ defmodule SwarmEngine.Endpoints.HTTPTest do
   def request(url) do
     url
     |> HTTP.create()
-    |> Connector.request()
+    |> Consumer.stream()
     |> Enum.to_list()
   end
 
   def request(url, options) do
     HTTP.create(url, options)
-    |> Connector.request()
+    |> Consumer.stream()
     |> Enum.to_list()
   end
 
@@ -35,14 +35,17 @@ defmodule SwarmEngine.Endpoints.HTTPTest do
     assert [
              %SwarmEngine.Message{body: "requested"},
              %SwarmEngine.Message{body: "data"}
-           ] = HTTPTest.request("http://url", [{:headers, [{"Authorization", "pass"}]}])
+           ] =
+             HTTPTest.request("http://example.com/url.txt", [
+               {:headers, [{"Authorization", "pass"}]}
+             ])
   end
 
   test "streaming with body" do
     assert [
              %SwarmEngine.Message{body: "requested"},
              %SwarmEngine.Message{body: "data"}
-           ] = HTTPTest.request("http://url", [{:body, 123}])
+           ] = HTTPTest.request("http://example.com/url.txt", [{:body, 123}])
   end
 
   test "when client fails" do

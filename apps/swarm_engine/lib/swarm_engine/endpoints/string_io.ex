@@ -1,6 +1,6 @@
 defmodule SwarmEngine.Endpoints.StringIO do
   alias __MODULE__
-  alias SwarmEngine.{Connector, Resource}
+  alias SwarmEngine.{Consumer, Consumable, Resource}
 
   use Ecto.Schema
   import Ecto.Changeset
@@ -27,24 +27,45 @@ defmodule SwarmEngine.Endpoints.StringIO do
     %StringIO{content: content, name: name}
   end
 
-  @spec metadata!(Connector.t()) :: Resource.t()
-  def metadata!(source) do
-    case Connector.metadata(source) do
+  @spec metadata!(Consumable.t()) :: Resource.t()
+  def metadata!(endpoint) do
+    case Consumer.metadata(endpoint) do
       {:ok, m} -> m
       {:error, reason} -> raise Kernel.inspect(reason)
     end
   end
 
   def fields(), do: __MODULE__.__schema__(:fields)
+
+  defimpl SwarmEngine.Consumable do
+    @spec metadata(StringIO.t()) :: {:ok, Resource.t()} | {:error, any}
+    def metadata(%StringIO{content: content, name: name} = source) do
+      {:ok,
+       %Resource{
+         name: name,
+         size: byte_size(content),
+         modified_at: nil,
+         source: source
+       }}
+    end
+
+    @spec stream(StringIO.t()) :: Enumerable.t()
+    def stream(%StringIO{content: content} = endpoint) do
+      {:ok, resource} = metadata(endpoint)
+
+      [SwarmEngine.Message.create(content, %{size: byte_size(content), resource: resource})]
+      |> Stream.map(& &1)
+    end
+  end
 end
 
 defimpl SwarmEngine.Connector, for: SwarmEngine.Endpoints.StringIO do
   alias SwarmEngine.Endpoints.StringIO
-  alias SwarmEngine.Resource
+  alias SwarmEngine.{Consumer, Resource}
 
   @spec list(Connector.t()) :: {:ok, list(Resource.t())} | {:error, any}
   def list(%StringIO{} = source) do
-    case metadata(source) do
+    case Consumer.metadata(source) do
       {:ok, resource} ->
         {:ok, [resource]}
 
@@ -52,19 +73,4 @@ defimpl SwarmEngine.Connector, for: SwarmEngine.Endpoints.StringIO do
         {:error, error}
     end
   end
-
-  @spec metadata(StringIO.t()) :: {:ok, Resource.t()} | {:error, any}
-  def metadata(%StringIO{content: content, name: name} = source) do
-    {:ok,
-     %Resource{
-       name: name,
-       size: byte_size(content),
-       modified_at: nil,
-       source: source
-     }}
-  end
-
-  @spec request(StringIO.t()) :: Enumerable.t()
-  def request(%StringIO{content: content} = endpoint),
-    do: Stream.map([SwarmEngine.Message.create(content, %{endpoint: endpoint})], & &1)
 end

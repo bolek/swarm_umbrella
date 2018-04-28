@@ -1,6 +1,6 @@
 defmodule SwarmEngine.Endpoints.LocalFile do
   alias __MODULE__
-  alias SwarmEngine.{Connector, Resource}
+  alias SwarmEngine.{Consumer, Consumable, Resource}
 
   use Ecto.Schema
   import Ecto.Changeset
@@ -31,9 +31,9 @@ defmodule SwarmEngine.Endpoints.LocalFile do
     %LocalFile{path: path}
   end
 
-  @spec metadata!(Connector.t()) :: Resource.t()
-  def metadata!(source) do
-    case Connector.metadata(source) do
+  @spec metadata!(Consumable.t()) :: Resource.t()
+  def metadata!(endpoint) do
+    case Consumer.metadata(endpoint) do
       {:ok, m} -> m
       {:error, reason} -> raise Kernel.inspect(reason)
     end
@@ -43,7 +43,7 @@ defmodule SwarmEngine.Endpoints.LocalFile do
   def store(%Resource{source: source} = resource, %LocalFile{path: path} = new_location) do
     File.mkdir_p(Path.dirname(path))
 
-    Connector.request(source)
+    Consumer.stream(source)
     |> Stream.map(fn %SwarmEngine.Message{body: body} -> body end)
     |> Stream.into(File.stream!(path))
     |> Stream.run()
@@ -57,10 +57,37 @@ defmodule SwarmEngine.Endpoints.LocalFile do
     |> Stream.into(File.stream!(path))
     |> Stream.run()
 
-    Connector.metadata(source)
+    Consumer.metadata(source)
   end
 
   def fields(), do: __MODULE__.__schema__(:fields)
+
+  defimpl SwarmEngine.Consumable do
+    def metadata(%LocalFile{path: path} = endpoint) do
+      with {:ok, info} <- File.stat(path, []) do
+        {:ok,
+         %Resource{
+           name: Path.basename(path),
+           size: info.size,
+           modified_at:
+             info.mtime
+             |> NaiveDateTime.from_erl!(),
+           source: endpoint
+         }}
+      else
+        {:error, reason} -> {:error, reason}
+      end
+    end
+
+    def stream(%LocalFile{path: path} = endpoint) do
+      {:ok, resource} = metadata(endpoint)
+
+      File.stream!(path, [], 2048)
+      |> Stream.map(fn i ->
+        SwarmEngine.Message.create(i, %{size: byte_size(i), resource: resource})
+      end)
+    end
+  end
 end
 
 defimpl SwarmEngine.Connector, for: SwarmEngine.Endpoints.LocalFile do
@@ -74,30 +101,5 @@ defimpl SwarmEngine.Connector, for: SwarmEngine.Endpoints.LocalFile do
      |> Stream.map(&%{location | path: &1})
      |> Stream.map(&LocalFile.metadata!(&1))
      |> Enum.to_list()}
-  end
-
-  @spec metadata(LocalFile.t()) :: {:ok, Resource.t()} | {:error, any}
-  def metadata(%LocalFile{path: path} = source) do
-    with {:ok, info} <- File.stat(path, []) do
-      {:ok,
-       %Resource{
-         name: Path.basename(path),
-         size: info.size,
-         modified_at:
-           info.mtime
-           |> NaiveDateTime.from_erl!(),
-         source: source
-       }}
-    else
-      {:error, reason} -> {:error, reason}
-    end
-  end
-
-  @spec request(LocalFile.t()) :: Enumerable.t()
-  def request(%LocalFile{path: path} = endpoint) do
-    File.stream!(path, [], 2048)
-    |> Stream.map(fn i ->
-      SwarmEngine.Message.create(i, %{size: byte_size(i), endpoint: endpoint})
-    end)
   end
 end

@@ -3,7 +3,7 @@ defmodule SwarmEngine.Decoders.CSV do
 
   alias __MODULE__
   alias SwarmEngine.Decoders.CSV
-  alias SwarmEngine.{Connector, Util}
+  alias SwarmEngine.{Consumer, Util}
 
   use Ecto.Schema
   import Ecto.Changeset
@@ -42,13 +42,13 @@ defmodule SwarmEngine.Decoders.CSV do
     }
   end
 
-  @spec columns(Connector.t(), struct()) :: Map
-  def columns(source, %CSV{delimiter: delimiter} = opts) do
+  @spec columns(Endpoint.t(), struct()) :: Map
+  def columns(endpoint, %CSV{delimiter: delimiter} = opts) do
     opts = column_options(opts)
 
     {:ok,
-     source
-     |> Connector.request()
+     endpoint
+     |> Consumer.stream()
      |> Stream.take(1)
      |> Enum.map(&(:binary.split(Map.get(&1, :body), delimiter) |> List.first()))
      |> Util.CSV.decode!(Map.to_list(opts))
@@ -65,12 +65,12 @@ defmodule SwarmEngine.Decoders.CSV do
      end)}
   end
 
-  @spec decode!(Connector.t(), CSV.t()) :: Enumerable.t()
-  def decode!(source, %CSV{} = opts) do
+  @spec decode!(Endpoint.t(), CSV.t()) :: Enumerable.t()
+  def decode!(endpoint, %CSV{} = opts) do
     tmp_file_path = "/tmp/#{Util.UUID.generate()}"
 
-    source
-    |> Connector.request()
+    endpoint
+    |> Consumer.stream()
     |> Stream.map(&Map.get(&1, :body))
     |> Stream.into(File.stream!(tmp_file_path))
     |> Stream.run()

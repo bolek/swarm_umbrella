@@ -1,5 +1,5 @@
 defmodule SwarmEngine.Endpoints.GoogleDrive.Utils do
-  alias SwarmEngine.Connector
+  alias SwarmEngine.Consumer
   alias SwarmEngine.Endpoints.HTTP
 
   @google_auth Application.get_env(:swarm_engine, :google_auth_client)
@@ -30,7 +30,7 @@ defmodule SwarmEngine.Endpoints.GoogleDrive.Utils do
 
   def get_metadata(params, opts) do
     HTTP.create(params, opts)
-    |> Connector.request()
+    |> Consumer.stream()
     |> Enum.to_list()
     |> Enum.join()
     |> Poison.Parser.parse!()

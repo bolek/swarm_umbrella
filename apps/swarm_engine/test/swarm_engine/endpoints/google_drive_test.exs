@@ -1,13 +1,13 @@
 defmodule SwarmEngine.Endpoints.GoogleDriveTest do
   use ExUnit.Case, async: true
 
-  alias SwarmEngine.Connector
+  alias SwarmEngine.Consumer
   alias SwarmEngine.Endpoints.GoogleDrive
 
   def request(file_id) do
     file_id
     |> GoogleDrive.create()
-    |> Connector.request()
+    |> Consumer.stream()
     |> Enum.to_list()
     |> Enum.join(" ")
   end
@@ -20,6 +20,6 @@ defmodule SwarmEngine.Endpoints.GoogleDriveTest do
     source = GoogleDrive.create("1234abc")
 
     assert [%SwarmEngine.Message{body: "requested"}, %SwarmEngine.Message{body: "data"}] =
-             Enum.to_list(Connector.request(source))
+             Enum.to_list(Consumer.stream(source))
   end
 end

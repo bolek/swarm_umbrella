@@ -8,7 +8,7 @@ defmodule SwarmEngine.Repo.Schema.Tracker do
   alias SwarmEngine.Repo.Schema.TrackerResource
 
   schema "trackers" do
-    field(:source, SwarmEngine.Repo.Types.Connector)
+    field(:source, SwarmEngine.Repo.Types.Endpoint)
     embeds_one(:store, SwarmEngine.Endpoints.LocalDir)
 
     has_many(:resources, SwarmEngine.Repo.Schema.TrackerResource)

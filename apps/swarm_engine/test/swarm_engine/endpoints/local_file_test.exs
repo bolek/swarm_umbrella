@@ -2,12 +2,12 @@ defmodule SwarmEngine.Endpoints.LocalFileTest do
   use ExUnit.Case, async: true
 
   alias SwarmEngine.Endpoints.LocalFile
-  alias SwarmEngine.{Connector, Resource}
+  alias SwarmEngine.{Connector, Consumer, Resource}
   alias SwarmEngine.Test
 
   def request(source) do
     source
-    |> Connector.request()
+    |> Consumer.stream()
     |> Enum.to_list()
     |> Enum.join(" ")
   end
@@ -34,12 +34,23 @@ defmodule SwarmEngine.Endpoints.LocalFileTest do
 
   test "streaming a local file" do
     source = LocalFile.create("test/fixtures/dummy.csv")
-    all_elements = Enum.to_list(SwarmEngine.Connector.request(source))
+    all_elements = Enum.to_list(SwarmEngine.Consumer.stream(source))
 
     assert [
              %SwarmEngine.Message{
                body: "col_1,col_2,col_3\nABC,def,123\n",
-               headers: %{size: 30, endpoint: ^source}
+               headers: %{
+                 size: 30,
+                 resource: %SwarmEngine.Resource{
+                   modified_at: ~N[2017-11-17 23:11:33],
+                   name: "dummy.csv",
+                   size: 30,
+                   source: %SwarmEngine.Endpoints.LocalFile{
+                     path: "test/fixtures/dummy.csv",
+                     type: "LocalFile"
+                   }
+                 }
+               }
              }
            ] = all_elements
   end
@@ -57,13 +68,13 @@ defmodule SwarmEngine.Endpoints.LocalFileTest do
          modified_at: Test.FileHelper.modified_at(fixture_path)
        }}
 
-    assert expected == Connector.metadata(source)
+    assert expected == Consumer.metadata(source)
   end
 
   test "metadata for inexisting file" do
     source = LocalFile.create("some_weird_file")
 
-    assert {:error, :enoent} = Connector.metadata(source)
+    assert {:error, :enoent} = Consumer.metadata(source)
   end
 
   test "metadata! - happy path" do
@@ -88,7 +99,7 @@ defmodule SwarmEngine.Endpoints.LocalFileTest do
     fixture_path = "test/fixtures/dummy.csv"
     source = LocalFile.create(fixture_path)
 
-    {:ok, resource} = Connector.metadata(source)
+    {:ok, resource} = Consumer.metadata(source)
 
     target = LocalFile.create("/tmp/dummy2.csv")
 

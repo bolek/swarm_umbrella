@@ -11,7 +11,7 @@ defmodule SwarmEngine.DatasetNew do
   embedded_schema do
     field(:name, :string)
     field(:decoder, SwarmEngine.Repo.Types.Decoder)
-    field(:source, SwarmEngine.Repo.Types.Connector)
+    field(:source, SwarmEngine.Repo.Types.Endpoint)
   end
 
   def create(%{name: name, source: source} = attrs) do
