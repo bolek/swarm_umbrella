@@ -20,10 +20,16 @@ defmodule SwarmEngine.Endpoints.LocalDir do
   end
 
   @spec store(Resource.t(), LocalDir.t()) :: {:ok, Resource.t()}
-  def store(%Resource{} = resource, %LocalDir{path: path}) do
+  def store(%Resource{source: endpoint} = resource, %LocalDir{path: path}) do
     ext = Path.extname(resource.name)
+    store_endpoint = LocalFile.create(new_path(path, ext))
 
-    LocalFile.store(resource, LocalFile.create(new_path(path, ext)))
+    endpoint
+    |> SwarmEngine.Consumer.stream()
+    |> SwarmEngine.Producer.into(store_endpoint)
+    |> Stream.run()
+
+    {:ok, %{resource | source: store_endpoint}}
   end
 
   defp new_path(base_path, extension) do

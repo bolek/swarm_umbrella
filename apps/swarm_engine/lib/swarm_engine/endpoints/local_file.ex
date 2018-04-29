@@ -39,27 +39,6 @@ defmodule SwarmEngine.Endpoints.LocalFile do
     end
   end
 
-  @spec store(Resource.t(), LocalFile.t()) :: {:ok, Resource.t()}
-  def store(%Resource{source: source} = resource, %LocalFile{path: path} = new_location) do
-    File.mkdir_p(Path.dirname(path))
-
-    Consumer.stream(source)
-    |> Stream.map(fn %SwarmEngine.Message{body: body} -> body end)
-    |> Stream.into(File.stream!(path))
-    |> Stream.run()
-
-    {:ok, %{resource | source: new_location}}
-  end
-
-  @spec store_stream(Enumerable.t(), LocalFile.t()) :: {:ok, Resource.t()} | {:error, any}
-  def store_stream(stream, %LocalFile{path: path} = source) do
-    stream
-    |> Stream.into(File.stream!(path))
-    |> Stream.run()
-
-    Consumer.metadata(source)
-  end
-
   def fields(), do: __MODULE__.__schema__(:fields)
 
   defimpl SwarmEngine.Consumable do
@@ -79,6 +58,7 @@ defmodule SwarmEngine.Endpoints.LocalFile do
       end
     end
 
+    @spec stream(LocalFile.t()) :: Enumerable.t()
     def stream(%LocalFile{path: path} = endpoint) do
       {:ok, resource} = metadata(endpoint)
 
@@ -86,6 +66,27 @@ defmodule SwarmEngine.Endpoints.LocalFile do
       |> Stream.map(fn i ->
         SwarmEngine.Message.create(i, %{size: byte_size(i), resource: resource})
       end)
+    end
+  end
+
+  defimpl SwarmEngine.Producable do
+    @spec into(LocalFile.t(), Enumerable.t()) :: Enumerable.t()
+    def into(%LocalFile{path: path}, stream) do
+      stream
+      |> Stream.transform(
+        fn ->
+          File.mkdir_p(Path.dirname(path))
+
+          File.open!(path, [:write])
+        end,
+        fn elem, file ->
+          IO.binwrite(file, Map.get(elem, :body))
+          {[elem], file}
+        end,
+        fn file ->
+          File.close(file)
+        end
+      )
     end
   end
 end

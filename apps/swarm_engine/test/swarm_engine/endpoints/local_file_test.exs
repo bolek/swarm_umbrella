@@ -95,51 +95,6 @@ defmodule SwarmEngine.Endpoints.LocalFileTest do
     assert_raise RuntimeError, fn -> LocalFile.metadata!(source) end
   end
 
-  test "storing a resource in a new location" do
-    fixture_path = "test/fixtures/dummy.csv"
-    source = LocalFile.create(fixture_path)
-
-    {:ok, resource} = Consumer.metadata(source)
-
-    target = LocalFile.create("/tmp/dummy2.csv")
-
-    expected =
-      {:ok,
-       %Resource{
-         name: "dummy.csv",
-         size: 30,
-         source: target,
-         modified_at: Test.FileHelper.modified_at(fixture_path)
-       }}
-
-    assert expected == LocalFile.store(resource, target)
-
-    assert File.read("test/fixtures/dummy.csv") == File.read("/tmp/dummy2.csv")
-
-    # cleanup
-    File.rm("/tmp/dummy2.csv")
-  end
-
-  test "storing a stream in a new location" do
-    target = LocalFile.create("/tmp/stream2.csv")
-
-    result =
-      ["col1,col2,col13\n", "123,234,345\n"]
-      |> Stream.map(& &1)
-      |> LocalFile.store_stream(target)
-
-    assert {:ok,
-            %Resource{
-              name: "stream2.csv",
-              size: 28,
-              source: %LocalFile{path: "/tmp/stream2.csv"},
-              modified_at: Test.FileHelper.modified_at("/tmp/stream2.csv")
-            }} == result
-
-    # cleanup
-    File.rm("/tmp/stream2.csv")
-  end
-
   test "list resources under given location" do
     location = LocalFile.create("test/fixtures/*")
 
@@ -176,5 +131,18 @@ defmodule SwarmEngine.Endpoints.LocalFileTest do
     location = LocalFile.create("foo/bar/*")
 
     assert {:ok, []} = Connector.list(location)
+  end
+
+  test "streaming into a local file" do
+    endpoint = LocalFile.create("/tmp/output.txt")
+
+    ["abc/n", "def/n"]
+    |> Stream.map(fn x -> SwarmEngine.Message.create(x, %{}) end)
+    |> SwarmEngine.Producer.into(endpoint)
+    |> Stream.run()
+
+    assert File.read!(endpoint.path) == "abc/ndef/n"
+
+    File.rm(endpoint.path)
   end
 end
